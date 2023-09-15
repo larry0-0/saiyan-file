@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="false">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <springProperty scop="context" name="appName" source="spring.application.name" defaultValue="mg-file"/>
+    <springProperty scop="context" name="rootLevel" source="app.logger.level" defaultValue="info"/>
+    <springProperty scop="context" name="log.path" source="log.path" defaultValue="${user.dir}/${appName}/logs/"/>
+    <property name="log.path" value="${log.path}" />
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} [%thread] [%logger{50}] [%X{TRACE_ID}] - %msg%n"/>
+    <!-- 控制台打印日志的相关配置 -->
+    <logger name="co.mgentertainment.file" level="DEBUG"/>
+    <logger name="org.springframework.security" level="INFO"/>
+    <logger name="springfox" level="WARN"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 日志格式 -->
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--error级别日志输出器-->
+    <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--记录的日志文件的路径及文件名-->
+        <file>${log.path}/error.log</file>
+
+        <!--记录的日志级别-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <!--日志文件输出格式-->
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <!--日志记录器的滚动策略，按日期，按大小记录-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!--记录排除debug级别外的全部其余日志级别的日志输出器-->
+    <appender name="FILE-TOTAL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--记录的日志文件的路径及文件名-->
+        <file>${log.path}/total.log</file>
+
+        <!--记录的日志级别-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>DENY</onMatch>
+            <onMismatch>ACCEPT</onMismatch>
+        </filter>
+        <!--日志文件输出格式-->
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <!--日志记录器的滚动策略，按日期，按大小记录-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/total.%d{yyyy-MM-dd}.log.%i</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+    <appender name="FILE-DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--记录的日志文件的路径及文件名-->
+        <file>${log.path}/debug.log</file>
+        <!--记录的日志级别-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--日志文件输出格式-->
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <!--日志记录器的滚动策略，按日期，按大小记录-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy-MM,aux}/total.%d{yyyy-MM-dd}.log.%i</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+    <root level="${rootLevel}">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-DEBUG"/>
+        <appender-ref ref="FILE-TOTAL"/>
+        <appender-ref ref="FILE-ERROR"/>
+    </root>
+</configuration>

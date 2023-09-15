@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: mg-file
+  profiles:
+    active: @env@
+  cloud:
+    nacos:
+      server-addr: @nacos.server@
+      username: @nacos.username@
+      password: @nacos.password@
+      config:
+        # 自定义命名空间id：修改nacos数据库三张表后重启nacos:tenant_info,config_info,his_config_info
+        namespace: file_${spring.profiles.active}
+        group: DEFAULT_GROUP
+        file-extension: yml
+        refresh-enabled: true
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.yml
