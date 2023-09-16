@@ -1,7 +1,5 @@
 package co.mgentertainment.file.web.config;
 
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -27,8 +25,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedMethods("GET", "POST", "PUT", "DELETE")
-                .allowCredentials(false)
+                .allowedMethods("*")
+                .allowCredentials(true)
+                .allowedOriginPatterns("*")
+                .allowedHeaders("*")
+                .allowedMethods("*")
+                // 暴露 header 中的其他属性给客户端应用程序
+                .exposedHeaders("Authorization", "X-Requested-With", "X-Total-Count", "Link",
+                        "Access-Control-Allow-Origin",
+                        "Access-Control-Allow-Credentials")
                 .maxAge(3600);
     }
 
@@ -39,12 +44,4 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .setUseTrailingSlashMatch(true);
     }
 
-    @Bean
-    public FilterRegistrationBean readBodyHttpServletFilterRegistration() {
-        FilterRegistrationBean registration = new FilterRegistrationBean();
-        registration.setFilter(new ReadBodyHttpServletFilter());
-        registration.setName("ReadBodyHttpServletFilter");
-        registration.setOrder(0);
-        return registration;
-    }
 }

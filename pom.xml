@@ -30,6 +30,14 @@
             <groupId>co.mgentertainment</groupId>
             <artifactId>common-utils</artifactId>
         </dependency>
+        <dependency>
+            <groupId>co.mgentertainment</groupId>
+            <artifactId>uid-generator-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>co.mgentertainment</groupId>
+            <artifactId>common-eventbus-spring-boot-starter</artifactId>
+        </dependency>
 
         <!-- spring starter -->
         <dependency>
@@ -64,10 +72,6 @@
         </dependency>
 
         <dependency>
-            <groupId>co.mgentertainment</groupId>
-            <artifactId>uid-generator-spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
@@ -93,6 +97,10 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.bramp.ffmpeg</groupId>
+            <artifactId>ffmpeg</artifactId>
         </dependency>
 
         <dependency>

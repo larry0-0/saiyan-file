@@ -2,13 +2,14 @@ package co.mgentertainment.file.web.controller;
 
 import co.mgentertainment.common.model.R;
 import co.mgentertainment.file.service.FileService;
+import co.mgentertainment.file.service.dto.FileUploadInfoDTO;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author larry
@@ -23,18 +24,23 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public R<Long> upload(@RequestPart(value = "file") MultipartFile file) {
+    public R<FileUploadInfoDTO> upload(@RequestPart(value = "file") MultipartFile file) {
         return R.ok(fileService.upload(file));
     }
 
     @PostMapping("/batchUpload")
-    public R<Map<String, Long>> batchUpload(@NotNull @RequestParam("files") MultipartFile[] files) {
-        Map<String, Long> map = new HashMap<>();
+    public R<List<FileUploadInfoDTO>> batchUpload(@NotNull @RequestParam("files") MultipartFile[] files) {
+        List<FileUploadInfoDTO> list = new ArrayList<>();
         for (MultipartFile file : files) {
-            R<Long> res = upload(file);
-            map.put(file.getOriginalFilename(), res.getData());
+            R<FileUploadInfoDTO> res = upload(file);
+            list.add(res.getData());
         }
-        return R.ok(map);
+        return R.ok(list);
+    }
+
+    @GetMapping("/queryUploadInfo")
+    public R<List<FileUploadInfoDTO>> queryUploadInfo(@RequestParam(value = "uploadIds") List<Long> uploadIds) {
+        return R.ok(fileService.getUploadInfos(uploadIds));
     }
 
 }

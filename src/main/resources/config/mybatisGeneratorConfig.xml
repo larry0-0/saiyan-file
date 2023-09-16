@@ -31,7 +31,7 @@
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
 
-        <javaModelGenerator targetPackage="co.mgentertainment.player.dal.po" targetProject="src/main/java">
+        <javaModelGenerator targetPackage="co.mgentertainment.file.dal.po" targetProject="src/main/java">
             <property name="constructorBased" value="false"/>
             <property name="enableSubPackages" value="false"/>
             <property name="immutable" value="false"/>
@@ -41,28 +41,42 @@
         <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources">
             <property name="enableSubPackages" value="false"/>
         </sqlMapGenerator>
-        <javaClientGenerator targetPackage="co.mgentertainment.player.dal.mapper" type="XMLMAPPER"
+        <javaClientGenerator targetPackage="co.mgentertainment.file.dal.mapper" type="XMLMAPPER"
                              targetProject="src/main/java">
             <property name="enableSubPackages" value="false"/>
         </javaClientGenerator>
 
-        <table tableName="resource" schema="mg_player"
-               domainObjectName="ResourceDO"
-               mapperName="ResourceMapper"
-               enableCountByExample="true"
-               enableSelectByExample="true"
-               enableUpdateByExample="true"
-               enableDeleteByExample="true">
-            <property name="constructorBased" value="false"/>
-            <property name="ignoreQualifiersAtRuntime" value="false"/>
-            <property name="immutable" value="false"/>
-            <property name="selectAllOrderByClause" value="gmt_create desc"/>
-            <property name="useActualColumnNames" value="false"/>
-            <property name="enableUpdateByExample" value="true"/>
-        </table>
-        <table tableName="resource_line" schema="mg_player"
-               domainObjectName="ResourceLineDO"
-               mapperName="ResourceLineMapper"
+<!--        <table tableName="resource" schema="mg_fs"-->
+<!--               domainObjectName="ResourceDO"-->
+<!--               mapperName="ResourceMapper"-->
+<!--               enableCountByExample="true"-->
+<!--               enableSelectByExample="true"-->
+<!--               enableUpdateByExample="true"-->
+<!--               enableDeleteByExample="true">-->
+<!--            <property name="constructorBased" value="false"/>-->
+<!--            <property name="ignoreQualifiersAtRuntime" value="false"/>-->
+<!--            <property name="immutable" value="false"/>-->
+<!--            <property name="selectAllOrderByClause" value="gmt_create desc"/>-->
+<!--            <property name="useActualColumnNames" value="false"/>-->
+<!--            <property name="enableUpdateByExample" value="true"/>-->
+<!--        </table>-->
+<!--        <table tableName="resource_line" schema="mg_fs"-->
+<!--               domainObjectName="ResourceLineDO"-->
+<!--               mapperName="ResourceLineMapper"-->
+<!--               enableCountByExample="true"-->
+<!--               enableSelectByExample="true"-->
+<!--               enableUpdateByExample="true"-->
+<!--               enableDeleteByExample="true">-->
+<!--            <property name="constructorBased" value="false"/>-->
+<!--            <property name="ignoreQualifiersAtRuntime" value="false"/>-->
+<!--            <property name="immutable" value="false"/>-->
+<!--            <property name="selectAllOrderByClause" value="gmt_create desc"/>-->
+<!--            <property name="useActualColumnNames" value="false"/>-->
+<!--            <property name="enableUpdateByExample" value="true"/>-->
+<!--        </table>-->
+        <table tableName="file_upload" schema="mg_fs"
+               domainObjectName="FileUploadDO"
+               mapperName="FileUploadMapper"
                enableCountByExample="true"
                enableSelectByExample="true"
                enableUpdateByExample="true"
