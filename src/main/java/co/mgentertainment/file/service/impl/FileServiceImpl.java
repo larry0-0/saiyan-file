@@ -129,7 +129,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             return FileUploadInfoDTO.builder().fileName(filename).uploadId(uploadId).statusEnum(UploadStatusEnum.TO_CONVERT).build();
         }
         String encryptResourceAddress = file2CloudStorage(multipartFile, resourceType);
-        return FileUploadInfoDTO.builder().fileName(filename).encryptResourceAddress(encryptResourceAddress).statusEnum(UploadStatusEnum.COMPLETED).build();
+        return FileUploadInfoDTO.builder().fileName(filename).encryptResourcePath(encryptResourceAddress).statusEnum(UploadStatusEnum.COMPLETED).build();
     }
 
     @Override
@@ -139,13 +139,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Long rid = persistResource(filename, resourceType);
         String folderLocation = getResourceFolderLocation(resourceType, rid);
         update2CloudStorage(multipartFile, filename, folderLocation, resourceType);
-        return encryptResourceAddress(rid, filename, resourceType);
+        return encryptResourcePath(rid, filename, resourceType);
     }
 
-    private String encryptResourceAddress(Long rid, String filename, ResourceTypeEnum resourceType) {
+    private String encryptResourcePath(Long rid, String filename, ResourceTypeEnum resourceType) {
         String folderLocation = getResourceFolderLocation(resourceType, rid);
-        String resourceAddress = getResourceAddress(folderLocation, filename);
-        return SecurityHelper.hyperEncrypt(resourceAddress, mgfsProperties.getSecret());
+        String resourcePath = getResourcePath(folderLocation, filename);
+        return SecurityHelper.hyperEncrypt(resourcePath, mgfsProperties.getSecret());
     }
 
     @Override
@@ -177,7 +177,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .fileName(fileUploadDO.getFilename())
                 .uploadId(fileUploadDO.getUploadId())
                 .statusEnum(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()))
-                .encryptResourceAddress(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()) == UploadStatusEnum.COMPLETED ? encryptResourceAddress(fileUploadDO.getRid(), fileUploadDO.getFilename(), ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue())) : null)
+                .encryptResourcePath(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()) == UploadStatusEnum.COMPLETED ? encryptResourcePath(fileUploadDO.getRid(), fileUploadDO.getFilename(), ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue())) : null)
                 .build()).collect(Lists::newArrayList, List::add, List::addAll);
     }
 
@@ -233,7 +233,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return localFile;
     }
 
-    private String getResourceAddress(String folderLocation, String filename) {
-        return String.format("https://mgfs-%s.s3.%s.amazonaws.com/%s%s", env, s3Client.getRegion(), folderLocation, filename);
+    private String getResourcePath(String folderLocation, String filename) {
+        return '/' + folderLocation + filename;
     }
 }

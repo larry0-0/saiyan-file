@@ -13,7 +13,7 @@ import lombok.Data;
 @Builder
 public class FileUploadInfoDTO {
     private String fileName;
-    private String encryptResourceAddress;
+    private String encryptResourcePath;
     private Long uploadId;
     private UploadStatusEnum statusEnum;
 }
