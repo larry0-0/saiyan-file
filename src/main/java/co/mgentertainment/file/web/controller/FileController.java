@@ -38,8 +38,8 @@ public class FileController {
         return R.ok(list);
     }
 
-    @GetMapping("/queryUploadInfo")
-    public R<List<FileUploadInfoDTO>> queryUploadInfo(@RequestParam(value = "uploadIds") List<Long> uploadIds) {
+    @PostMapping("/queryUploadInfo")
+    public R<List<FileUploadInfoDTO>> queryUploadInfo(@RequestBody List<Long> uploadIds) {
         return R.ok(fileService.getUploadInfos(uploadIds));
     }
 
