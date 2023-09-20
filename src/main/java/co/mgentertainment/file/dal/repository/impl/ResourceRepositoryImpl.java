@@ -2,15 +2,21 @@ package co.mgentertainment.file.dal.repository.impl;
 
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
+import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.mapper.ResourceMapper;
+import co.mgentertainment.file.dal.po.FileUploadDO;
+import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.po.ResourceDO;
 import co.mgentertainment.file.dal.po.ResourceExample;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
+import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author auto
@@ -23,6 +29,8 @@ public class ResourceRepositoryImpl implements ResourceRepository {
     private final CachedUidGenerator cachedUidGenerator;
 
     private final ResourceMapper resourceMapper;
+
+    private final FileUploadMapper fileUploadMapper;
 
     @Override
     public Long addResource(ResourceDO resourceDO) {
@@ -84,5 +92,18 @@ public class ResourceRepositoryImpl implements ResourceRepository {
         ResourceDO update = new ResourceDO();
         update.setDeleted(Byte.valueOf("1"));
         return resourceMapper.updateByExample(update, example) > 0;
+    }
+
+    @Override
+    public List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds) {
+        FileUploadExample example = new FileUploadExample();
+        example.createCriteria().andUploadIdIn(uploadIds).andDeletedEqualTo((byte) 0);
+        List<FileUploadDO> fileUploadDOS = fileUploadMapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(fileUploadDOS)) {
+            return Lists.newArrayList();
+        }
+        ResourceExample resourceExample = new ResourceExample();
+        resourceExample.createCriteria().andDeletedEqualTo((byte) 0).andRidIn(fileUploadDOS.stream().map(dO -> dO.getRid()).collect(Collectors.toList()));
+        return resourceMapper.selectByExample(resourceExample);
     }
 }

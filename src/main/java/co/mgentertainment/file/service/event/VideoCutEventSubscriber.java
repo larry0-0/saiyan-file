@@ -1,8 +1,6 @@
 package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
-import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.VideoType;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -17,17 +15,14 @@ import java.io.File;
 /**
  * @author larry
  * @createTime 2023/9/16
- * @description VideoConvertEventSubscriber
+ * @description VideoCutEventSubscriber
  */
 @Component
 @Slf4j
-public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoConvertEvent> {
+public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEvent> {
 
     @Resource
     private FfmpegService ffmpegService;
-
-    @Resource
-    private FileUploadRepository fileUploadRepository;
 
     @Resource
     private AsyncEventBus eventBus;
@@ -36,18 +31,16 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
     @Override
     @Subscribe
     @AllowConcurrentEvents
-    public void subscribe(VideoConvertEvent event) {
+    public void subscribe(VideoCutEvent event) {
         try {
-            log.debug("转码，状态转换：CONVERTING->UPLOADING");
-            File m3u8File = ffmpegService.mediaConvert(event.getOriginVideo());
-            fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.UPLOADING, null);
+            log.debug("剪切预告片，无状态转换，下一步上传预告片");
+            File mp4File = ffmpegService.mediaCut(event.getOriginVideo(), event.getCuttingSetting());
             eventBus.post(
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
-                            .processedVideo(m3u8File)
-                            .originVideo(event.getOriginVideo())
-                            .videoType(VideoType.FEATURE_FILM)
-                            .cuttingSetting(event.getCuttingSetting())
+                            .processedVideo(mp4File)
+                            .videoType(VideoType.TRAILER)
+                            .rid(event.getRid())
                             .build());
         } catch (Exception e) {
             log.error("转码失败", e);

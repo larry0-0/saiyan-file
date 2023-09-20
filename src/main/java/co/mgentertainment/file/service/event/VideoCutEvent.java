@@ -10,15 +10,17 @@ import java.io.File;
 /**
  * @author larry
  * @createTime 2023/9/16
- * @description VideoConvertEvent
+ * @description VideoCutEvent
  */
 @Data
 @Builder
-public class VideoConvertEvent extends AbstractEvent {
+public class VideoCutEvent extends AbstractEvent {
 
     private Long uploadId;
 
     private File originVideo;
 
     private CuttingSetting cuttingSetting;
+
+    private Long rid;
 }

@@ -9,9 +9,10 @@ import java.util.Arrays;
  */
 public enum UploadStatusEnum {
 
-    TO_CONVERT(0, "待转换"),
-    TO_UPLOAD(1, "待上传"),
-    COMPLETED(2, "已完成"),
+    CONVERTING(0, "转码中"),
+    UPLOADING(1, "上传中"),
+    TRAILER_CUTTING_AND_UPLOADING(2, "预告片剪切上传中"),
+    COMPLETED(10, "已完成"),
     ;
 
     private final Integer value;

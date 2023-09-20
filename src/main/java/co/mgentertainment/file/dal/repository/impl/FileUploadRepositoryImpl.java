@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,9 +90,10 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     }
 
     @Override
-    public Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status) {
+    public Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status, @Nullable Long rid) {
         FileUploadDO upload = new FileUploadDO();
         upload.setUploadId(uploadId);
+        upload.setRid(rid);
         upload.setStatus(Optional.ofNullable(status.getValue()).orElse(0).shortValue());
         fileUploadMapper.updateByPrimaryKeySelective(upload);
         return null;

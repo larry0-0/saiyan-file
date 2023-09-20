@@ -1,11 +1,18 @@
 package co.mgentertainment.file.service;
 
+import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
-import co.mgentertainment.file.service.dto.FileUploadInfoDTO;
+import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.ResourcePathType;
+import co.mgentertainment.file.service.dto.QueryUploadConditionDTO;
+import co.mgentertainment.file.service.dto.UploadedFileDTO;
+import co.mgentertainment.file.service.dto.UploadedImageDTO;
+import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author larry
@@ -14,11 +21,19 @@ import java.util.List;
  */
 public interface FileService {
 
-    FileUploadInfoDTO upload(MultipartFile file);
+    UploadedImageDTO uploadImage(MultipartFile file);
 
-    String file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType);
+    UploadedFileDTO uploadFile(MultipartFile file);
 
-    void folder2CloudStorage(File folder, ResourceTypeEnum resourceType);
+    VideoUploadInfoDTO uploadVideo(MultipartFile file, CuttingSetting cuttingSetting);
 
-    List<FileUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
+    Map<ResourcePathType, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType);
+
+    Long folder2CloudStorage(File folder, ResourceTypeEnum resourceType);
+
+    List<VideoUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
+
+    PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
+
+    void uploadLocalTrailUnderResource(Long rid, Object localFile);
 }

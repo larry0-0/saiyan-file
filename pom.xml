@@ -38,6 +38,10 @@
             <groupId>co.mgentertainment</groupId>
             <artifactId>common-eventbus-spring-boot-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>co.mgentertainment</groupId>
+            <artifactId>common-doc-spring-boot-starter</artifactId>
+        </dependency>
 
         <!-- spring starter -->
         <dependency>
@@ -101,6 +105,11 @@
         <dependency>
             <groupId>net.bramp.ffmpeg</groupId>
             <artifactId>ffmpeg</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
         </dependency>
 
         <dependency>

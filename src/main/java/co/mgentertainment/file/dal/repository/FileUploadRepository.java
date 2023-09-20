@@ -70,5 +70,5 @@ public interface FileUploadRepository {
      */
     Boolean removeFileUpload(Long uploadId);
 
-    Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status);
+    Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status, Long rid);
 }
