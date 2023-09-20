@@ -264,6 +264,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     private List<VideoUploadInfoDTO> toVideoUploadInfoDTOList(List<FileUploadDO> fileUploadDOS) {
+        if (CollectionUtils.isEmpty(fileUploadDOS)) {
+            return Lists.newArrayList();
+        }
         List<Long> uploadIds = fileUploadDOS.stream().map(FileUploadDO::getUploadId).collect(Collectors.toList());
         Map<Long, ResourceDO> ridMap = resourceRepository.getResourceByUploadIds(uploadIds).stream().collect(Collectors.toMap(ResourceDO::getRid, r -> r));
         return fileUploadDOS.stream().map(fileUploadDO -> VideoUploadInfoDTO.builder()
