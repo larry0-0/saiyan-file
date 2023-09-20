@@ -20,7 +20,10 @@ import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
-import co.mgentertainment.file.service.config.*;
+import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.MgfsProperties;
+import co.mgentertainment.file.service.config.ResourcePathType;
+import co.mgentertainment.file.service.config.ResourceSuffix;
 import co.mgentertainment.file.service.dto.QueryUploadConditionDTO;
 import co.mgentertainment.file.service.dto.UploadedFileDTO;
 import co.mgentertainment.file.service.dto.UploadedImageDTO;
@@ -51,13 +54,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +70,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
     private final List<String> videoTypes = Lists.newArrayList("mp4", "avi", "mov", "wmv", "flv", "f4v", "rmvb", "rm", "mkv", "3gp", "dat", "ts", "mts", "vob");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap");
+    private Executor uploadExecutor;
 
     @Resource
     private SpringFileStorageProperties springFileStorageProperties;
@@ -117,6 +117,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .withChunkedEncodingDisabled(true)
                 .build();
         createBucketIfNotExists(s3Config);
+        this.uploadExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+            Thread thread = new Thread(r);
+            thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
+            return thread;
+        });
     }
 
     @Override
@@ -143,12 +148,18 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("file type is not video");
         }
-        File file = saveMultipartFileInDisk(multipartFile);
+        File file;
+        try {
+            file = saveMultipartFileInDisk(multipartFile);
+        } catch (IOException e) {
+            throw new RuntimeException("fail to persist file", e);
+        }
         String filename = multipartFile.getOriginalFilename();
         Long uploadId = addUploadRecord(filename);
         eventBus.post(
                 VideoConvertEvent.builder()
-                        .originVideo(file).uploadId(uploadId)
+                        .originVideo(file)
+                        .uploadId(uploadId)
                         .cuttingSetting(cuttingSetting)
                         .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(multipartFile.getSize()) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
@@ -189,7 +200,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     private String retrieveResourcePath(String resourceFolderLocation, String filename, String suffix) {
         filename = StringUtils.isEmpty(suffix) ? filename : StringUtils.substringBeforeLast(filename, ".") + suffix;
-        String resourcePath = new StringBuilder('/').append(resourceFolderLocation).append('/').append(filename).toString();
+        String resourcePath = new StringBuilder('/').append(resourceFolderLocation).append(filename).toString();
         if (mgfsProperties.getEncryption().isEnabled()) {
             return SecurityHelper.hyperEncrypt(resourcePath, mgfsProperties.getEncryption().getSecret());
         }
@@ -211,9 +222,22 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Integer duration = ffmpegService.getMediaDuration(media);
         Long rid = persistResource(originFilename, resourceType, remoteFolderName, media.length(), duration);
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid,
-                resourceType == ResourceTypeEnum.VIDEO ? VideoType.FEATURE_FILM.getValue() : null);
-        for (File file : files) {
-            upload2CloudStorage(file, file.getName(), folderLocation, resourceType == ResourceTypeEnum.IMAGE);
+                resourceType == ResourceTypeEnum.VIDEO ? ResourcePathType.FEATURE_FILM.getValue() : null);
+        List<UploadPretreatment> list = getCloudStorageUploadList(files, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
+        List<CompletableFuture<Boolean>> cfs = list.parallelStream().map(pretreatment ->
+                CompletableFuture.supplyAsync(() -> {
+                    pretreatment.upload();
+                    return true;
+                }, this.uploadExecutor).exceptionally(throwable -> {
+                    log.error("fail to upload file {}", pretreatment.getOriginalFilename(), throwable);
+                    return false;
+                })
+        ).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(cfs)) {
+            CompletableFuture<List<Boolean>> cf = CompletableFuture.allOf(
+                    cfs.toArray(new CompletableFuture[cfs.size()])).thenApplyAsync(
+                    v -> cfs.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+            cf.join();
         }
         return rid;
     }
@@ -261,8 +285,23 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String filename = resourceDO.getFilename();
         String remoteFolderName = resourceDO.getFolder();
         ResourceTypeEnum resourceType = ResourceTypeEnum.getByValue(resourceDO.getType().intValue());
-        String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, VideoType.TRAILER.getValue());
+        String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, ResourcePathType.TRAILER.getValue());
         upload2CloudStorage(trailVideo, filename, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
+    }
+
+    private List<UploadPretreatment> getCloudStorageUploadList(File[] files, String remoteFolderLocation, boolean isImage) {
+        return isImage ?
+                Arrays.stream(files).map(f -> fileStorageService.of(f)
+                        .setSaveFilename(f.getName())
+                        .setPath(remoteFolderLocation)
+                        .setAcl(Constant.ACL.PUBLIC_READ)
+                        .setSaveThFilename(StringUtils.substringBeforeLast(f.getName(), "."))
+                        .setThumbnailSuffix(ResourceSuffix.THUMBNAIL)
+                        .thumbnail(th -> th.scale(1f).outputQuality(0.3f))).collect(Collectors.toList()) :
+                Arrays.stream(files).map(f -> fileStorageService.of(f)
+                        .setSaveFilename(f.getName())
+                        .setPath(remoteFolderLocation)
+                        .setAcl(Constant.ACL.PUBLIC_READ)).collect(Collectors.toList());
     }
 
     private List<VideoUploadInfoDTO> toVideoUploadInfoDTOList(List<FileUploadDO> fileUploadDOS) {
@@ -278,9 +317,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .uploadId(fileUploadDO.getUploadId())
                 .status(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getDesc())
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), VideoType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
+                        retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
                 .trailerPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), VideoType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
+                        retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
                 .build()).collect(Lists::newArrayList, List::add, List::addAll);
     }
 
@@ -288,7 +327,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String[] arr = StringUtils.isEmpty(category) ?
                 new String[]{type.name().toLowerCase(), remoteFolder, rid.toString()} :
                 new String[]{type.name().toLowerCase(), remoteFolder, rid.toString(), category};
-        return StringUtils.join(arr, '/');
+        return StringUtils.join(arr, '/') + '/';
     }
 
     private FileInfo upload2CloudStorage(Object file, String filename, String folderLocation, boolean isImage) {
@@ -337,15 +376,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
     }
 
-    private File saveMultipartFileInDisk(MultipartFile multipartFile) {
+    private File saveMultipartFileInDisk(MultipartFile multipartFile) throws IOException {
         File folder = new File(new File(System.getProperty("user.home"), "tmp"), RandomStringUtils.randomAlphanumeric(4));
         FileUtil.mkdir(folder);
         File localFile = new File(folder, multipartFile.getOriginalFilename());
-        try (OutputStream os = new FileOutputStream(localFile)) {
-            os.write(multipartFile.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException("fail to save multipartFile in disk", e);
-        }
+        multipartFile.transferTo(localFile);
         return localFile;
     }
 

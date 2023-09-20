@@ -153,7 +153,7 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     private File getOutputFileFromInputFile(File inputFile, String folderSuffix, String fileSuffix) {
-        String filename = StringUtils.substringBeforeLast(inputFile.getAbsolutePath(), ".");
+        String filename = StringUtils.substringBeforeLast(inputFile.getName(), ".");
         String newFolderName = new StringBuffer(filename).append('.').append(RandomStringUtils.randomAlphanumeric(4)).append(folderSuffix).toString();
         File newDir = new File(inputFile.getParentFile(), newFolderName);
         if (!newDir.exists()) {

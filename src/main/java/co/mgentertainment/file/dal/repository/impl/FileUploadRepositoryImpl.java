@@ -95,7 +95,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
         upload.setUploadId(uploadId);
         upload.setRid(rid);
         upload.setStatus(Optional.ofNullable(status.getValue()).orElse(0).shortValue());
-        fileUploadMapper.updateByPrimaryKeySelective(upload);
-        return null;
+        int rowcount = fileUploadMapper.updateByPrimaryKeySelective(upload);
+        return rowcount > 0;
     }
 }
