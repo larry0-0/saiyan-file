@@ -19,8 +19,10 @@ checkHealth(){
 mkdir -p $workspace || exit 1
 mkdir -p logs
 mkdir -p backup
-mv -f $appname.jar backup/$appname.$(date +%Y%m%d%H%M%S).jar
-mv -f $appname-*.jar $appname.jar
+if [ -e $workspace/$appname-*.jar ]; then
+  mv -f $appname.jar backup/$appname.$(date +%Y%m%d%H%M%S).jar
+  mv -f $appname-*.jar $appname.jar
+fi
 
 process_id=$(ps aux | grep -v grep | grep $appname.jar | awk '{print $2}')
 if [ "$process_id" != "" ]; then
