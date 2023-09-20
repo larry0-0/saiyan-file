@@ -203,7 +203,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         filename = StringUtils.isEmpty(suffix) ? filename : StringUtils.substringBeforeLast(filename, ".") + suffix;
         String resourcePath = new StringBuilder('/').append(resourceFolderLocation).append(filename).toString();
         if (mgfsProperties.getEncryption().isEnabled()) {
-            return SecurityHelper.hyperEncrypt(resourcePath, mgfsProperties.getEncryption().getSecret());
+            return SecurityHelper.aesEncrypt(resourcePath, mgfsProperties.getEncryption().getSecret());
         }
         return resourcePath;
     }
