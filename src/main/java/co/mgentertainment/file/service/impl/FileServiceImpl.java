@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import cn.xuyanwu.spring.file.storage.FileInfo;
 import cn.xuyanwu.spring.file.storage.FileStorageProperties;
 import cn.xuyanwu.spring.file.storage.FileStorageService;
@@ -39,6 +40,7 @@ import com.amazonaws.services.s3.model.ownership.ObjectOwnership;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.AsyncEventBus;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
@@ -336,7 +338,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     private File saveMultipartFileInDisk(MultipartFile multipartFile) {
-        File localFile = new File(System.getProperty("user.home") + File.separator + "tmp" + File.separator + multipartFile.getOriginalFilename());
+        File folder = new File(new File(System.getProperty("user.home"), "tmp"), RandomStringUtils.randomAlphanumeric(4));
+        FileUtil.mkdir(folder);
+        File localFile = new File(folder, multipartFile.getOriginalFilename());
         try (OutputStream os = new FileOutputStream(localFile)) {
             os.write(multipartFile.getBytes());
         } catch (IOException e) {
