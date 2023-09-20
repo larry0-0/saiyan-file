@@ -103,7 +103,10 @@ public class ResourceRepositoryImpl implements ResourceRepository {
             return Lists.newArrayList();
         }
         ResourceExample resourceExample = new ResourceExample();
-        resourceExample.createCriteria().andDeletedEqualTo((byte) 0).andRidIn(fileUploadDOS.stream().map(dO -> dO.getRid()).collect(Collectors.toList()));
+        resourceExample.createCriteria()
+                .andDeletedEqualTo((byte) 0)
+                .andRidIn(fileUploadDOS.stream().filter(dO -> dO.getRid() != null).map(dO -> dO.getRid())
+                        .collect(Collectors.toList()));
         return resourceMapper.selectByExample(resourceExample);
     }
 }
