@@ -145,6 +145,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     public VideoUploadInfoDTO uploadVideo(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
+        long size = multipartFile.getSize();
         if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("file type is not video");
         }
@@ -162,7 +163,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .uploadId(uploadId)
                         .cuttingSetting(cuttingSetting)
                         .build());
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(multipartFile.getSize()) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
+        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
     }
 
     @Override
@@ -277,12 +278,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public void uploadLocalTrailUnderResource(Long rid, Object trailVideo) {
+    public void uploadLocalTrailUnderResource(Long rid, File trailVideo) {
         ResourceDO resourceDO = resourceRepository.getResourceByRid(rid);
         if (resourceDO == null) {
             throw new IllegalArgumentException("resource not found");
         }
-        String filename = resourceDO.getFilename();
+        String filename = trailVideo.getName();
         String remoteFolderName = resourceDO.getFolder();
         ResourceTypeEnum resourceType = ResourceTypeEnum.getByValue(resourceDO.getType().intValue());
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, ResourcePathType.TRAILER.getValue());

@@ -35,5 +35,5 @@ public interface FileService {
 
     PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
 
-    void uploadLocalTrailUnderResource(Long rid, Object localFile);
+    void uploadLocalTrailUnderResource(Long rid, File localFile);
 }
