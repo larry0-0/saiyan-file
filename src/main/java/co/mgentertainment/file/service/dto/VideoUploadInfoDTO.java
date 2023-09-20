@@ -17,6 +17,10 @@ public class VideoUploadInfoDTO {
     private Long uploadId;
     @Schema(description = "原始文件名")
     private String filename;
+    @Schema(description = "视频大小")
+    private String size;
+    @Schema(description = "视频时长")
+    private String duration;
     @Schema(description = "正片相对路径 仅状态已完成时有值")
     private String filmPath;
     @Schema(description = "预告片相对路径 仅状态已完成时有值")

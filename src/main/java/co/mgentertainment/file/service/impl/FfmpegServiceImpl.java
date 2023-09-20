@@ -48,13 +48,8 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public FFmpegProbeResult getMediaMetadata(@NotNull File file) {
-        try {
-            return ffprobe.probe(file.getAbsolutePath());
-        } catch (Exception e) {
-            log.error("getMediaMetadata error", e);
-        }
-        return null;
+    public Integer getMediaDuration(File file) {
+        return new Double(getMediaMetadata(file).getFormat().duration).intValue();
     }
 
     @Override
@@ -146,6 +141,15 @@ public class FfmpegServiceImpl implements FfmpegService {
         // Run a one-pass encode
         executor.createJob(builder).run();
         return outputFile;
+    }
+
+    private FFmpegProbeResult getMediaMetadata(@NotNull File file) {
+        try {
+            return ffprobe.probe(file.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("getMediaMetadata error", e);
+        }
+        return null;
     }
 
     private File getOutputFileFromInputFile(File inputFile, String folderSuffix, String fileSuffix) {

@@ -17,6 +17,7 @@ import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.po.ResourceDO;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
+import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.*;
 import co.mgentertainment.file.service.dto.QueryUploadConditionDTO;
@@ -24,6 +25,7 @@ import co.mgentertainment.file.service.dto.UploadedFileDTO;
 import co.mgentertainment.file.service.dto.UploadedImageDTO;
 import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
 import co.mgentertainment.file.service.event.VideoConvertEvent;
+import co.mgentertainment.file.utils.MediaHelper;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -44,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -84,6 +87,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Resource
     private MgfsProperties mgfsProperties;
+
+    @Resource
+    private FfmpegService ffmpegService;
 
     @Resource
     private AsyncEventBus eventBus;
@@ -143,7 +149,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .originVideo(file).uploadId(uploadId)
                         .cuttingSetting(cuttingSetting)
                         .build());
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).status(UploadStatusEnum.CONVERTING.getDesc()).build();
+        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(multipartFile.getSize()) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
     }
 
     @Override
@@ -151,7 +157,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public Map<ResourcePathType, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {
         String filename = multipartFile.getOriginalFilename();
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
-        Long rid = persistResource(filename, resourceType, remoteFolderName);
+        Long rid = persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null);
         String resourceFolderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, null);
         boolean isImage = resourceType == ResourceTypeEnum.IMAGE;
         upload2CloudStorage(multipartFile, filename, resourceFolderLocation, isImage);
@@ -190,17 +196,18 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long folder2CloudStorage(File folder, ResourceTypeEnum resourceType) {
-        if (folder == null || folder.isFile()) {
-            throw new IllegalArgumentException("folder is not a directory");
+    public Long media2CloudStorage(File media, ResourceTypeEnum resourceType) {
+        if (media == null || media.getParentFile().isFile()) {
+            throw new IllegalArgumentException("media parent is not a directory");
         }
-        File[] files = folder.listFiles();
+        File[] files = media.getParentFile().listFiles();
         if (files == null || files.length == 0) {
             return null;
         }
-        String originFilename = StringUtils.substringBefore(folder.getName(), ".");
+        String originFilename = StringUtils.substringBefore(media.getParentFile().getName(), ".");
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
-        Long rid = persistResource(originFilename, resourceType, remoteFolderName);
+        Integer duration = ffmpegService.getMediaDuration(media);
+        Long rid = persistResource(originFilename, resourceType, remoteFolderName, media.length(), duration);
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid,
                 resourceType == ResourceTypeEnum.VIDEO ? VideoType.FEATURE_FILM.getValue() : null);
         for (File file : files) {
@@ -261,6 +268,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Map<Long, ResourceDO> ridMap = resourceRepository.getResourceByUploadIds(uploadIds).stream().collect(Collectors.toMap(ResourceDO::getRid, r -> r));
         return fileUploadDOS.stream().map(fileUploadDO -> VideoUploadInfoDTO.builder()
                 .filename(fileUploadDO.getFilename())
+                .size(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.getMediaSize(ridMap.get(fileUploadDO.getRid()).getSize().longValue()) + "kb" : null)
+                .duration(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.formatMediaDuration(ridMap.get(fileUploadDO.getRid()).getDuration()) : null)
                 .uploadId(fileUploadDO.getUploadId())
                 .status(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getDesc())
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
@@ -292,11 +301,15 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return uploadPretreatment.upload();
     }
 
-    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder) {
+    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable Integer duration) {
         ResourceDO resourceDO = new ResourceDO();
         resourceDO.setFilename(filename);
         resourceDO.setFolder(remoteFolder);
         resourceDO.setType((short) type.getValue());
+        resourceDO.setSize(MediaHelper.getMediaSize(sizeInBytes));
+        if (duration != null) {
+            resourceDO.setDuration(duration);
+        }
         return resourceRepository.addResource(resourceDO);
     }
 

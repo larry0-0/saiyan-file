@@ -4,10 +4,7 @@ import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.dto.UploadedImageDTO;
-import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
-import co.mgentertainment.file.service.dto.QueryUploadConditionDTO;
-import co.mgentertainment.file.service.dto.ResourceLineDTO;
+import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.impl.ResourceLineService;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +34,12 @@ public class FileController {
     @Operation(summary = "图片上传")
     public R<UploadedImageDTO> uploadImage(@RequestParam(value = "file") MultipartFile file) {
         return R.ok(fileService.uploadImage(file));
+    }
+
+    @PostMapping("/upload/file")
+    @Operation(summary = "普通文件上传")
+    public R<UploadedFileDTO> uploadFile(@RequestParam(value = "file") MultipartFile file) {
+        return R.ok(fileService.uploadFile(file));
     }
 
     @PostMapping("/upload/video")

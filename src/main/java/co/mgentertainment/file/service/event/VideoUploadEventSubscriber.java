@@ -44,7 +44,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             }
             if (event.getVideoType() == VideoType.FEATURE_FILM) {
                 log.debug("上传正片并生成rid，状态转换：UPLOADING->TRAILER_CUTTING_AND_UPLOADING，下一步剪切预告片");
-                Long rid = fileService.folder2CloudStorage(folderToUpload, ResourceTypeEnum.VIDEO);
+                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO);
                 fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, null);
                 eventBus.post(
                         VideoCutEvent.builder()
