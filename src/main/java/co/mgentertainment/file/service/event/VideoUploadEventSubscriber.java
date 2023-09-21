@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.event;
 
+import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
 import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
 import co.mgentertainment.file.dal.enums.UploadStatusEnum;
@@ -58,9 +59,18 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 fileService.uploadLocalTrailUnderResource(event.getRid(), event.getProcessedVideo());
                 // 预告片上传成功才填充rid
                 fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
+                deleteCompletedVideoFolder(event.getOriginVideo());
             }
         } catch (Exception e) {
-            log.error("上传桶失败", e);
+            log.error("上传事件异常", e);
+        }
+    }
+
+    private void deleteCompletedVideoFolder(File originVideo) {
+        File folderToDelete = originVideo.getParentFile();
+        if (folderToDelete != null && folderToDelete.isDirectory()) {
+            log.debug("删除转码后的视频文件夹{}", folderToDelete.getAbsolutePath());
+            FileUtil.del(folderToDelete.getAbsolutePath());
         }
     }
 }

@@ -50,7 +50,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
                             .cuttingSetting(event.getCuttingSetting())
                             .build());
         } catch (Exception e) {
-            log.error("转码失败", e);
+            log.error("切预告片事件异常", e);
         }
     }
 }
