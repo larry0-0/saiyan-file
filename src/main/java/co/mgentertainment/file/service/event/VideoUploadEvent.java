@@ -28,4 +28,6 @@ public class VideoUploadEvent extends AbstractEvent {
     private VideoType videoType;
 
     private Long rid;
+
+    private String appName;
 }

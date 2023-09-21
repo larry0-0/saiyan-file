@@ -29,7 +29,7 @@ public interface FileService {
 
     Map<ResourcePathType, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType);
 
-    Long media2CloudStorage(File media, ResourceTypeEnum resourceType);
+    Long media2CloudStorage(File media, ResourceTypeEnum resourceType, String appName);
 
     List<VideoUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
 

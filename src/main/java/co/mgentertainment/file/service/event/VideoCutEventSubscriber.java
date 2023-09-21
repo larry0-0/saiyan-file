@@ -40,7 +40,6 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
                             .uploadId(event.getUploadId())
                             .processedVideo(mp4File)
                             .videoType(VideoType.TRAILER)
-                            .rid(event.getRid())
                             .build());
         } catch (Exception e) {
             log.error("转码事件异常", e);

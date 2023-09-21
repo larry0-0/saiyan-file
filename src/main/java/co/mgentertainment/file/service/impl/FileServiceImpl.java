@@ -30,6 +30,7 @@ import co.mgentertainment.file.service.dto.UploadedImageDTO;
 import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
 import co.mgentertainment.file.service.event.VideoConvertEvent;
 import co.mgentertainment.file.utils.MediaHelper;
+import co.mgentertainment.file.web.cache.ClientHolder;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -156,12 +157,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
             throw new RuntimeException("fail to persist file", e);
         }
         String filename = multipartFile.getOriginalFilename();
-        Long uploadId = addUploadRecord(filename);
+        // 添加上传记录
+        Long uploadId = this.addUploadRecord(filename);
         eventBus.post(
                 VideoConvertEvent.builder()
-                        .originVideo(file)
                         .uploadId(uploadId)
+                        .originVideo(file)
                         .cuttingSetting(cuttingSetting)
+                        .appName(ClientHolder.getCurrentClient().get())
                         .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
     }
@@ -171,7 +174,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public Map<ResourcePathType, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {
         String filename = multipartFile.getOriginalFilename();
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
-        Long rid = persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null);
+        // 添加resource记录
+        Long rid = this.persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null, null);
         String resourceFolderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, null);
         boolean isImage = resourceType == ResourceTypeEnum.IMAGE;
         upload2CloudStorage(multipartFile, filename, resourceFolderLocation, isImage);
@@ -185,32 +189,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return pathMap;
     }
 
-    private ResourceTypeEnum getResourceType(MultipartFile multipartFile) {
-        String filename = multipartFile.getOriginalFilename();
-        String fileType;
-        try {
-            fileType = contentTypeDetect.detect(multipartFile.getInputStream(), filename);
-        } catch (IOException e) {
-            fileType = StringUtils.lowerCase(StringUtils.substringAfterLast(filename, "."));
-        }
-        String finalFileType = fileType;
-        return imageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ?
-                ResourceTypeEnum.IMAGE : videoTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.VIDEO :
-                packageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.PACKAGE : ResourceTypeEnum.OTHER;
-    }
-
-    private String retrieveResourcePath(String resourceFolderLocation, String filename, String suffix) {
-        filename = StringUtils.isEmpty(suffix) ? filename : StringUtils.substringBeforeLast(filename, ".") + suffix;
-        String resourcePath = new StringBuilder('/').append(resourceFolderLocation).append(filename).toString();
-        if (mgfsProperties.getEncryption().isEnabled()) {
-            return SecurityHelper.aesEncrypt(resourcePath, mgfsProperties.getEncryption().getSecret());
-        }
-        return resourcePath;
-    }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long media2CloudStorage(File media, ResourceTypeEnum resourceType) {
+    public Long media2CloudStorage(File media, ResourceTypeEnum resourceType, String appName) {
         if (media == null || media.getParentFile().isFile()) {
             throw new IllegalArgumentException("media parent is not a directory");
         }
@@ -221,7 +202,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String originFilename = StringUtils.substringBefore(media.getParentFile().getName(), ".");
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
         Integer duration = ffmpegService.getMediaDuration(media);
-        Long rid = persistResource(originFilename, resourceType, remoteFolderName, media.length(), duration);
+        // 添加资源记录
+        Long rid = this.persistResource(originFilename, resourceType, remoteFolderName, media.length(), duration, appName);
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid,
                 resourceType == ResourceTypeEnum.VIDEO ? ResourcePathType.FEATURE_FILM.getValue() : null);
         List<UploadPretreatment> list = getCloudStorageUploadList(files, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
@@ -260,6 +242,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         example.setLimit(condition.getPageSize());
         example.setOffset((condition.getPageNo() - 1) * condition.getPageSize());
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
+        if (ClientHolder.getCurrentClient().isPresent()) {
+            criteria.andAppNameEqualTo(ClientHolder.getCurrentClient().get());
+        }
         if (StringUtils.isNotBlank(condition.getFilename())) {
             criteria.andFilenameLike(condition.getFilename());
         }
@@ -288,6 +273,29 @@ public class FileServiceImpl implements FileService, InitializingBean {
         ResourceTypeEnum resourceType = ResourceTypeEnum.getByValue(resourceDO.getType().intValue());
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, ResourcePathType.TRAILER.getValue());
         upload2CloudStorage(trailVideo, filename, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
+    }
+
+    private ResourceTypeEnum getResourceType(MultipartFile multipartFile) {
+        String filename = multipartFile.getOriginalFilename();
+        String fileType;
+        try {
+            fileType = contentTypeDetect.detect(multipartFile.getInputStream(), filename);
+        } catch (IOException e) {
+            fileType = StringUtils.lowerCase(StringUtils.substringAfterLast(filename, "."));
+        }
+        String finalFileType = fileType;
+        return imageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ?
+                ResourceTypeEnum.IMAGE : videoTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.VIDEO :
+                packageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.PACKAGE : ResourceTypeEnum.OTHER;
+    }
+
+    private String retrieveResourcePath(String resourceFolderLocation, String filename, String suffix) {
+        filename = StringUtils.isEmpty(suffix) ? filename : StringUtils.substringBeforeLast(filename, ".") + suffix;
+        String resourcePath = new StringBuilder('/').append(resourceFolderLocation).append(filename).toString();
+        if (mgfsProperties.getEncryption().isEnabled()) {
+            return SecurityHelper.aesEncrypt(resourcePath, mgfsProperties.getEncryption().getSecret());
+        }
+        return resourcePath;
     }
 
     private List<UploadPretreatment> getCloudStorageUploadList(File[] files, String remoteFolderLocation, boolean isImage) {
@@ -346,7 +354,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return uploadPretreatment.upload();
     }
 
-    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable Integer duration) {
+    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable Integer duration, @Nullable String appName) {
         ResourceDO resourceDO = new ResourceDO();
         resourceDO.setFilename(filename);
         resourceDO.setFolder(remoteFolder);
@@ -355,6 +363,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (duration != null) {
             resourceDO.setDuration(duration);
         }
+        resourceDO.setAppName(ClientHolder.getCurrentClient().orElse(appName));
         return resourceRepository.addResource(resourceDO);
     }
 
@@ -388,6 +397,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private Long addUploadRecord(String filename) {
         FileUploadDO fileUpload = new FileUploadDO();
         fileUpload.setFilename(filename);
+        fileUpload.setAppName(ClientHolder.getCurrentClient().get());
         fileUploadRepository.addFileUpload(fileUpload);
         return fileUpload.getUploadId();
     }

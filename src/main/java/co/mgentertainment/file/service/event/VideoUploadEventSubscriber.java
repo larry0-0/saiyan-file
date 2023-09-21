@@ -45,20 +45,19 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             }
             if (event.getVideoType() == VideoType.FEATURE_FILM) {
                 log.debug("上传正片并生成rid，状态转换：UPLOADING->TRAILER_CUTTING_AND_UPLOADING，下一步剪切预告片");
-                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO);
-                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, null);
+                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO, event.getAppName());
+                // 正片上传成功就填充rid
+                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
                 eventBus.post(
                         VideoCutEvent.builder()
                                 .uploadId(event.getUploadId())
                                 .originVideo(event.getOriginVideo())
                                 .cuttingSetting(event.getCuttingSetting())
-                                .rid(rid)
                                 .build());
             } else {
                 log.debug("上传预告片，状态转换：TRAILER_CUTTING_AND_UPLOADING->COMPLETED");
                 fileService.uploadLocalTrailUnderResource(event.getRid(), event.getProcessedVideo());
-                // 预告片上传成功才填充rid
-                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
+                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, null);
                 deleteCompletedVideoFolder(event.getOriginVideo());
             }
         } catch (Exception e) {
