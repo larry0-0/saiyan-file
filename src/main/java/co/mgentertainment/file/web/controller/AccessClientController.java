@@ -8,11 +8,9 @@ import co.mgentertainment.file.service.dto.ApplyAppAccessDTO;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 /**
@@ -36,5 +34,12 @@ public class AccessClientController {
         String token = accessClientService.applyAccess(applyAppAccessDTO);
         MapBuilder<String, String> mapBuilder = MapBuilder.create();
         return R.ok(mapBuilder.put(TOKEN_HEADER, token).build());
+    }
+
+    @PostMapping("/disable/{appCode}")
+    @Operation(summary = "让接入失效")
+    @SysLog("disable接入")
+    public R<Boolean> disableAccess(@PathVariable("appCode") @NotNull String appCode) {
+        return R.ok(accessClientService.disableAccess(appCode));
     }
 }

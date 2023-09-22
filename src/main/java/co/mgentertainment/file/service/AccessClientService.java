@@ -16,4 +16,12 @@ public interface AccessClientService {
      * @return
      */
     String applyAccess(ApplyAppAccessDTO applyAppAccessDTO);
+
+    /**
+     * disable client app Access
+     *
+     * @param appCode
+     * @return
+     */
+    Boolean disableAccess(String appCode);
 }

@@ -36,4 +36,9 @@ public class AccessClientServiceImpl implements AccessClientService {
         }
         return SecurityHelper.hyperEncrypt(appCode, mgfsProperties.getAuthentication().getAesSecret());
     }
+
+    @Override
+    public Boolean disableAccess(String appCode) {
+        return accessClientRepository.disableAccessClient(appCode);
+    }
 }
