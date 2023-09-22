@@ -39,6 +39,7 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
                             .processedVideo(cutResult.getTrailerFile())
+                            .originVideo(event.getOriginVideo())
                             .videoType(VideoType.TRAILER)
                             .rid(event.getRid())
                             .build());

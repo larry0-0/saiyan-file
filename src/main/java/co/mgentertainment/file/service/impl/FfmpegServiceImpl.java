@@ -6,6 +6,7 @@ import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.config.ResourceSuffix;
 import co.mgentertainment.file.service.dto.MediaCutResultDTO;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class FfmpegServiceImpl implements FfmpegService {
+
+    private final Map<String, FFmpegProbeResult> mediaMetadataCache = Maps.newConcurrentMap();
 
     private FFprobe ffprobe;
     private FFmpeg ffmpeg;
@@ -115,6 +119,8 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(builder).run();
+        // remove cache
+        mediaMetadataCache.remove(inputFile.getAbsolutePath());
         return MediaCutResultDTO.builder().trailerFile(outFile).filmDuration(new BigDecimal(duration).setScale(0, RoundingMode.HALF_UP).intValue()).build();
     }
 
@@ -145,12 +151,14 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     private FFmpegProbeResult getMediaMetadata(@NotNull File file) {
-        try {
-            return ffprobe.probe(file.getAbsolutePath());
-        } catch (Exception e) {
-            log.error("getMediaMetadata error", e);
-        }
-        return null;
+        return mediaMetadataCache.computeIfAbsent(file.getAbsolutePath(), s -> {
+            try {
+                return ffprobe.probe(file.getAbsolutePath());
+            } catch (IOException e) {
+                log.error("getMediaMetadata error", e);
+                return null;
+            }
+        });
     }
 
     private File getOutputFileFromInputFile(File inputFile, String folderSuffix, String fileSuffix) {
