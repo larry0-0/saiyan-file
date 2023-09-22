@@ -4,10 +4,7 @@ import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.ResourcePathType;
-import co.mgentertainment.file.service.dto.QueryUploadConditionDTO;
-import co.mgentertainment.file.service.dto.UploadedFileDTO;
-import co.mgentertainment.file.service.dto.UploadedImageDTO;
-import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
+import co.mgentertainment.file.service.dto.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -36,4 +33,10 @@ public interface FileService {
     PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
 
     void uploadLocalTrailUnderResource(Long rid, File localFile);
+
+    Long addUploadVideoRecord(String filename);
+
+    void updateUpload(FileUploadDTO fileUploadDTO);
+
+    Long saveResource(ResourceDTO resourceDTO);
 }

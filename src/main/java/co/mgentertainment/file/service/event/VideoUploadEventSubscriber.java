@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
 import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
 import co.mgentertainment.file.dal.enums.UploadStatusEnum;
+import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
@@ -50,7 +51,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 Integer duration = ffmpegService.getMediaDuration(event.getOriginVideo());
                 Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO, event.getAppName(), duration);
                 // 正片上传成功就填充rid
-                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
+                updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
                 eventBus.post(
                         VideoCutEvent.builder()
                                 .uploadId(event.getUploadId())
@@ -61,12 +62,20 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             } else {
                 log.debug("上传预告片，状态转换：TRAILER_CUTTING_AND_UPLOADING->COMPLETED");
                 fileService.uploadLocalTrailUnderResource(event.getRid(), event.getProcessedVideo());
-                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
+                updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
                 deleteCompletedVideoFolder(event.getOriginVideo());
             }
         } catch (Exception e) {
             log.error("上传事件异常", e);
         }
+    }
+
+    private void updateUploadStatus(Long uploadId, UploadStatusEnum status, Long rid) {
+        FileUploadDO uploadDO = new FileUploadDO();
+        uploadDO.setUploadId(uploadId);
+        uploadDO.setStatus(Integer.valueOf(status.getValue()).shortValue());
+        uploadDO.setRid(rid);
+        fileUploadRepository.updateFileUploadByPrimaryKey(uploadDO);
     }
 
     private void deleteCompletedVideoFolder(File originVideo) {

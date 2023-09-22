@@ -1,7 +1,6 @@
 package co.mgentertainment.file.dal.repository;
 
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 
@@ -70,5 +69,10 @@ public interface FileUploadRepository {
      */
     Boolean removeFileUpload(Long uploadId);
 
-    Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status, Long rid);
+    /**
+     * update FileUpload by uploadId
+     * @param uploadDO
+     * @return
+     */
+    Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO);
 }

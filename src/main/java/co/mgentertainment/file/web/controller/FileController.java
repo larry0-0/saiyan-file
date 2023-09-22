@@ -84,4 +84,23 @@ public class FileController {
     public R<List<ResourceLineDTO>> getResourceLines() {
         return R.ok(resourceLineService.listResourceLine());
     }
+
+    @PostMapping("/addUploadRecord")
+    @Operation(summary = "供上传器添加上传记录")
+    public R<Long> addUploadRecord(@RequestBody FileUploadDTO fileUploadDTO) {
+        return R.ok(fileService.addUploadVideoRecord(fileUploadDTO.getFilename()));
+    }
+
+    @PostMapping("/updateUploadStatus")
+    @Operation(summary = "供上传器更新上传状态")
+    public R<Void> updateUploadStatus(@RequestBody FileUploadDTO fileUploadDTO) {
+        fileService.updateUpload(fileUploadDTO);
+        return R.ok();
+    }
+
+    @PostMapping("/addResource")
+    @Operation(summary = "供上传器添加媒资")
+    public R<Long> addResource(@RequestBody ResourceDTO resourceDTO) {
+        return R.ok(fileService.saveResource(resourceDTO));
+    }
 }

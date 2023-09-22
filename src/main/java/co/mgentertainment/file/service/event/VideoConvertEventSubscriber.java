@@ -2,6 +2,7 @@ package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
 import co.mgentertainment.file.dal.enums.UploadStatusEnum;
+import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.VideoType;
@@ -40,7 +41,10 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
         try {
             log.debug("转码，状态转换：CONVERTING->UPLOADING");
             File m3u8File = ffmpegService.mediaConvert(event.getOriginVideo());
-            fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.UPLOADING, null);
+            FileUploadDO uploadDO = new FileUploadDO();
+            uploadDO.setUploadId(event.getUploadId());
+            uploadDO.setStatus(Integer.valueOf(UploadStatusEnum.UPLOADING.getValue()).shortValue());
+            fileUploadRepository.updateFileUploadByPrimaryKey(uploadDO);
             eventBus.post(
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())

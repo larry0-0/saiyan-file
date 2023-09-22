@@ -2,7 +2,6 @@ package co.mgentertainment.file.dal.repository.impl;
 
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
 import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
@@ -11,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author auto
@@ -90,12 +87,9 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     }
 
     @Override
-    public Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status, @Nullable Long rid) {
-        FileUploadDO upload = new FileUploadDO();
-        upload.setUploadId(uploadId);
-        upload.setRid(rid);
-        upload.setStatus(Optional.ofNullable(status.getValue()).orElse(0).shortValue());
-        int rowcount = fileUploadMapper.updateByPrimaryKeySelective(upload);
-        return rowcount > 0;
+    public Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO) {
+        Assert.notNull(uploadDO, "fileUploadDO can not be null");
+        Assert.notNull(uploadDO.getUploadId(), "uploadId can not be null");
+        return fileUploadMapper.updateByPrimaryKeySelective(uploadDO) > 0;
     }
 }
