@@ -47,7 +47,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix(API_SERVICE_PREFIX, HandlerTypePredicate.forBasePackage(BASE_PACKAGE))
-                // setUseTrailingSlashMatch,设置是否自动后缀留级匹配模式，如“/user”是否匹配“/user/”，为true匹配
                 .setUseTrailingSlashMatch(true);
     }
 
