@@ -97,7 +97,10 @@ public class ResourceRepositoryImpl implements ResourceRepository {
     @Override
     public List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds) {
         FileUploadExample example = new FileUploadExample();
-        example.createCriteria().andUploadIdIn(uploadIds).andDeletedEqualTo((byte) 0);
+        FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(uploadIds)) {
+            criteria.andUploadIdIn(uploadIds);
+        }
         List<FileUploadDO> fileUploadDOS = fileUploadMapper.selectByExample(example);
         if (CollectionUtils.isEmpty(fileUploadDOS)) {
             return Lists.newArrayList();

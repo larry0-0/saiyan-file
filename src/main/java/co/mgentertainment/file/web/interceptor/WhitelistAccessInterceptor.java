@@ -24,7 +24,10 @@ public class WhitelistAccessInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!mgfsProperties.getApplyAccess().isEnabled()) {
+            return true;
+        }
         log.info("当前请求来源：{}", request.getRemoteAddr());
-        return mgfsProperties.getWhiteList().stream().anyMatch(subnet -> new IpAddressMatcher(subnet).matches(request));
+        return mgfsProperties.getApplyAccess().getWhiteList().stream().anyMatch(subnet -> new IpAddressMatcher(subnet).matches(request));
     }
 }

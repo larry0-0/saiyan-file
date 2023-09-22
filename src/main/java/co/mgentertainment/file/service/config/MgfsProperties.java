@@ -19,14 +19,14 @@ import java.util.List;
 public class MgfsProperties {
 
     /**
+     * 申请令牌
+     */
+    private AccessApply applyAccess = new AccessApply();
+
+    /**
      * 访问认证
      */
     private Authentication authentication = new Authentication();
-
-    /**
-     * 访问白名单
-     */
-    private List<String> whiteList = Lists.newArrayList();
 
     /**
      * 文件存储地址加密
@@ -42,6 +42,15 @@ public class MgfsProperties {
      * hls文件存放目录
      */
     private String hlsDir = StringUtils.EMPTY;
+
+    @Data
+    public static class AccessApply {
+        private boolean enabled;
+        /**
+         * 访问白名单
+         */
+        private List<String> whiteList = Lists.newArrayList();
+    }
 
     @Data
     public static class Authentication {
