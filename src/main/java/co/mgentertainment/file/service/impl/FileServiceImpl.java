@@ -164,7 +164,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .uploadId(uploadId)
                         .originVideo(file)
                         .cuttingSetting(cuttingSetting)
-                        .appName(ClientHolder.getCurrentClient().get())
+                        .appName(ClientHolder.getCurrentClient())
                         .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
     }
@@ -242,8 +242,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         example.setLimit(condition.getPageSize());
         example.setOffset((condition.getPageNo() - 1) * condition.getPageSize());
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
-        if (ClientHolder.getCurrentClient().isPresent()) {
-            criteria.andAppNameEqualTo(ClientHolder.getCurrentClient().get());
+        if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
+            criteria.andAppNameEqualTo(ClientHolder.getCurrentClient());
         }
         if (StringUtils.isNotBlank(condition.getFilename())) {
             criteria.andFilenameLike(condition.getFilename());
@@ -363,7 +363,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (duration != null) {
             resourceDO.setDuration(duration);
         }
-        resourceDO.setAppName(ClientHolder.getCurrentClient().orElse(appName));
+        if (StringUtils.isNotEmpty(ClientHolder.getCurrentClient())) {
+            resourceDO.setAppName(ClientHolder.getCurrentClient());
+        }
         return resourceRepository.addResource(resourceDO);
     }
 
@@ -397,7 +399,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private Long addUploadRecord(String filename) {
         FileUploadDO fileUpload = new FileUploadDO();
         fileUpload.setFilename(filename);
-        fileUpload.setAppName(ClientHolder.getCurrentClient().get());
+        if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
+            fileUpload.setAppName(ClientHolder.getCurrentClient());
+        }
         fileUploadRepository.addFileUpload(fileUpload);
         return fileUpload.getUploadId();
     }
