@@ -175,7 +175,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String filename = multipartFile.getOriginalFilename();
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
         // 添加resource记录
-        Long rid = this.persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null);
+        Long rid = this.persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null, null);
         String resourceFolderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, null);
         boolean isImage = resourceType == ResourceTypeEnum.IMAGE;
         upload2CloudStorage(multipartFile, filename, resourceFolderLocation, isImage);
@@ -191,7 +191,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long media2CloudStorage(File media, ResourceTypeEnum resourceType, String appName) {
+    public Long media2CloudStorage(File media, ResourceTypeEnum resourceType, String appName, Integer duration) {
         if (media == null || media.getParentFile().isFile()) {
             throw new IllegalArgumentException("media parent is not a directory");
         }
@@ -202,7 +202,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String originFilename = StringUtils.substringBefore(media.getParentFile().getName(), ".");
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
         // 添加资源记录
-        Long rid = this.persistResource(originFilename, resourceType, remoteFolderName, media.length(), appName);
+        Long rid = this.persistResource(originFilename, resourceType, remoteFolderName, media.length(), appName, duration);
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid,
                 resourceType == ResourceTypeEnum.VIDEO ? ResourcePathType.FEATURE_FILM.getValue() : null);
         List<UploadPretreatment> list = getCloudStorageUploadList(files, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
@@ -353,7 +353,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return uploadPretreatment.upload();
     }
 
-    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable String appName) {
+    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable String appName, @Nullable Integer duration) {
         ResourceDO resourceDO = new ResourceDO();
         resourceDO.setFilename(filename);
         resourceDO.setFolder(remoteFolder);
@@ -361,6 +361,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         resourceDO.setSize(MediaHelper.getMediaSize(sizeInBytes));
         if (StringUtils.isNotEmpty(ClientHolder.getCurrentClient())) {
             resourceDO.setAppName(ClientHolder.getCurrentClient());
+        }
+        if (duration != null) {
+            resourceDO.setDuration(duration);
         }
         return resourceRepository.addResource(resourceDO);
     }

@@ -1,7 +1,6 @@
 package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
-import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.VideoType;
 import co.mgentertainment.file.service.dto.MediaCutResultDTO;
@@ -25,8 +24,6 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
     @Resource
     private FfmpegService ffmpegService;
     @Resource
-    private ResourceRepository resourceRepository;
-    @Resource
     private AsyncEventBus eventBus;
 
 
@@ -38,7 +35,6 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
             log.debug("剪切预告片，无状态转换，下一步上传预告片");
             MediaCutResultDTO cutResult = ffmpegService.mediaCut(event.getOriginVideo(), event.getCuttingSetting());
             log.debug("剪切预告片完成，更新资源时长");
-            resourceRepository.updateResourceDuration(event.getRid(), cutResult.getFilmDuration());
             eventBus.post(
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())

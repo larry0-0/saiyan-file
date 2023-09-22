@@ -5,6 +5,7 @@ import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
 import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
 import co.mgentertainment.file.dal.enums.UploadStatusEnum;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
+import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.VideoType;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -30,6 +31,8 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
     @Resource
     private FileUploadRepository fileUploadRepository;
     @Resource
+    private FfmpegService ffmpegService;
+    @Resource
     private AsyncEventBus eventBus;
 
     @Override
@@ -44,7 +47,8 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             }
             if (event.getVideoType() == VideoType.FEATURE_FILM) {
                 log.debug("上传正片并生成rid，状态转换：UPLOADING->TRAILER_CUTTING_AND_UPLOADING，下一步剪切预告片");
-                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO, event.getAppName());
+                Integer duration = ffmpegService.getMediaDuration(event.getOriginVideo());
+                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO, event.getAppName(), duration);
                 // 正片上传成功就填充rid
                 fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
                 eventBus.post(

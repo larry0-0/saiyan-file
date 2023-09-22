@@ -77,11 +77,4 @@ public interface ResourceRepository {
      */
     List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds);
 
-    /**
-     * update Resource duration
-     * @param rid
-     * @param duration
-     * @return
-     */
-    Boolean updateResourceDuration(Long rid, Integer duration);
 }
