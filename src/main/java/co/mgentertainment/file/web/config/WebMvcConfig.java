@@ -1,5 +1,6 @@
 package co.mgentertainment.file.web.config;
 
+import co.mgentertainment.file.web.interceptor.AuthTokenInterceptor;
 import co.mgentertainment.file.web.interceptor.WhitelistAccessInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final String BASE_PACKAGE = "co.mgentertainment.file.web.controller";
 
     private final WhitelistAccessInterceptor whitelistAccessInterceptor;
+    private final AuthTokenInterceptor authTokenInterceptor;
 
     /**
      * allow CORS requests
@@ -52,5 +54,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(whitelistAccessInterceptor).addPathPatterns(API_SERVICE_PREFIX + "/access/**");
+        registry.addInterceptor(authTokenInterceptor).addPathPatterns(API_SERVICE_PREFIX + "/file/**");
     }
 }
