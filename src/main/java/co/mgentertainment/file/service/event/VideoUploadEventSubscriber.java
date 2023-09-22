@@ -53,15 +53,17 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                                 .uploadId(event.getUploadId())
                                 .originVideo(event.getOriginVideo())
                                 .cuttingSetting(event.getCuttingSetting())
+                                .rid(rid)
                                 .build());
             } else {
                 log.debug("上传预告片，状态转换：TRAILER_CUTTING_AND_UPLOADING->COMPLETED");
                 fileService.uploadLocalTrailUnderResource(event.getRid(), event.getProcessedVideo());
-                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, null);
-                deleteCompletedVideoFolder(event.getOriginVideo());
+                fileUploadRepository.updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
             }
         } catch (Exception e) {
             log.error("上传事件异常", e);
+        } finally {
+            deleteCompletedVideoFolder(event.getOriginVideo());
         }
     }
 

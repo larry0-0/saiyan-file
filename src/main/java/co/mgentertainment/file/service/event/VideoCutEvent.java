@@ -22,4 +22,5 @@ public class VideoCutEvent extends AbstractEvent {
 
     private CuttingSetting cuttingSetting;
 
+    private Long rid;
 }
