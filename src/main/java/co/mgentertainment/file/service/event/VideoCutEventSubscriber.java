@@ -1,8 +1,10 @@
 package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
+import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.VideoType;
+import co.mgentertainment.file.service.dto.MediaCutResultDTO;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
@@ -10,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.File;
 
 /**
  * @author larry
@@ -23,7 +24,8 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
 
     @Resource
     private FfmpegService ffmpegService;
-
+    @Resource
+    private ResourceRepository resourceRepository;
     @Resource
     private AsyncEventBus eventBus;
 
@@ -34,11 +36,13 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
     public void subscribe(VideoCutEvent event) {
         try {
             log.debug("剪切预告片，无状态转换，下一步上传预告片");
-            File mp4File = ffmpegService.mediaCut(event.getOriginVideo(), event.getCuttingSetting());
+            MediaCutResultDTO cutResult = ffmpegService.mediaCut(event.getOriginVideo(), event.getCuttingSetting());
+            log.debug("剪切预告片完成，更新资源时长");
+            resourceRepository.updateResourceDuration(event.getRid(), cutResult.getFilmDuration());
             eventBus.post(
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
-                            .processedVideo(mp4File)
+                            .processedVideo(cutResult.getTrailerFile())
                             .videoType(VideoType.TRAILER)
                             .rid(event.getRid())
                             .build());

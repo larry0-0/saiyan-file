@@ -5,6 +5,7 @@ import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.config.ResourceSuffix;
+import co.mgentertainment.file.service.dto.MediaCutResultDTO;
 import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
@@ -85,7 +86,7 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public File mediaCut(File inputFile, CuttingSetting cuttingSetting) {
+    public MediaCutResultDTO mediaCut(File inputFile, CuttingSetting cuttingSetting) {
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         double duration = mediaMetadata.getFormat().duration;
         long startOffset = new BigDecimal(duration).multiply(new BigDecimal(cuttingSetting.getStartFromProportion())).divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
@@ -114,7 +115,7 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(builder).run();
-        return outFile;
+        return MediaCutResultDTO.builder().trailerFile(outFile).filmDuration(new BigDecimal(duration).setScale(0, RoundingMode.HALF_UP).intValue()).build();
     }
 
     @Override

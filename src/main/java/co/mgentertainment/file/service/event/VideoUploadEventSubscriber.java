@@ -29,7 +29,6 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
     private FileService fileService;
     @Resource
     private FileUploadRepository fileUploadRepository;
-
     @Resource
     private AsyncEventBus eventBus;
 

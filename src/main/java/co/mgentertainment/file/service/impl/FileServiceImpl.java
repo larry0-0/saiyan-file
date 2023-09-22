@@ -175,7 +175,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String filename = multipartFile.getOriginalFilename();
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
         // 添加resource记录
-        Long rid = this.persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null, null);
+        Long rid = this.persistResource(filename, resourceType, remoteFolderName, multipartFile.getSize(), null);
         String resourceFolderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid, null);
         boolean isImage = resourceType == ResourceTypeEnum.IMAGE;
         upload2CloudStorage(multipartFile, filename, resourceFolderLocation, isImage);
@@ -201,9 +201,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
         String originFilename = StringUtils.substringBefore(media.getParentFile().getName(), ".");
         String remoteFolderName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
-        Integer duration = ffmpegService.getMediaDuration(media);
         // 添加资源记录
-        Long rid = this.persistResource(originFilename, resourceType, remoteFolderName, media.length(), duration, appName);
+        Long rid = this.persistResource(originFilename, resourceType, remoteFolderName, media.length(), appName);
         String folderLocation = getResourceFolderLocation(resourceType, remoteFolderName, rid,
                 resourceType == ResourceTypeEnum.VIDEO ? ResourcePathType.FEATURE_FILM.getValue() : null);
         List<UploadPretreatment> list = getCloudStorageUploadList(files, folderLocation, resourceType == ResourceTypeEnum.IMAGE);
@@ -354,15 +353,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return uploadPretreatment.upload();
     }
 
-    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable Integer duration, @Nullable String appName) {
+    private Long persistResource(String filename, ResourceTypeEnum type, String remoteFolder, long sizeInBytes, @Nullable String appName) {
         ResourceDO resourceDO = new ResourceDO();
         resourceDO.setFilename(filename);
         resourceDO.setFolder(remoteFolder);
         resourceDO.setType((short) type.getValue());
         resourceDO.setSize(MediaHelper.getMediaSize(sizeInBytes));
-        if (duration != null) {
-            resourceDO.setDuration(duration);
-        }
         if (StringUtils.isNotEmpty(ClientHolder.getCurrentClient())) {
             resourceDO.setAppName(ClientHolder.getCurrentClient());
         }

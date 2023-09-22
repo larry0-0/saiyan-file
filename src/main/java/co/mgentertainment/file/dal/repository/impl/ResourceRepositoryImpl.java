@@ -114,4 +114,15 @@ public class ResourceRepositoryImpl implements ResourceRepository {
         }
         return resourceMapper.selectByExample(resourceExample);
     }
+
+    @Override
+    public Boolean updateResourceDuration(Long rid, Integer duration) {
+        Assert.notNull(rid, "rid can not be null");
+        Assert.notNull(duration, "duration can not be null");
+        ResourceDO resourceDO = new ResourceDO();
+        resourceDO.setRid(rid);
+        resourceDO.setDuration(duration);
+        int rowcount = resourceMapper.updateByPrimaryKeySelective(resourceDO);
+        return rowcount > 0;
+    }
 }
