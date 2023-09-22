@@ -73,12 +73,13 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .setVideoBitRate(64000)
                 .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls")
-                .setPreset("ultrafast")
-                .addExtraArgs("-vsync", "2",
+//                .setPreset("ultrafast")
+                .addExtraArgs(
+//                        "-vsync", "2",
+//                        "-tune", "fastdecode",
                         "-force_key_frames", "expr:gte(t,n_forced*2)",
                         "-c:v", "copy",
                         "-c:a", "copy",
-                        "-tune", "fastdecode",
                         "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
                         "-hls_list_size", "0",
                         "-hls_flags", "0",
@@ -93,7 +94,10 @@ public class FfmpegServiceImpl implements FfmpegService {
     public MediaCutResultDTO mediaCut(File inputFile, CuttingSetting cuttingSetting) {
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         double duration = mediaMetadata.getFormat().duration;
-        long startOffset = new BigDecimal(duration).multiply(new BigDecimal(cuttingSetting.getStartFromProportion())).divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
+        log.debug("the media {} duration:{}, startFromProportion:{}", inputFile.getAbsolutePath(), duration, cuttingSetting.getStartFromProportion());
+        long startOffset = new BigDecimal(Optional.ofNullable(duration).orElse(0.0))
+                .multiply(new BigDecimal(Optional.ofNullable(cuttingSetting.getStartFromProportion()).orElse(0)))
+                .divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
         final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
         final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
         File outFile = getOutputFileFromInputFile(inputFile, "_trailer", ResourceSuffix.TRAILER);
@@ -109,12 +113,13 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .setVideoBitRate(64000)
                 .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("mp4")
-                .setPreset("ultrafast")
-                .addExtraArgs("-vsync", "2",
+//                .setPreset("ultrafast")
+                .addExtraArgs(
                         "-force_key_frames", "expr:gte(t,n_forced*2)",
                         "-c:v", "copy",
                         "-c:a", "copy",
-                        "-tune", "fastdecode",
+//                        "-vsync", "2",
+//                        "-tune", "fastdecode",
                         "-threads", Runtime.getRuntime().availableProcessors() + "")
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);

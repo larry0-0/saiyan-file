@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Date;
+
 /**
  * @author larry
  * @createTime 2023/9/16
@@ -27,4 +29,8 @@ public class VideoUploadInfoDTO {
     private String trailerPath;
     @Schema(description = "上传状态")
     private String status;
+    @Schema(description = "上传开始时间")
+    private Date uploadStartTime;
+    @Schema(description = "状态更新时间")
+    private Date statusUpdateTime;
 }

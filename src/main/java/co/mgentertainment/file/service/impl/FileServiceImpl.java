@@ -166,7 +166,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .cuttingSetting(cuttingSetting)
                         .appName(ClientHolder.getCurrentClient())
                         .build());
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).build();
+        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).uploadStartTime(new Date()).build();
     }
 
     @Override
@@ -245,7 +245,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             criteria.andAppNameEqualTo(ClientHolder.getCurrentClient());
         }
         if (StringUtils.isNotBlank(condition.getFilename())) {
-            criteria.andFilenameLike(condition.getFilename());
+            criteria.andFilenameLike(String.format("%%%s%%", condition.getFilename()));
         }
         if (null != condition.getResourceType()) {
             criteria.andTypeEqualTo(condition.getResourceType().shortValue());
@@ -256,6 +256,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (null != condition.getUploadStartDate() && null != condition.getUploadEndDate()) {
             criteria.andCreateTimeBetween(condition.getUploadStartDate(), condition.getUploadEndDate());
         }
+        example.setOrderByClause("create_time desc");
         PageResult<FileUploadDO> pr = fileUploadRepository.queryFileUpload(example);
         List<VideoUploadInfoDTO> dtoList = toVideoUploadInfoDTOList(pr.getRecords());
         return PageResult.createPageResult(pr.getCurrent(), pr.getSize(), pr.getTotal(), dtoList);
@@ -317,6 +318,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
             return Lists.newArrayList();
         }
         List<Long> uploadIds = fileUploadDOS.stream().map(FileUploadDO::getUploadId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(uploadIds)) {
+            return Lists.newArrayList();
+        }
         Map<Long, ResourceDO> ridMap = resourceRepository.getResourceByUploadIds(uploadIds).stream().collect(Collectors.toMap(ResourceDO::getRid, r -> r));
         return fileUploadDOS.stream().map(fileUploadDO -> VideoUploadInfoDTO.builder()
                 .filename(fileUploadDO.getFilename())
@@ -328,6 +332,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
                 .trailerPath(ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getResourceFolderLocation(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
+                .uploadStartTime(fileUploadDO.getCreateTime())
+                .statusUpdateTime(fileUploadDO.getUpdatedTime())
                 .build()).collect(Lists::newArrayList, List::add, List::addAll);
     }
 
