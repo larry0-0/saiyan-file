@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.impl;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.xuyanwu.spring.file.storage.FileInfo;
 import cn.xuyanwu.spring.file.storage.FileStorageProperties;
@@ -156,7 +157,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
         String filename = multipartFile.getOriginalFilename();
         // 添加上传记录
-        Long uploadId = this.addUploadVideoRecord(filename);
+        Map<String, Long> map = this.batchAddUploadVideoRecord(ListUtil.of(filename));
+        Long uploadId = map.get(filename);
         eventBus.post(
                 VideoConvertEvent.builder()
                         .uploadId(uploadId)
@@ -288,15 +290,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public Long addUploadVideoRecord(String filename) {
-        FileUploadDO fileUpload = new FileUploadDO();
-        fileUpload.setFilename(filename);
-        fileUpload.setType(Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue());
-        if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
-            fileUpload.setAppName(ClientHolder.getCurrentClient());
-        }
-        fileUploadRepository.addFileUpload(fileUpload);
-        return fileUpload.getUploadId();
+    public Map<String, Long> batchAddUploadVideoRecord(List<String> filename) {
+        return fileUploadRepository.batchAddFileUpload(filename, ResourceTypeEnum.VIDEO, ClientHolder.getCurrentClient());
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author larry
@@ -85,10 +86,10 @@ public class FileController {
         return R.ok(resourceLineService.listResourceLine());
     }
 
-    @PostMapping("/addUploadRecord")
-    @Operation(summary = "供上传器添加上传记录")
-    public R<Long> addUploadRecord(@RequestBody FileUploadDTO fileUploadDTO) {
-        return R.ok(fileService.addUploadVideoRecord(fileUploadDTO.getFilename()));
+    @PostMapping("/batchAddUploadRecord")
+    @Operation(summary = "供上传器批量添加上传记录")
+    public R<Map<String,Long>> batchAddUploadRecord(@RequestBody List<String> filenames) {
+        return R.ok(fileService.batchAddUploadVideoRecord(filenames));
     }
 
     @PostMapping("/updateUploadStatus")

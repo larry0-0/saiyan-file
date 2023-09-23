@@ -34,7 +34,7 @@ public interface FileService {
 
     void uploadLocalTrailUnderResource(Long rid, File localFile);
 
-    Long addUploadVideoRecord(String filename);
+    Map<String, Long> batchAddUploadVideoRecord(List<String> filename);
 
     void updateUpload(FileUploadDTO fileUploadDTO);
 
