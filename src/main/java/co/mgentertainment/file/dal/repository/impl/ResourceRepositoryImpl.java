@@ -52,16 +52,15 @@ public class ResourceRepositoryImpl implements ResourceRepository {
     @Override
     public Long saveResource(ResourceDO resourceDO) {
         Assert.notNull(resourceDO, "resourceDO can not be null");
-        Assert.notNull(resourceDO.getRid(), "rid can not be null");
-        ResourceExample example = new ResourceExample();
-        example.createCriteria().andRidEqualTo(resourceDO.getRid());
-        boolean exists = resourceMapper.countByExample(example) > 0;
-        if (exists) {
-            updateResource(resourceDO, example);
-            return resourceDO.getRid();
-        } else {
-            return addResource(resourceDO);
+        if (resourceDO.getRid() != null) {
+            ResourceExample example = new ResourceExample();
+            example.createCriteria().andRidEqualTo(resourceDO.getRid());
+            if (resourceMapper.countByExample(example) > 0) {
+                updateResource(resourceDO, example);
+                return resourceDO.getRid();
+            }
         }
+        return addResource(resourceDO);
     }
 
     @Override
