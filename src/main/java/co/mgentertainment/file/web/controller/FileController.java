@@ -9,6 +9,7 @@ import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.impl.ResourceLineService;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -88,8 +89,8 @@ public class FileController {
 
     @PostMapping("/batchAddUploadRecord")
     @Operation(summary = "供上传器批量添加上传记录")
-    public R<Map<String,Long>> batchAddUploadRecord(@RequestBody List<String> filenames) {
-        return R.ok(fileService.batchAddUploadVideoRecord(filenames));
+    public R<Map<String,Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
+        return R.ok(fileService.batchAddUploadVideoRecord(request.filenames));
     }
 
     @PostMapping("/updateUploadStatus")
@@ -103,5 +104,10 @@ public class FileController {
     @Operation(summary = "供上传器添加媒资")
     public R<Long> addResource(@RequestBody ResourceDTO resourceDTO) {
         return R.ok(fileService.saveResource(resourceDTO));
+    }
+
+    @Data
+    public static class AddUploadsRequest {
+        private List<String> filenames;
     }
 }
