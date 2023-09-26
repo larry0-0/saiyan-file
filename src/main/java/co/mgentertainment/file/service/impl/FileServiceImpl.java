@@ -22,7 +22,6 @@ import co.mgentertainment.file.dal.po.ResourceDO;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FileService;
-import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.config.ResourcePathType;
@@ -99,9 +98,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Resource
     private CachedUidGenerator cachedUidGenerator;
-
-    @Resource
-    private UploadWorkflowService uploadWorkflowService;
 
     private AmazonS3 s3Client;
 
@@ -270,9 +266,16 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                         .cuttingSetting(cuttingSetting)
                                         .appName(ClientHolder.getCurrentClient())
                                         .build());
-                        break;
+                    } else {
+                        eventBus.post(
+                                VideoUploadEvent.builder()
+                                        .uploadId(uploadId)
+                                        .processedVideo(trailerVideo)
+                                        .originVideo(originVideo)
+                                        .videoType(VideoType.TRAILER)
+                                        .rid(resourceDO.getRid())
+                                        .build());
                     }
-                    uploadWorkflowService.uploadTrailer2CloudStorage(trailerVideo, fileUploadDO.getRid(), resourceDO.getFolder(), uploadId);
                 } else {
                     eventBus.post(
                             VideoCutEvent.builder()
@@ -282,6 +285,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .rid(fileUploadDO.getRid())
                                     .build());
                 }
+                break;
+            default:
                 break;
         }
     }

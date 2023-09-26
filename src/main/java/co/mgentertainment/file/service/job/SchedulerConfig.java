@@ -26,14 +26,14 @@ public class SchedulerConfig {
     /**
      * 配置shedlock bean
      *
-     * @param dataSource
+     * @param druidDataSource
      * @return
      */
     @Bean
-    public LockProvider lockProvider(DataSource dataSource) {
+    public LockProvider lockProvider(DataSource druidDataSource) {
         return new JdbcTemplateLockProvider(
                 JdbcTemplateLockProvider.Configuration.builder()
-                        .withJdbcTemplate(new JdbcTemplate(dataSource))
+                        .withJdbcTemplate(new JdbcTemplate(druidDataSource))
                         .usingDbTime()
                         .build()
         );
