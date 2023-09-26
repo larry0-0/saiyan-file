@@ -29,6 +29,8 @@ public class VideoUploadInfoDTO {
     private String trailerPath;
     @Schema(description = "上传状态")
     private String status;
+    @Schema(description = "上传状态码")
+    private Integer statusCode;
     @Schema(description = "上传开始时间")
     private Date uploadStartTime;
     @Schema(description = "状态更新时间")

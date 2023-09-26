@@ -177,7 +177,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .cuttingSetting(cuttingSetting)
                         .appName(ClientHolder.getCurrentClient())
                         .build());
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).uploadStartTime(new Date()).build();
+        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
     }
 
     @Override
@@ -488,6 +488,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .duration(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.formatMediaDuration(ridMap.get(fileUploadDO.getRid()).getDuration()) : null)
                 .uploadId(fileUploadDO.getUploadId())
                 .status(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getDesc())
+                .statusCode(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getValue())
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
                 .trailerPath(ridMap.containsKey(fileUploadDO.getRid()) ?
