@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import static co.mgentertainment.file.web.controller.AccessClientController.TOKEN_HEADER;
 
 /**
- * @author cl
+ * @author larry
  * @createTime 2022/12/5
  * @description OpenAPI AuthenticationInterceptor
  */

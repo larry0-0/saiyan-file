@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * @author cl
+ * @author larry
  * @createTime 2022/12/5
  * @description OpenAPI AuthenticationInterceptor
  */
