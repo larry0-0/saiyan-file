@@ -1,22 +1,20 @@
 package co.mgentertainment.file.service.event;
 
-import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
-import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
-import co.mgentertainment.file.dal.po.FileUploadDO;
-import co.mgentertainment.file.dal.repository.FileUploadRepository;
-import co.mgentertainment.file.service.FfmpegService;
-import co.mgentertainment.file.service.FileService;
+import co.mgentertainment.common.utils.DateUtils;
+import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.VideoType;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.io.File;
+import java.util.Date;
+import java.util.Optional;
 
 /**
  * @author larry
@@ -25,16 +23,11 @@ import java.io.File;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUploadEvent> {
 
-    @Resource
-    private FileService fileService;
-    @Resource
-    private FileUploadRepository fileUploadRepository;
-    @Resource
-    private FfmpegService ffmpegService;
-    @Resource
-    private AsyncEventBus eventBus;
+    private final UploadWorkflowService uploadWorkflowService;
+    private final AsyncEventBus eventBus;
 
     @Override
     @Subscribe
@@ -46,12 +39,19 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 log.error("待上传的视频文件夹{}不存在", folderToUpload.getAbsolutePath());
                 return;
             }
+            Long uploadId = event.getUploadId();
+            File originVideo = event.getOriginVideo();
+            File processedVideo = event.getProcessedVideo();
+            String subDirName = Optional.ofNullable(event.getSubDirName()).orElse(DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD));
             if (event.getVideoType() == VideoType.FEATURE_FILM) {
-                log.debug("上传正片并生成rid，状态转换：UPLOADING->TRAILER_CUTTING_AND_UPLOADING，下一步剪切预告片");
-                Integer duration = ffmpegService.getMediaDuration(event.getOriginVideo());
-                Long rid = fileService.media2CloudStorage(event.getProcessedVideo(), ResourceTypeEnum.VIDEO, event.getAppName(), duration);
-                // 正片上传成功就填充rid
-                updateUploadStatus(event.getUploadId(), UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
+                StopWatch stopWatch = new StopWatch();
+                stopWatch.start("上传正片并添加资源记录");
+                log.debug("(3.1)开始{}, uploadId:{}, 正片:{}", stopWatch.getLastTaskName(), uploadId, processedVideo.getAbsolutePath());
+                Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppName(), uploadId);
+                log.debug("(3.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
+                if (rid == null) {
+                    return;
+                }
                 eventBus.post(
                         VideoCutEvent.builder()
                                 .uploadId(event.getUploadId())
@@ -60,29 +60,14 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                                 .rid(rid)
                                 .build());
             } else {
-                log.debug("上传预告片，状态转换：TRAILER_CUTTING_AND_UPLOADING->COMPLETED");
-                fileService.uploadLocalTrailUnderResource(event.getRid(), event.getProcessedVideo());
-                updateUploadStatus(event.getUploadId(), UploadStatusEnum.COMPLETED, event.getRid());
-                deleteCompletedVideoFolder(event.getOriginVideo());
+                StopWatch stopWatch = new StopWatch();
+                stopWatch.start("上传预告片");
+                log.debug("(5.1)开始{}, uploadId:{}, 预告片:{}", stopWatch.getLastTaskName(), uploadId, processedVideo.getAbsolutePath());
+                uploadWorkflowService.uploadTrailer2CloudStorage(event.getProcessedVideo(), event.getRid(), subDirName, event.getUploadId());
+                log.debug("(5.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
             }
         } catch (Exception e) {
             log.error("上传事件异常", e);
-        }
-    }
-
-    private void updateUploadStatus(Long uploadId, UploadStatusEnum status, Long rid) {
-        FileUploadDO uploadDO = new FileUploadDO();
-        uploadDO.setUploadId(uploadId);
-        uploadDO.setStatus(Integer.valueOf(status.getValue()).shortValue());
-        uploadDO.setRid(rid);
-        fileUploadRepository.updateFileUploadByPrimaryKey(uploadDO);
-    }
-
-    private void deleteCompletedVideoFolder(File originVideo) {
-        File folderToDelete = originVideo.getParentFile();
-        if (folderToDelete != null && folderToDelete.isDirectory()) {
-            log.debug("删除转码后的视频文件夹{}", folderToDelete.getAbsolutePath());
-            FileUtil.del(folderToDelete.getAbsolutePath());
         }
     }
 }

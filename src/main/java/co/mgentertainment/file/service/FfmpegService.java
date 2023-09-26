@@ -1,7 +1,6 @@
 package co.mgentertainment.file.service;
 
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.dto.MediaCutResultDTO;
 
 import java.io.File;
 
@@ -16,7 +15,7 @@ public interface FfmpegService {
 
     File mediaConvert(File inputFile);
 
-    MediaCutResultDTO mediaCut(File inputFile, CuttingSetting cuttingSetting);
+    File mediaCut(File inputFile, CuttingSetting cuttingSetting);
 
     File mediaConcat(File inputFile, File subFilesTxt);
 

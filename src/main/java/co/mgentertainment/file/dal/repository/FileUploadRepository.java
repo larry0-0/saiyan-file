@@ -1,7 +1,7 @@
 package co.mgentertainment.file.dal.repository;
 
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 

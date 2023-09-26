@@ -54,6 +54,18 @@ public class FileController {
         return R.ok(fileService.uploadVideo(file, cuttingSetting));
     }
 
+    @PostMapping("/upload/retry")
+    @Operation(summary = "重试失败的视频")
+    @SysLog("失败重试")
+    public R<Void> retryUploadVideo(@RequestBody RetryVideoUploadDTO retryVideoUploadDTO) {
+        fileService.reuploadVideo(retryVideoUploadDTO.getUploadId(),
+                CuttingSetting.builder()
+                        .duration(retryVideoUploadDTO.getDuration())
+                        .startFromProportion(retryVideoUploadDTO.getStartFromProportion())
+                        .build());
+        return R.ok();
+    }
+
     @PostMapping("/upload/videos")
     @Operation(summary = "批量视频上传")
     @SysLog("批量上传视频")
@@ -89,7 +101,7 @@ public class FileController {
 
     @PostMapping("/batchAddUploadRecord")
     @Operation(summary = "供上传器批量添加上传记录")
-    public R<Map<String,Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
+    public R<Map<String, Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
         return R.ok(fileService.batchAddUploadVideoRecord(request.filenames));
     }
 

@@ -23,6 +23,8 @@ public class VideoUploadEvent extends AbstractEvent {
 
     private File processedVideo;
 
+    private String subDirName;
+
     private CuttingSetting cuttingSetting;
 
     private VideoType videoType;

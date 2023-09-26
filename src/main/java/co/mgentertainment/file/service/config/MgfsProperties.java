@@ -39,6 +39,11 @@ public class MgfsProperties {
     private int segmentTimeLength;
 
     /**
+     * 用户视频预告片时间长度单位秒
+     */
+    private int userTrailerTimeLength;
+
+    /**
      * hls文件存放目录
      */
     private String hlsDir = StringUtils.EMPTY;

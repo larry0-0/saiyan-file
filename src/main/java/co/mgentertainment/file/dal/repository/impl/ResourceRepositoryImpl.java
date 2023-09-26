@@ -34,7 +34,7 @@ public class ResourceRepositoryImpl implements ResourceRepository {
 
     @Override
     public Long addResource(ResourceDO resourceDO) {
-        if (resourceDO != null) {
+        if (resourceDO != null && resourceDO.getRid() == null) {
             resourceDO.setRid(cachedUidGenerator.getUID());
         }
         resourceMapper.insertSelective(resourceDO);

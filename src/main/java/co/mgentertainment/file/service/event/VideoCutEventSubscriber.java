@@ -1,16 +1,17 @@
 package co.mgentertainment.file.service.event;
 
+import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
-import co.mgentertainment.file.service.FfmpegService;
+import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.VideoType;
-import co.mgentertainment.file.service.dto.MediaCutResultDTO;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import java.io.File;
 
 /**
  * @author larry
@@ -19,12 +20,11 @@ import javax.annotation.Resource;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEvent> {
 
-    @Resource
-    private FfmpegService ffmpegService;
-    @Resource
-    private AsyncEventBus eventBus;
+    private final UploadWorkflowService uploadWorkflowService;
+    private final AsyncEventBus eventBus;
 
 
     @Override
@@ -32,13 +32,19 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
     @AllowConcurrentEvents
     public void subscribe(VideoCutEvent event) {
         try {
-            log.debug("剪切预告片，无状态转换，下一步上传预告片");
-            MediaCutResultDTO cutResult = ffmpegService.mediaCut(event.getOriginVideo(), event.getCuttingSetting());
-            log.debug("剪切预告片完成，更新资源时长");
+            File originVideo = event.getOriginVideo();
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start("剪切预告片");
+            log.debug("(4.1)开始{}, uploadId:{}, 原始片:{}", stopWatch.getLastTaskName(), event.getUploadId(), originVideo.getAbsolutePath());
+            File trailerFile = uploadWorkflowService.cutVideo(event.getOriginVideo(), event.getCuttingSetting(), event.getUploadId());
+            if (trailerFile == null) {
+                return;
+            }
+            log.debug("(4.2)结束{}, 预告片位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), trailerFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             eventBus.post(
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
-                            .processedVideo(cutResult.getTrailerFile())
+                            .processedVideo(trailerFile)
                             .originVideo(event.getOriginVideo())
                             .videoType(VideoType.TRAILER)
                             .rid(event.getRid())

@@ -1,11 +1,11 @@
 package co.mgentertainment.file.service.impl;
 
-import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.ResourceSuffix;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
-import co.mgentertainment.file.service.config.ResourceSuffix;
-import co.mgentertainment.file.service.dto.MediaCutResultDTO;
+import co.mgentertainment.file.service.config.VideoType;
+import co.mgentertainment.file.service.utils.MediaHelper;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFmpeg;
@@ -14,8 +14,6 @@ import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 import net.bramp.ffmpeg.probe.FFmpegStream;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -62,7 +60,7 @@ public class FfmpegServiceImpl implements FfmpegService {
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
         final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
-        File outFile = getOutputFileFromInputFile(inputFile, "_hls", ResourceSuffix.FEATURE_FILM);
+        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setInput(inputFile.getAbsolutePath())
                 .overrideOutputFiles(true)
@@ -91,7 +89,7 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public MediaCutResultDTO mediaCut(File inputFile, CuttingSetting cuttingSetting) {
+    public File mediaCut(File inputFile, CuttingSetting cuttingSetting) {
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         double duration = mediaMetadata.getFormat().duration;
         log.debug("the media {} duration:{}, startFromProportion:{}", inputFile.getAbsolutePath(), duration, cuttingSetting.getStartFromProportion());
@@ -100,7 +98,7 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
         final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
         final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
-        File outFile = getOutputFileFromInputFile(inputFile, "_trailer", ResourceSuffix.TRAILER);
+        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.TRAILER.getValue(), ResourceSuffix.TRAILER);
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setStartOffset(startOffset, TimeUnit.SECONDS)
                 .setInput(inputFile.getAbsolutePath())
@@ -126,12 +124,12 @@ public class FfmpegServiceImpl implements FfmpegService {
         executor.createJob(builder).run();
         // remove cache
         mediaMetadataCache.remove(inputFile.getAbsolutePath());
-        return MediaCutResultDTO.builder().trailerFile(outFile).filmDuration(new BigDecimal(duration).setScale(0, RoundingMode.HALF_UP).intValue()).build();
+        return outFile;
     }
 
     @Override
     public File mediaConcat(File inputFile, File subFilesTxt) {
-        File outputFile = getOutputFileFromInputFile(inputFile, "_hls", ResourceSuffix.FEATURE_FILM);
+        File outputFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setInput(subFilesTxt.getAbsolutePath())
                 .setFormat("concat")
@@ -164,16 +162,5 @@ public class FfmpegServiceImpl implements FfmpegService {
                 return null;
             }
         });
-    }
-
-    private File getOutputFileFromInputFile(File inputFile, String folderSuffix, String fileSuffix) {
-        String filename = StringUtils.substringBeforeLast(inputFile.getName(), ".");
-        String newFolderName = new StringBuffer(filename).append('.').append(RandomStringUtils.randomAlphanumeric(4)).append(folderSuffix).toString();
-        File newDir = new File(inputFile.getParentFile(), newFolderName);
-        if (!newDir.exists()) {
-            FileUtil.mkdir(newDir);
-        }
-        String newFilename = filename + fileSuffix;
-        return new File(newDir, newFilename);
     }
 }

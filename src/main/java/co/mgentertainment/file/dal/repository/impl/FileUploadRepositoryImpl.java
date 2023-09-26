@@ -1,9 +1,9 @@
 package co.mgentertainment.file.dal.repository.impl;
 
 import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
-import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
 import co.mgentertainment.file.dal.mapper.FileUploadExtMapper;
 import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.po.FileUploadDO;
@@ -37,7 +37,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
 
     @Override
     public Long addFileUpload(FileUploadDO fileUploadDO) {
-        if (fileUploadDO != null) {
+        if (fileUploadDO != null && fileUploadDO.getUploadId() == null) {
             fileUploadDO.setUploadId(cachedUidGenerator.getUID());
         }
         fileUploadMapper.insertSelective(fileUploadDO);
