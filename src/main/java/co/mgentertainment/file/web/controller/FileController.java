@@ -68,7 +68,7 @@ public class FileController {
 
     @PostMapping("/upload/videos")
     @Operation(summary = "批量视频上传")
-    @SysLog("批量上传视频")
+    @SysLog(value = "批量上传视频", ignoredArgs = true)
     public R<List<VideoUploadInfoDTO>> batchUploadVideo(@NotNull @RequestParam("files") MultipartFile[] files, CuttingSetting cuttingSetting) {
         List<VideoUploadInfoDTO> list = new ArrayList<>();
         for (MultipartFile file : files) {
