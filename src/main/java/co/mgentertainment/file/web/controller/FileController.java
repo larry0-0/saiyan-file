@@ -80,21 +80,18 @@ public class FileController {
 
     @PostMapping("/listUploadProgress")
     @Operation(summary = "根据uploadId获取视频上传进展")
-    @SysLog("根据uploadId获取视频上传进展")
     public R<List<VideoUploadInfoDTO>> listUploadInfo(@RequestBody List<Long> uploadIds) {
         return R.ok(fileService.getUploadInfos(uploadIds));
     }
 
     @PostMapping("/queryUploadProgress")
     @Operation(summary = "查询视频上传进展")
-    @SysLog("查询视频上传进展")
     public R<PageResult<VideoUploadInfoDTO>> queryUploads(@RequestBody QueryUploadConditionDTO condition) {
         return R.ok(fileService.queryFileUpload(condition));
     }
 
     @PostMapping("/lines")
     @Operation(summary = "查询媒资线路")
-    @SysLog("查询媒资线路")
     public R<List<ResourceLineDTO>> getResourceLines() {
         return R.ok(resourceLineService.listResourceLine());
     }
