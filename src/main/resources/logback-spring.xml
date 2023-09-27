@@ -2,8 +2,8 @@
 <configuration debug="false" scan="false">
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <springProperty scop="context" name="appName" source="spring.application.name" defaultValue="mg-file"/>
-    <springProperty scop="context" name="rootLevel" source="app.logger.level" defaultValue="info"/>
-    <springProperty scop="context" name="log.path" source="log.path" defaultValue="${user.dir}/${appName}/logs/"/>
+    <springProperty scop="context" name="rootLevel" source="logging.level" defaultValue="info"/>
+    <springProperty scop="context" name="log.path" source="logging.file.path" defaultValue="${user.dir}/logs/"/>
     <property name="log.path" value="${log.path}" />
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} [%thread] [%logger{50}] [%X{TRACE_ID}] - %msg%n"/>
     <!-- 控制台打印日志的相关配置 -->
