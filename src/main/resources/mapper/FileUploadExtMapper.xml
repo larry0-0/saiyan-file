@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.mgentertainment.file.dal.mapper.FileUploadExtMapper">
+  <insert id="batchInsert">
+    insert into file_upload(upload_id, filename, type, status, app_name)
+    VALUES
+    <foreach collection="collection" separator="," item="item">
+      (#{item.uploadId}, #{item.filename}, #{item.type}, #{item.status}, #{item.appName})
+    </foreach>
+  </insert>
+</mapper>

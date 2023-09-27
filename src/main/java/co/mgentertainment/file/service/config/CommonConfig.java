@@ -1,6 +1,8 @@
 package co.mgentertainment.file.service.config;
 
+import co.mgentertainment.common.doc.annonation.EnableCommonDoc;
 import co.mgentertainment.common.eventbus.annonation.EnableCommonEventBus;
+import co.mgentertainment.common.syslog.annotation.EnableCommonSyslog;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -10,5 +12,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableCommonEventBus
+@EnableCommonDoc
+@EnableCommonSyslog
 public class CommonConfig {
 }

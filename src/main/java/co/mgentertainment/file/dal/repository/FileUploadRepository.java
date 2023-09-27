@@ -1,11 +1,12 @@
 package co.mgentertainment.file.dal.repository;
 
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author auto
@@ -20,6 +21,16 @@ public interface FileUploadRepository {
      * @return uploadId
      */
     Long addFileUpload(FileUploadDO fileUploadDO);
+
+    /**
+     * batch add FileUpload
+     *
+     * @param filenames
+     * @param resourceTypeEnum
+     * @param appName
+     * @return
+     */
+    Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appName);
 
     /**
      * update FileUpload
@@ -70,5 +81,11 @@ public interface FileUploadRepository {
      */
     Boolean removeFileUpload(Long uploadId);
 
-    Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status);
+    /**
+     * update FileUpload by uploadId
+     *
+     * @param uploadDO
+     * @return
+     */
+    Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO);
 }

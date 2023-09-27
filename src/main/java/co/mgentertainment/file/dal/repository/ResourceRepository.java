@@ -68,4 +68,13 @@ public interface ResourceRepository {
      * @return
      */
     Boolean removeResource(Long rid);
+
+    /**
+     * get Resource by uploadIds
+     *
+     * @param uploadIds
+     * @return
+     */
+    List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds);
+
 }

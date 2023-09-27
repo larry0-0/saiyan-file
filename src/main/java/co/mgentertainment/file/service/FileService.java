@@ -1,11 +1,15 @@
 package co.mgentertainment.file.service;
 
-import co.mgentertainment.file.dal.enums.ResourceTypeEnum;
-import co.mgentertainment.file.service.dto.FileUploadInfoDTO;
+import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.dto.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author larry
@@ -14,11 +18,30 @@ import java.util.List;
  */
 public interface FileService {
 
-    FileUploadInfoDTO upload(MultipartFile file);
+    UploadedImageDTO uploadImage(MultipartFile file);
 
-    String file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType);
+    UploadedFileDTO uploadFile(MultipartFile file);
 
-    void folder2CloudStorage(File folder, ResourceTypeEnum resourceType);
+    VideoUploadInfoDTO uploadVideo(MultipartFile file, CuttingSetting cuttingSetting);
 
-    List<FileUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
+    void reuploadVideo(Long uploadId, CuttingSetting cuttingSetting);
+
+    void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid);
+
+    List<VideoUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
+
+    PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
+
+    void uploadLocalTrailUnderResource(File trailVideo, Long rid, String subDirName);
+
+    Map<String, Long> batchAddUploadVideoRecord(List<String> filename);
+
+    void updateUpload(FileUploadDTO fileUploadDTO);
+
+    void updateUploadStatus(Long uploadId, UploadStatusEnum status);
+
+    void updateUploadRid(Long uploadId, UploadStatusEnum status, Long rid);
+
+    Long saveResource(ResourceDTO resourceDTO);
+
 }

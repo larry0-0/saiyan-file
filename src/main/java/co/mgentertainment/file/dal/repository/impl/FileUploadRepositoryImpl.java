@@ -1,18 +1,25 @@
 package co.mgentertainment.file.dal.repository.impl;
 
 import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
-import co.mgentertainment.file.dal.enums.UploadStatusEnum;
+import co.mgentertainment.file.dal.mapper.FileUploadExtMapper;
 import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
+import com.google.common.collect.Maps;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author auto
@@ -26,13 +33,36 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
 
     private final FileUploadMapper fileUploadMapper;
 
+    private final FileUploadExtMapper fileUploadExtMapper;
+
     @Override
     public Long addFileUpload(FileUploadDO fileUploadDO) {
-        if (fileUploadDO != null) {
+        if (fileUploadDO != null && fileUploadDO.getUploadId() == null) {
             fileUploadDO.setUploadId(cachedUidGenerator.getUID());
         }
         fileUploadMapper.insertSelective(fileUploadDO);
         return fileUploadDO.getUploadId();
+    }
+
+    @Override
+    public Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appName) {
+        if (CollectionUtils.isEmpty(filenames) || resourceTypeEnum == null) {
+            return Maps.newHashMap();
+        }
+        List<FileUploadDO> list = filenames.stream().map(fn -> {
+            FileUploadDO fileUploadDO = new FileUploadDO();
+            fileUploadDO.setUploadId(cachedUidGenerator.getUID());
+            fileUploadDO.setFilename(fn);
+            fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
+            fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
+            fileUploadDO.setAppName(Optional.ofNullable(appName).orElse(StringUtils.EMPTY));
+            return fileUploadDO;
+        }).collect(Collectors.toList());
+        int rowcount = fileUploadExtMapper.batchInsert(list);
+        if (rowcount > 0) {
+            return list.stream().collect(Collectors.toMap(FileUploadDO::getFilename, FileUploadDO::getUploadId));
+        }
+        return Maps.newHashMap();
     }
 
     @Override
@@ -89,11 +119,9 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     }
 
     @Override
-    public Boolean updateUploadStatus(Long uploadId, UploadStatusEnum status) {
-        FileUploadDO upload = new FileUploadDO();
-        upload.setUploadId(uploadId);
-        upload.setStatus(Optional.ofNullable(status.getValue()).orElse(0).shortValue());
-        fileUploadMapper.updateByPrimaryKeySelective(upload);
-        return null;
+    public Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO) {
+        Assert.notNull(uploadDO, "fileUploadDO can not be null");
+        Assert.notNull(uploadDO.getUploadId(), "uploadId can not be null");
+        return fileUploadMapper.updateByPrimaryKeySelective(uploadDO) > 0;
     }
 }

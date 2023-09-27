@@ -8,7 +8,7 @@
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} [%thread] [%logger{50}] [%X{TRACE_ID}] - %msg%n"/>
     <!-- 控制台打印日志的相关配置 -->
     <logger name="co.mgentertainment.file" level="DEBUG"/>
-    <logger name="org.springframework.security" level="INFO"/>
+    <logger name="org.springframework.security" level="DEBUG"/>
     <logger name="springfox" level="WARN"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- 日志格式 -->
