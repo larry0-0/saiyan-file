@@ -40,6 +40,7 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
             if (trailerFile == null) {
                 return;
             }
+            stopWatch.stop();
             log.debug("(4.2)结束{}, 预告片位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), trailerFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             eventBus.post(
                     VideoUploadEvent.builder()
