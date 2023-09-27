@@ -16,7 +16,7 @@
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
-        <common.lib.version>1.0.0-SNAPSHOT</common.lib.version>
+        <common.lib.version>${common.version}</common.lib.version>
         <maven.build.timestamp.format>yyMMddHHmm</maven.build.timestamp.format>
         <mybatis.generator.skip>true</mybatis.generator.skip>
     </properties>
