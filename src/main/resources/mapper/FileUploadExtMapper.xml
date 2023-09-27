@@ -5,7 +5,7 @@
     insert into file_upload(upload_id, filename, type, status, app_name)
     VALUES
     <foreach collection="collection" separator="," item="item">
-      (#{item.uploadIdId}, #{item.filename}, #{item.type}, #{item.status}, #{item.appName})
+      (#{item.uploadId}, #{item.filename}, #{item.type}, #{item.status}, #{item.appName})
     </foreach>
   </insert>
 </mapper>
