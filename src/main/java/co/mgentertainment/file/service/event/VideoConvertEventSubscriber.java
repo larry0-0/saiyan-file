@@ -38,7 +38,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
             File originVideo = event.getOriginVideo();
             StopWatch stopWatch = new StopWatch();
             stopWatch.start("转码");
-            log.debug("(2.1)开始{}, uploadId:{}, 视频位置:{}", stopWatch.getLastTaskName(), uploadId, originVideo.getAbsolutePath());
+            log.debug("(2.1)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
             File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
             stopWatch.stop();
             log.debug("(2.2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());

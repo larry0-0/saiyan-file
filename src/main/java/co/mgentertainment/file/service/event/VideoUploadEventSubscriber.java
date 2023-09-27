@@ -46,7 +46,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             if (event.getVideoType() == VideoType.FEATURE_FILM) {
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start("上传正片并添加资源记录");
-                log.debug("(3.1)开始{}, uploadId:{}, 正片:{}", stopWatch.getLastTaskName(), uploadId, processedVideo.getAbsolutePath());
+                log.debug("(3.1)开始{}, uploadId:{}, 正片:{}", stopWatch.currentTaskName(), uploadId, processedVideo.getAbsolutePath());
                 Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppName(), uploadId);
                 stopWatch.stop();
                 log.debug("(3.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
@@ -63,7 +63,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             } else {
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start("上传预告片");
-                log.debug("(5.1)开始{}, uploadId:{}, 预告片:{}", stopWatch.getLastTaskName(), uploadId, processedVideo.getAbsolutePath());
+                log.debug("(5.1)开始{}, uploadId:{}, 预告片:{}", stopWatch.currentTaskName(), uploadId, processedVideo.getAbsolutePath());
                 uploadWorkflowService.uploadTrailer2CloudStorage(event.getProcessedVideo(), event.getRid(), subDirName, event.getUploadId());
                 stopWatch.stop();
                 log.debug("(5.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());

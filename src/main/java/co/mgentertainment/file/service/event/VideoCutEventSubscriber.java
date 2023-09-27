@@ -35,7 +35,7 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
             File originVideo = event.getOriginVideo();
             StopWatch stopWatch = new StopWatch();
             stopWatch.start("剪切预告片");
-            log.debug("(4.1)开始{}, uploadId:{}, 原始片:{}", stopWatch.getLastTaskName(), event.getUploadId(), originVideo.getAbsolutePath());
+            log.debug("(4.1)开始{}, uploadId:{}, 原始片:{}", stopWatch.currentTaskName(), event.getUploadId(), originVideo.getAbsolutePath());
             File trailerFile = uploadWorkflowService.cutVideo(event.getOriginVideo(), event.getCuttingSetting(), event.getUploadId());
             if (trailerFile == null) {
                 return;
