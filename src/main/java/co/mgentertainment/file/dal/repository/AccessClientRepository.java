@@ -51,7 +51,7 @@ public interface AccessClientRepository {
      * @param appCode
      * @return
      */
-    boolean existsAppCode(String appCode);
+    boolean validateAppCode(String appCode);
 
     /**
      * list AccessClient by example

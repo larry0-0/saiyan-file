@@ -52,7 +52,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
                             .originVideo(event.getOriginVideo())
                             .videoType(VideoType.FEATURE_FILM)
                             .cuttingSetting(event.getCuttingSetting())
-                            .appName(event.getAppName())
+                            .appCode(event.getAppCode())
                             .build());
         } catch (Exception e) {
             log.error("转码事件异常", e);

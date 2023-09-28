@@ -155,6 +155,18 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>default</id>
+            <properties>
+                <env></env>
+                <nacos.server></nacos.server>
+                <nacos.username></nacos.username>
+                <nacos.password></nacos.password>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <finalName>mg-file-${project.version}-${maven.build.timestamp}</finalName>
 
@@ -258,6 +270,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                    <delimiters>
+                        <delimiter>@</delimiter>
+                    </delimiters>
+                </configuration>
+                <version>3.1.0</version>
             </plugin>
         </plugins>
 

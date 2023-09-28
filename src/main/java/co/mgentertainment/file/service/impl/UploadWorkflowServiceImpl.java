@@ -66,7 +66,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     .type(Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue())
                     .folder(subDirName)
                     .size(MediaHelper.getMediaSize(originVideo.length()))
-                    .appName(appCode)
+                    .appCode(appCode)
                     .duration(ffmpegService.getMediaDuration(originVideo))
                     .build());
             log.debug("正片上传成功后file_upload表填充rid, uploadId:{}, rid:{}", uploadId, rid);

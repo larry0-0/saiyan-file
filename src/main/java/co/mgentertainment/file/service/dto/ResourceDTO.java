@@ -20,5 +20,5 @@ public class ResourceDTO {
     private BigDecimal size;
     private Short type;
     private Integer duration;
-    private String appName;
+    private String appCode;
 }

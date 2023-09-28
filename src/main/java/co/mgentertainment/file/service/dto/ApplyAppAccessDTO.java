@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.Date;
 
 /**
  * @author larry
@@ -18,4 +19,6 @@ public class ApplyAppAccessDTO {
     private String appName;
     @Schema(description = "加密算法类型")
     private String algorithmType;
+    @Schema(description = "过期日期，格式yyyy-mm-dd，不填默认不过期")
+    private Date expiredDate;
 }

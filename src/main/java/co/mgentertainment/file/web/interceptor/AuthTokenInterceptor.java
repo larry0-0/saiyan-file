@@ -6,14 +6,14 @@ import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.web.cache.ClientHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static co.mgentertainment.file.web.controller.AccessClientController.TOKEN_HEADER;
 
 /**
  * @author larry
@@ -31,19 +31,22 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (StringUtils.equalsAnyIgnoreCase(request.getMethod(), HttpMethod.OPTIONS.name())) {
+            return true;
+        }
         if (!mgfsProperties.getAuthentication().isEnabled()) {
             return true;
         }
-        String token = request.getHeader(TOKEN_HEADER);
+        String token = request.getHeader(mgfsProperties.getApiToken());
         String algorithm = mgfsProperties.getAuthentication().getAlgorithm();
         String appCode;
         if (MgfsProperties.AlgorithmType.RSA.name().equalsIgnoreCase(algorithm)) {
-            appCode = SecurityHelper.rsaDecrypt(token, mgfsProperties.getAuthentication().getRsaPrivateKey(), 10);
+            appCode = SecurityHelper.rsaPeriodDecrypt(token, mgfsProperties.getAuthentication().getRsaPrivateKey(), null);
         } else {
             appCode = SecurityHelper.hyperDecrypt(token, mgfsProperties.getAuthentication().getAesSecret());
         }
         ClientHolder.setCurrentClient(appCode);
-        return accessClientRepository.existsAppCode(appCode);
+        return accessClientRepository.validateAppCode(appCode);
     }
 
     @Override

@@ -7,9 +7,9 @@ import co.mgentertainment.file.service.AccessClientService;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.dto.ApplyAppAccessDTO;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.RandomUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Optional;
 
 /**
@@ -31,8 +31,8 @@ public class AccessClientServiceImpl implements AccessClientService {
         accessClientDO.setEncryptAlgorithm(Optional.ofNullable(applyAppAccessDTO.getAlgorithmType()).orElse(MgfsProperties.AlgorithmType.RSA.name()));
         String appCode = accessClientRepository.saveAccessClient(accessClientDO);
         if (MgfsProperties.AlgorithmType.RSA.name().equalsIgnoreCase(accessClientDO.getEncryptAlgorithm())) {
-            String encrypt = SecurityHelper.rsaEncrypt(appCode, mgfsProperties.getAuthentication().getRsaPublicKey());
-            return String.format("%s;%d", encrypt, (System.currentTimeMillis() + RandomUtils.nextInt(0, 9000)));
+            Date expiredDate = applyAppAccessDTO.getExpiredDate();
+            return SecurityHelper.rsaPeriodEncrypt(appCode, mgfsProperties.getAuthentication().getRsaPublicKey(), expiredDate);
         }
         return SecurityHelper.hyperEncrypt(appCode, mgfsProperties.getAuthentication().getAesSecret());
     }

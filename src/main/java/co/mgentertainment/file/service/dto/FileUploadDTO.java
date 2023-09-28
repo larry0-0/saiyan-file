@@ -19,7 +19,7 @@ public class FileUploadDTO {
     @NotEmpty(message = "上传状态不能为空")
     private Short status;
 
-    private String appName;
+    private String appCode;
 
     private Long rid;
 }
