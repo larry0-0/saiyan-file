@@ -6,13 +6,16 @@ import co.mgentertainment.file.dal.po.AccessClientDO;
 import co.mgentertainment.file.dal.po.AccessClientExample;
 import co.mgentertainment.file.dal.repository.AccessClientRepository;
 import co.mgentertainment.file.service.config.MgfsProperties;
+import com.google.common.base.Preconditions;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,15 +51,14 @@ public class AccessClientRepositoryImpl implements AccessClientRepository {
 
     @Override
     public String saveAccessClient(AccessClientDO accessClientDO) {
-        Assert.notNull(accessClientDO, "accessClientDO can not be null");
-        Assert.notNull(accessClientDO.getAppName(), "appName can not be null");
+        Preconditions.checkArgument(accessClientDO != null, "accessClientDO can not be null");
+        Preconditions.checkArgument(StringUtils.isNotBlank(accessClientDO.getAppName()), "appName can not be blank");
         AccessClientExample example = new AccessClientExample();
         example.createCriteria().andAppNameEqualTo(accessClientDO.getAppName()).andDisabledEqualTo((byte) 0);
         List<AccessClientDO> accessClientDOS = accessClientMapper.selectByExample(example);
         if (CollectionUtils.isNotEmpty(accessClientDOS)) {
-            AccessClientDO accessClient = accessClientDOS.get(0);
-            updateAccessClient(accessClient, example);
-            return accessClient.getAppCode();
+            updateAccessClient(accessClientDO, example);
+            return accessClientDO.getAppCode();
         } else {
             return addAccessClient(accessClientDO);
         }
@@ -68,11 +70,15 @@ public class AccessClientRepositoryImpl implements AccessClientRepository {
     }
 
     @Override
-    public boolean existsAppCode(String appCode) {
+    public boolean validateAppCode(String appCode) {
         AccessClientExample example = new AccessClientExample();
         example.createCriteria().andAppCodeEqualTo(appCode).andDisabledEqualTo((byte) 0);
-        long count = accessClientMapper.countByExample(example);
-        return count > 0;
+        List<AccessClientDO> accessClientDOS = accessClientMapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(accessClientDOS)) {
+            return false;
+        }
+        Date expiredDate = accessClientDOS.get(0).getExpiredDate();
+        return expiredDate == null || expiredDate.after(new Date());
     }
 
     @Override

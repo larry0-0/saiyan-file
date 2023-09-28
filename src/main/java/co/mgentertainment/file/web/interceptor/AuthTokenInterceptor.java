@@ -36,12 +36,12 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
         String algorithm = mgfsProperties.getAuthentication().getAlgorithm();
         String appCode;
         if (MgfsProperties.AlgorithmType.RSA.name().equalsIgnoreCase(algorithm)) {
-            appCode = SecurityHelper.rsaDecrypt(token, mgfsProperties.getAuthentication().getRsaPrivateKey(), 10);
+            appCode = SecurityHelper.rsaPeriodDecrypt(token, mgfsProperties.getAuthentication().getRsaPrivateKey(), null);
         } else {
             appCode = SecurityHelper.hyperDecrypt(token, mgfsProperties.getAuthentication().getAesSecret());
         }
         ClientHolder.setCurrentClient(appCode);
-        return accessClientRepository.existsAppCode(appCode);
+        return accessClientRepository.validateAppCode(appCode);
     }
 
     @Override
