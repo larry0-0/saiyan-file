@@ -2,10 +2,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="co.mgentertainment.file.dal.mapper.FileUploadExtMapper">
   <insert id="batchInsert">
-    insert into file_upload(upload_id, filename, type, status, app_name)
+    insert into file_upload(upload_id, filename, type, status, app_code)
     VALUES
     <foreach collection="collection" separator="," item="item">
-      (#{item.uploadId}, #{item.filename}, #{item.type}, #{item.status}, #{item.appName})
+      (#{item.uploadId}, #{item.filename}, #{item.type}, #{item.status}, #{item.appCode})
     </foreach>
   </insert>
 </mapper>
