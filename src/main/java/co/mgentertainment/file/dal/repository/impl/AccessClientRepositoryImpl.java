@@ -54,8 +54,9 @@ public class AccessClientRepositoryImpl implements AccessClientRepository {
         example.createCriteria().andAppNameEqualTo(accessClientDO.getAppName()).andDisabledEqualTo((byte) 0);
         List<AccessClientDO> accessClientDOS = accessClientMapper.selectByExample(example);
         if (CollectionUtils.isNotEmpty(accessClientDOS)) {
-            updateAccessClient(accessClientDO, example);
-            return accessClientDO.getAppCode();
+            AccessClientDO accessClient = accessClientDOS.get(0);
+            updateAccessClient(accessClient, example);
+            return accessClient.getAppCode();
         } else {
             return addAccessClient(accessClientDO);
         }
