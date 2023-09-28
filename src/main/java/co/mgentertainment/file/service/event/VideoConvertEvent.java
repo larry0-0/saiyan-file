@@ -22,5 +22,5 @@ public class VideoConvertEvent extends AbstractEvent {
 
     private CuttingSetting cuttingSetting;
 
-    private String appName;
+    private String appCode;
 }

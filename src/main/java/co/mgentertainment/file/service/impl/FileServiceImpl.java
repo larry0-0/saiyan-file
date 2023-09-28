@@ -175,7 +175,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                         .uploadId(uploadId)
                         .originVideo(file)
                         .cuttingSetting(cuttingSetting)
-                        .appName(ClientHolder.getCurrentClient())
+                        .appCode(ClientHolder.getCurrentClient())
                         .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
     }
@@ -207,7 +207,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .originVideo(originVideo)
                                     .videoType(VideoType.FEATURE_FILM)
                                     .cuttingSetting(cuttingSetting)
-                                    .appName(ClientHolder.getCurrentClient())
+                                    .appCode(ClientHolder.getCurrentClient())
                                     .build());
                 } else {
                     eventBus.post(
@@ -215,7 +215,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .uploadId(uploadId)
                                     .originVideo(originVideo)
                                     .cuttingSetting(cuttingSetting)
-                                    .appName(ClientHolder.getCurrentClient())
+                                    .appCode(ClientHolder.getCurrentClient())
                                     .build());
                 }
                 break;
@@ -228,7 +228,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .originVideo(originVideo)
                                     .videoType(VideoType.FEATURE_FILM)
                                     .cuttingSetting(cuttingSetting)
-                                    .appName(ClientHolder.getCurrentClient())
+                                    .appCode(ClientHolder.getCurrentClient())
                                     .build());
                 } else {
                     ResourceDO resourceDO = resourceRepository.getResourceByRid(fileUploadDO.getRid());
@@ -240,7 +240,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                         .originVideo(originVideo)
                                         .videoType(VideoType.FEATURE_FILM)
                                         .cuttingSetting(cuttingSetting)
-                                        .appName(ClientHolder.getCurrentClient())
+                                        .appCode(ClientHolder.getCurrentClient())
                                         .build());
                         break;
                     }
@@ -264,7 +264,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                         .originVideo(originVideo)
                                         .videoType(VideoType.FEATURE_FILM)
                                         .cuttingSetting(cuttingSetting)
-                                        .appName(ClientHolder.getCurrentClient())
+                                        .appCode(ClientHolder.getCurrentClient())
                                         .build());
                     } else {
                         eventBus.post(
@@ -346,7 +346,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         example.setOffset((condition.getPageNo() - 1) * condition.getPageSize());
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
         if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
-            criteria.andAppNameEqualTo(ClientHolder.getCurrentClient());
+            criteria.andAppCodeEqualTo(ClientHolder.getCurrentClient());
         }
         if (StringUtils.isNotBlank(condition.getFilename())) {
             criteria.andFilenameLike(String.format("%%%s%%", condition.getFilename()));
@@ -405,7 +405,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public Long saveResource(ResourceDTO resourceDTO) {
         ResourceDO resourceDO = FileObjectMapper.INSTANCE.toResourceDO(resourceDTO);
         if (StringUtils.isNotEmpty(ClientHolder.getCurrentClient())) {
-            resourceDO.setAppName(ClientHolder.getCurrentClient());
+            resourceDO.setAppCode(ClientHolder.getCurrentClient());
         }
         return resourceRepository.saveResource(resourceDO);
     }

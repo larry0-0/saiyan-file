@@ -45,7 +45,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     }
 
     @Override
-    public Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appName) {
+    public Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode) {
         if (CollectionUtils.isEmpty(filenames) || resourceTypeEnum == null) {
             return Maps.newHashMap();
         }
@@ -55,7 +55,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             fileUploadDO.setFilename(fn);
             fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
             fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
-            fileUploadDO.setAppName(Optional.ofNullable(appName).orElse(StringUtils.EMPTY));
+            fileUploadDO.setAppCode(Optional.ofNullable(appCode).orElse(StringUtils.EMPTY));
             return fileUploadDO;
         }).collect(Collectors.toList());
         int rowcount = fileUploadExtMapper.batchInsert(list);

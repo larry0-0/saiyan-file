@@ -27,10 +27,10 @@ public interface FileUploadRepository {
      *
      * @param filenames
      * @param resourceTypeEnum
-     * @param appName
+     * @param appCode
      * @return
      */
-    Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appName);
+    Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode);
 
     /**
      * update FileUpload
