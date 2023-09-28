@@ -6,6 +6,7 @@ import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.web.cache.ClientHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -29,6 +30,9 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (StringUtils.equalsAnyIgnoreCase(request.getMethod(), "OPTIONS")) {
+            return true;
+        }
         if (!mgfsProperties.getAuthentication().isEnabled()) {
             return true;
         }
