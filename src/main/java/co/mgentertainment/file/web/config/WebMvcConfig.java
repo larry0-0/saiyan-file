@@ -1,5 +1,6 @@
 package co.mgentertainment.file.web.config;
 
+import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.web.interceptor.AuthTokenInterceptor;
 import co.mgentertainment.file.web.interceptor.WhitelistAccessInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +10,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import static co.mgentertainment.file.web.controller.AccessClientController.TOKEN_HEADER;
 
 /**
  * @author larry
@@ -26,6 +25,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final WhitelistAccessInterceptor whitelistAccessInterceptor;
     private final AuthTokenInterceptor authTokenInterceptor;
+    private final MgfsProperties mgfsProperties;
 
     /**
      * allow CORS requests
@@ -40,7 +40,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*")
                 .allowedHeaders("*")
                 // 暴露 header 中的其他属性给客户端应用程序
-                .exposedHeaders(TOKEN_HEADER)
+                .exposedHeaders(mgfsProperties.getApiToken())
                 .maxAge(3600);
     }
 

@@ -19,6 +19,11 @@ import java.util.List;
 public class MgfsProperties {
 
     /**
+     * 口令header name
+     */
+    private String apiToken = StringUtils.EMPTY;
+
+    /**
      * 申请令牌
      */
     private AccessApply applyAccess = new AccessApply();

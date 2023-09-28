@@ -13,8 +13,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static co.mgentertainment.file.web.controller.AccessClientController.TOKEN_HEADER;
-
 /**
  * @author larry
  * @createTime 2022/12/5
@@ -34,7 +32,7 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
         if (!mgfsProperties.getAuthentication().isEnabled()) {
             return true;
         }
-        String token = request.getHeader(TOKEN_HEADER);
+        String token = request.getHeader(mgfsProperties.getApiToken());
         String algorithm = mgfsProperties.getAuthentication().getAlgorithm();
         String appCode;
         if (MgfsProperties.AlgorithmType.RSA.name().equalsIgnoreCase(algorithm)) {
