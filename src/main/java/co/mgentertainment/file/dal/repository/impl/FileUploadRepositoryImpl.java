@@ -18,6 +18,7 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -54,9 +55,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             fileUploadDO.setFilename(fn);
             fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
             fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
-            if (StringUtils.isNotBlank(appCode)) {
-                fileUploadDO.setAppCode(appCode);
-            }
+            fileUploadDO.setAppCode(Optional.ofNullable(appCode).orElse(StringUtils.EMPTY));
             return fileUploadDO;
         }).collect(Collectors.toList());
         int rowcount = fileUploadExtMapper.batchInsert(list);
