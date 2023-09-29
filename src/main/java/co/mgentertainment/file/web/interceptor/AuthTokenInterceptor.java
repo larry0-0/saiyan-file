@@ -45,6 +45,9 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
         } else {
             appCode = SecurityHelper.hyperDecrypt(token, mgfsProperties.getAuthentication().getAesSecret());
         }
+        if (StringUtils.isEmpty(appCode)) {
+            return false;
+        }
         ClientHolder.setCurrentClient(appCode);
         return accessClientRepository.validateAppCode(appCode);
     }
