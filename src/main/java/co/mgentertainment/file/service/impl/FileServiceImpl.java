@@ -374,8 +374,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public Map<String, Long> batchAddUploadVideoRecord(List<String> filename) {
-        return fileUploadRepository.batchAddFileUpload(filename, ResourceTypeEnum.VIDEO, ClientHolder.getCurrentClient());
+    public Map<String, Long> batchAddUploadVideoRecord(List<String> filenames) {
+        return fileUploadRepository.batchAddFileUpload(filenames, ResourceTypeEnum.VIDEO, ClientHolder.getCurrentClient());
     }
 
     @Override
