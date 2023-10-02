@@ -183,10 +183,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
     @Override
     public void reuploadVideo(Long uploadId, CuttingSetting cuttingSetting) {
         FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
-        File originVideo = MediaHelper.getUploadFileParentDirByUploadId(uploadId);
+        File originVideoDir = MediaHelper.getUploadIdDir(uploadId);
+        File originVideo = new File(originVideoDir, fileUploadDO.getFilename());
         if (fileUploadDO == null) {
-            if (originVideo.exists()) {
-                FileUtil.del(originVideo);
+            if (originVideoDir.exists()) {
+                FileUtil.del(originVideoDir);
             }
             throw new IllegalArgumentException("uploadId not exists");
         }
@@ -544,7 +545,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     private File saveMultipartFileInDisk(MultipartFile multipartFile, Long uploadId) throws IOException {
-        File folder = MediaHelper.getUploadFileParentDirByUploadId(uploadId);
+        File folder = MediaHelper.getUploadIdDir(uploadId);
         FileUtil.mkdir(folder);
         File localFile = new File(folder, multipartFile.getOriginalFilename());
         multipartFile.transferTo(localFile);

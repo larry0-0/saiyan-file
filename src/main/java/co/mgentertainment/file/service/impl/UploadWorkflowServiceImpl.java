@@ -128,7 +128,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     private void deleteCompletedVideoFolder(Long uploadId) {
-        File folderToDelete = MediaHelper.getUploadFileParentDirByUploadId(uploadId);
+        File folderToDelete = MediaHelper.getUploadIdDir(uploadId);
         if (folderToDelete != null && folderToDelete.exists()) {
             log.debug("(6)删除视频目录：{}", folderToDelete.getAbsolutePath());
             FileUtil.del(folderToDelete.getAbsolutePath());

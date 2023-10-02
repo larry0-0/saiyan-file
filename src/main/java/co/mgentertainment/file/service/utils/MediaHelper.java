@@ -28,8 +28,8 @@ public class MediaHelper {
         return String.format("%d:%02d:%02d", hours, minutes, remainingSeconds);
     }
 
-    public static File getUploadFileParentDirByUploadId(Long uploadId) {
-        return new File("/tmp/mgfs/"+ uploadId.toString());
+    public static File getUploadIdDir(Long uploadId) {
+        return new File("/data/mgfs/"+ uploadId.toString());
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
