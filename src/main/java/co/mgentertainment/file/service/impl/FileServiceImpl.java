@@ -198,7 +198,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         File filmVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         File trailerVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.TRAILER.getValue(), ResourceSuffix.TRAILER);
         switch (oldStatus) {
-            case CONVERTING:
+            case CONVERT_FAILURE:
                 if (filmVideo.exists()) {
                     eventBus.post(
                             VideoUploadEvent.builder()
@@ -219,7 +219,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .build());
                 }
                 break;
-            case UPLOADING:
+            case UPLOAD_FAILURE:
                 if (fileUploadDO.getRid() == null) {
                     eventBus.post(
                             VideoUploadEvent.builder()
@@ -253,7 +253,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .build());
                 }
                 break;
-            case TRAILER_CUTTING_AND_UPLOADING:
+            case TRAILER_CUT_FAILURE:
+            case TRAILER_UPLOAD_FAILURE:
                 if (trailerVideo.exists()) {
                     ResourceDO resourceDO = resourceRepository.getResourceByRid(fileUploadDO.getRid());
                     if (resourceDO == null) {

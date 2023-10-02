@@ -52,7 +52,11 @@ public class FfmpegServiceImpl implements FfmpegService {
 
     @Override
     public Integer getMediaDuration(File file) {
-        return new Double(getMediaMetadata(file).getFormat().duration).intValue();
+        try {
+            return new Double(getMediaMetadata(file).getFormat().duration).intValue();
+        } catch (Exception e) {
+            return Integer.valueOf(0);
+        }
     }
 
     @Override
