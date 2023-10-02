@@ -52,12 +52,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -548,7 +550,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         File folder = MediaHelper.getUploadIdDir(uploadId);
         FileUtil.mkdir(folder);
         File localFile = new File(folder, multipartFile.getOriginalFilename());
-        multipartFile.transferTo(localFile.getAbsoluteFile());
+        FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));
         return localFile;
     }
 }
