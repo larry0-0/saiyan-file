@@ -163,11 +163,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
         log.debug("(1.1)添加上传记录:{}", filename);
         Map<String, Long> map = this.batchAddUploadVideoRecord(ListUtil.of(filename));
         Long uploadId = map.get(filename);
-        File file;
+        File file = null;
         try {
             file = saveMultipartFileInDisk(multipartFile, uploadId);
         } catch (IOException e) {
-            throw new RuntimeException("fail to persist file", e);
+            log.warn("fail to persist file", e);
+        }
+        if (file == null || !file.exists()) {
+            throw new IllegalArgumentException("fail to transfer MultipartFile");
         }
         log.debug("(1.2)已上传记录:{} uploadId:{}", filename, uploadId);
         eventBus.post(
