@@ -551,8 +551,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         File folder = MediaHelper.getUploadIdDir(uploadId);
         FileUtil.mkdir(folder);
         File localFile = new File(folder, multipartFile.getOriginalFilename());
-        log.info("save multipartFile in disk, filename:{}, filePath:{}", multipartFile.getOriginalFilename(), localFile.getAbsolutePath());
-        multipartFile.transferTo(localFile.toPath());
+        multipartFile.transferTo(localFile.getAbsoluteFile());
         return localFile;
     }
 }
