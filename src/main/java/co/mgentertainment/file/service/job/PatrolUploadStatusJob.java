@@ -42,9 +42,10 @@ public class PatrolUploadStatusJob {
         FileUploadExample example = new FileUploadExample();
         example.createCriteria()
                 .andDeletedEqualTo((byte) 0)
-                .andStatusIn(ListUtil.of(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue(),
-                        Integer.valueOf(UploadStatusEnum.UPLOADING.getValue()).shortValue(),
-                        Integer.valueOf(UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING.getValue()).shortValue()))
+                .andStatusIn(ListUtil.of(Integer.valueOf(UploadStatusEnum.CONVERT_FAILURE.getValue()).shortValue(),
+                        Integer.valueOf(UploadStatusEnum.UPLOAD_FAILURE.getValue()).shortValue(),
+                        Integer.valueOf(UploadStatusEnum.TRAILER_CUT_FAILURE.getValue()).shortValue(),
+                        Integer.valueOf(UploadStatusEnum.TRAILER_UPLOAD_FAILURE.getValue()).shortValue()))
                 .andCreateTimeLessThan(DateUtils.addMinutes(new Date(), -10));
         List<FileUploadDO> fileUploadDOS = fileUploadRepository.getFileUploadsByExample(example);
         if (CollectionUtils.isEmpty(fileUploadDOS)) {
