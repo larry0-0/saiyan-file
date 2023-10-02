@@ -19,6 +19,8 @@ public class QueryUploadConditionDTO {
     private Integer pageNo;
     @Schema(description = "每页数量")
     private Integer pageSize;
+    @Schema(description = "应用编码")
+    private String appCode;
     @Schema(description = "文件名")
     private String filename;
     @Schema(description = "文件类型")

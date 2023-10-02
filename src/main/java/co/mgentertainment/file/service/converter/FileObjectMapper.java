@@ -1,8 +1,10 @@
 package co.mgentertainment.file.service.converter;
 
+import co.mgentertainment.file.dal.po.AccessClientDO;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.ResourceDO;
 import co.mgentertainment.file.dal.po.ResourceLineDO;
+import co.mgentertainment.file.service.dto.AccessClientDTO;
 import co.mgentertainment.file.service.dto.FileUploadDTO;
 import co.mgentertainment.file.service.dto.ResourceDTO;
 import co.mgentertainment.file.service.dto.ResourceLineDTO;
@@ -26,4 +28,6 @@ public interface FileObjectMapper {
     FileUploadDO toFileUploadDO(FileUploadDTO fileUploadDTO);
 
     ResourceDO toResourceDO(ResourceDTO resourceDTO);
+
+    List<AccessClientDTO> toAccessClientDTOList(List<AccessClientDO> accessClientDOList);
 }

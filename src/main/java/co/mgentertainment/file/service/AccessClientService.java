@@ -1,6 +1,9 @@
 package co.mgentertainment.file.service;
 
+import co.mgentertainment.file.service.dto.AccessClientDTO;
 import co.mgentertainment.file.service.dto.ApplyAppAccessDTO;
+
+import java.util.List;
 
 /**
  * @author larry
@@ -24,4 +27,11 @@ public interface AccessClientService {
      * @return
      */
     Boolean disableAccess(String appCode);
+
+    /**
+     * get all clients
+     *
+     * @return
+     */
+    List<AccessClientDTO> getAllClients();
 }

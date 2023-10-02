@@ -5,6 +5,7 @@ import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.AccessClientService;
 import co.mgentertainment.file.service.config.MgfsProperties;
+import co.mgentertainment.file.service.dto.AccessClientDTO;
 import co.mgentertainment.file.service.dto.ApplyAppAccessDTO;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,5 +45,12 @@ public class AccessClientController {
     @SysLog("disable接入")
     public R<Boolean> disableAccess(@PathVariable("appCode") @NotNull String appCode) {
         return R.ok(accessClientService.disableAccess(appCode));
+    }
+
+    @PostMapping("/clients")
+    @Operation(summary = "查询所有接入客户端")
+    @SysLog("查询所有接入客户端")
+    public R<List<AccessClientDTO>> getAllClients() {
+        return R.ok(accessClientService.getAllClients());
     }
 }

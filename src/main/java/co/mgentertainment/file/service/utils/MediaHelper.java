@@ -29,7 +29,7 @@ public class MediaHelper {
     }
 
     public static File getUploadFileParentDirByUploadId(Long uploadId) {
-        return new File(new File(System.getProperty("user.home"), "tmp"), uploadId.toString());
+        return new File("/tmp/mgfs/"+ uploadId.toString());
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
