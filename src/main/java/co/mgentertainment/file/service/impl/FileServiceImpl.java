@@ -194,7 +194,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
             throw new IllegalArgumentException("uploadId not exists");
         }
         if (!originVideo.exists()) {
-            updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
+            // 多实例下本地磁盘找不到则忽略
+//            updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
             return;
         }
         UploadStatusEnum oldStatus = UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue());
