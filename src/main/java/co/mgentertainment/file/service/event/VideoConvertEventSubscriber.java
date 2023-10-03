@@ -43,6 +43,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
             stopWatch.stop();
             log.debug("(2.2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             if (m3u8File == null || !m3u8File.exists()) {
+                log.error("(2)找不到转码后的视频文件：{}", m3u8File != null ? m3u8File.getAbsolutePath() : null);
                 return;
             }
             eventBus.post(
