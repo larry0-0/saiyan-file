@@ -51,6 +51,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 stopWatch.stop();
                 log.debug("(3.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
                 if (rid == null) {
+                    log.error("(3)rid返回为空");
                     return;
                 }
                 eventBus.post(
