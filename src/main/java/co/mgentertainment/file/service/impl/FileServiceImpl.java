@@ -350,7 +350,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         example.setLimit(condition.getPageSize());
         example.setOffset((condition.getPageNo() - 1) * condition.getPageSize());
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
-        if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
+        if (StringUtils.isNotBlank(condition.getAppCode())) {
+            criteria.andAppCodeEqualTo(condition.getAppCode());
+        } else if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
             criteria.andAppCodeEqualTo(ClientHolder.getCurrentClient());
         }
         if (StringUtils.isNotBlank(condition.getFilename())) {
@@ -365,9 +367,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (null != condition.getUploadStartDate() && null != condition.getUploadEndDate()) {
             criteria.andCreateTimeBetween(condition.getUploadStartDate(), condition.getUploadEndDate());
         }
-        if (StringUtils.isNotBlank(condition.getAppCode())) {
-            criteria.andAppCodeEqualTo(condition.getAppCode());
-        }
+
         example.setOrderByClause("create_time desc");
         PageResult<FileUploadDO> pr = fileUploadRepository.queryFileUpload(example);
         List<VideoUploadInfoDTO> dtoList = toVideoUploadInfoDTOList(pr.getRecords());
