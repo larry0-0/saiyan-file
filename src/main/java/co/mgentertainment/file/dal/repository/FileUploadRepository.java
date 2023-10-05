@@ -2,6 +2,7 @@ package co.mgentertainment.file.dal.repository;
 
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 
@@ -31,6 +32,14 @@ public interface FileUploadRepository {
      * @return
      */
     Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode);
+
+    /**
+     * batch update FileUpload status
+     *
+     * @param uploadIds
+     * @param status
+     */
+    void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status);
 
     /**
      * update FileUpload

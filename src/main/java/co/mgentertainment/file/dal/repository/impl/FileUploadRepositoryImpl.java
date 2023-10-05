@@ -9,8 +9,10 @@ import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
  */
 @Repository("fileUploadRepository")
 @RequiredArgsConstructor
+@Slf4j
 public class FileUploadRepositoryImpl implements FileUploadRepository {
 
     private final CachedUidGenerator cachedUidGenerator;
@@ -63,6 +66,24 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             return list.stream().collect(Collectors.toMap(FileUploadDO::getFilename, FileUploadDO::getUploadId));
         }
         return Maps.newHashMap();
+    }
+
+    @Override
+    public void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status) {
+        if (CollectionUtils.isEmpty(uploadIds) || status == null) {
+            return;
+        }
+        Lists.partition(uploadIds, 200).forEach(sub -> {
+            try {
+                FileUploadDO update = new FileUploadDO();
+                update.setStatus(Integer.valueOf(status.getValue()).shortValue());
+                FileUploadExample example = new FileUploadExample();
+                example.createCriteria().andUploadIdIn(sub);
+                fileUploadMapper.updateByExampleSelective(update, example);
+            } catch (Exception e) {
+                log.error("批量修改上传状态失败", e);
+            }
+        });
     }
 
     @Override

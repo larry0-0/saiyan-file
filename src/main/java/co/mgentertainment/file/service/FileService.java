@@ -36,6 +36,8 @@ public interface FileService {
 
     Map<String, Long> batchAddUploadVideoRecord(List<String> filename);
 
+    void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status);
+
     void updateUpload(FileUploadDTO fileUploadDTO);
 
     void updateUploadStatus(Long uploadId, UploadStatusEnum status);
