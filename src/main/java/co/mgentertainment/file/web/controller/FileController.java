@@ -2,6 +2,7 @@ package co.mgentertainment.file.web.controller;
 
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
@@ -102,6 +103,13 @@ public class FileController {
         return R.ok(fileService.batchAddUploadVideoRecord(request.filenames));
     }
 
+    @PostMapping("/batchUpdateUploadStatus")
+    @Operation(summary = "供上传器批量更新上传状态")
+    public R<Void> batchUpdateUploadStatus(@RequestBody UpdateUploadsRequest request) {
+        fileService.batchUpdateUploadStatus(request.getUploadIds(), UploadStatusEnum.getByValue(request.getStatusCode()));
+        return R.ok();
+    }
+
     @PostMapping("/updateUploadStatus")
     @Operation(summary = "供上传器更新上传状态")
     public R<Void> updateUploadStatus(@RequestBody FileUploadDTO fileUploadDTO) {
@@ -118,5 +126,11 @@ public class FileController {
     @Data
     public static class AddUploadsRequest {
         private List<String> filenames;
+    }
+
+    @Data
+    public static class UpdateUploadsRequest {
+        private List<Long> uploadIds;
+        private Integer statusCode;
     }
 }

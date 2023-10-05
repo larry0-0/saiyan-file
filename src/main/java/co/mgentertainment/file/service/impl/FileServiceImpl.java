@@ -387,6 +387,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
+    public void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status) {
+        fileUploadRepository.batchUpdateUploadStatus(uploadIds, status);
+    }
+
+    @Override
     public void updateUpload(FileUploadDTO fileUploadDTO) {
         FileUploadDO fileUploadDO = FileObjectMapper.INSTANCE.toFileUploadDO(fileUploadDTO);
         fileUploadRepository.updateFileUploadByPrimaryKey(fileUploadDO);
