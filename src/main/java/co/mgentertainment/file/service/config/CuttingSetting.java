@@ -12,8 +12,11 @@ import lombok.Data;
 @Builder
 public class CuttingSetting {
 
-    private Integer duration;
+    private Integer trailerDuration;
 
-    private Integer startFromProportion;
+    private Integer trailerStartFromProportion;
 
+    private Integer shortVideoDuration;
+
+    private Integer shortVideoStartFromProportion;
 }

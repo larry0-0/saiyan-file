@@ -19,6 +19,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author larry
@@ -61,8 +62,8 @@ public class FileController {
     public R<Void> retryUploadVideo(@RequestBody RetryVideoUploadDTO retryVideoUploadDTO) {
         fileService.reuploadVideo(retryVideoUploadDTO.getUploadId(),
                 CuttingSetting.builder()
-                        .duration(retryVideoUploadDTO.getDuration())
-                        .startFromProportion(retryVideoUploadDTO.getStartFromProportion())
+                        .trailerDuration(retryVideoUploadDTO.getDuration())
+                        .trailerStartFromProportion(retryVideoUploadDTO.getStartFromProportion())
                         .build());
         return R.ok();
     }
@@ -100,7 +101,11 @@ public class FileController {
     @PostMapping("/batchAddUploadRecord")
     @Operation(summary = "供上传器批量添加上传记录")
     public R<Map<String, Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
-        return R.ok(fileService.batchAddUploadVideoRecord(request.filenames));
+        CuttingSetting cuttingSetting = CuttingSetting.builder()
+                .trailerDuration(Optional.ofNullable(request.getTrailerDuration()).orElse(30))
+                .trailerStartFromProportion(Optional.ofNullable(request.getTrailerStartFromProportion()).orElse(0))
+                .build();
+        return R.ok(fileService.batchAddUploadVideoRecord(request.filenames, cuttingSetting));
     }
 
     @PostMapping("/batchUpdateUploadStatus")
@@ -126,6 +131,8 @@ public class FileController {
     @Data
     public static class AddUploadsRequest {
         private List<String> filenames;
+        private Integer trailerDuration;
+        private Integer trailerStartFromProportion;
     }
 
     @Data

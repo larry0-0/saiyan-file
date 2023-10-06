@@ -1,7 +1,7 @@
 package co.mgentertainment.file.service.config;
 
-import cn.xuyanwu.spring.file.storage.tika.ContentTypeDetect;
-import cn.xuyanwu.spring.file.storage.tika.TikaFactory;
+import co.mgentertainment.common.fileupload.tika.ContentTypeDetect;
+import co.mgentertainment.common.fileupload.tika.TikaFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

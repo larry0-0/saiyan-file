@@ -27,6 +27,8 @@ public class VideoUploadInfoDTO {
     private String filmPath;
     @Schema(description = "预告片相对路径 仅状态已完成时有值")
     private String trailerPath;
+    @Schema(description = "短视频相对路径 仅状态已完成时有值")
+    private String shortPath;
     @Schema(description = "上传状态")
     private String status;
     @Schema(description = "上传状态码")

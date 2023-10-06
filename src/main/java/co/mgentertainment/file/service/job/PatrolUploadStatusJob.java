@@ -50,7 +50,7 @@ public class PatrolUploadStatusJob {
             return;
         }
         fileUploadDOS.stream().filter(fu -> StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
-            fileService.reuploadVideo(fu.getUploadId(), CuttingSetting.builder().startFromProportion(0).duration(30).build());
+            fileService.reuploadVideo(fu.getUploadId(), CuttingSetting.builder().trailerStartFromProportion(0).trailerDuration(30).build());
         });
     }
 }

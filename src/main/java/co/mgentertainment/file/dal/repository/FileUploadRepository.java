@@ -31,7 +31,7 @@ public interface FileUploadRepository {
      * @param appCode
      * @return
      */
-    Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode);
+    Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode, Integer trailerDuration, Integer trailerStartFromProportion);
 
     /**
      * batch update FileUpload status

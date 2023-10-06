@@ -7,7 +7,8 @@ package co.mgentertainment.file.service.config;
  */
 public enum VideoType {
     FEATURE_FILM("film"),
-    TRAILER("trailer");
+    TRAILER("trailer"),
+    SHORT_VIDEO("short");
 
     private final String value;
 
