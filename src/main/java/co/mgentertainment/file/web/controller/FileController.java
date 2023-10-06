@@ -60,11 +60,7 @@ public class FileController {
     @Operation(summary = "重试失败的视频")
     @SysLog("失败重试")
     public R<Void> retryUploadVideo(@RequestBody RetryVideoUploadDTO retryVideoUploadDTO) {
-        fileService.reuploadVideo(retryVideoUploadDTO.getUploadId(),
-                CuttingSetting.builder()
-                        .trailerDuration(retryVideoUploadDTO.getDuration())
-                        .trailerStartFromProportion(retryVideoUploadDTO.getStartFromProportion())
-                        .build());
+        fileService.reuploadVideo(retryVideoUploadDTO.getUploadId(), retryVideoUploadDTO.getCuttingSetting());
         return R.ok();
     }
 

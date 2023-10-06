@@ -196,6 +196,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         UploadStatusEnum oldStatus = UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue());
         File filmVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         File trailerVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.TRAILER.getValue(), ResourceSuffix.TRAILER);
+        File shortVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.SHORT_VIDEO.getValue(), ResourceSuffix.TRAILER);
         switch (oldStatus) {
             case CONVERT_FAILURE:
                 if (filmVideo.exists()) {
@@ -274,6 +275,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                         .originVideo(originVideo)
                                         .videoType(VideoType.TRAILER)
                                         .rid(resourceDO.getRid())
+                                        .cuttingSetting(cuttingSetting)
                                         .build());
                     }
                 } else {
@@ -282,7 +284,29 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .uploadId(uploadId)
                                     .originVideo(originVideo)
                                     .cuttingSetting(cuttingSetting)
+                                    .type(VideoType.TRAILER)
                                     .rid(fileUploadDO.getRid())
+                                    .build());
+                }
+                break;
+            case SHORT_VIDEO_FAILURE:
+                if (shortVideo.exists()) {
+                    eventBus.post(
+                            VideoUploadEvent.builder()
+                                    .uploadId(uploadId)
+                                    .processedVideo(shortVideo)
+                                    .originVideo(originVideo)
+                                    .videoType(VideoType.SHORT_VIDEO)
+                                    .cuttingSetting(cuttingSetting)
+                                    .appCode(ClientHolder.getCurrentClient())
+                                    .build());
+                } else {
+                    eventBus.post(
+                            VideoCutEvent.builder()
+                                    .uploadId(uploadId)
+                                    .originVideo(originVideo)
+                                    .cuttingSetting(cuttingSetting)
+                                    .type(VideoType.SHORT_VIDEO)
                                     .build());
                 }
                 break;
@@ -386,6 +410,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting) {
         FileUploadDO fu = new FileUploadDO();
         fu.setFilename(filename);
+        fu.setAppCode(ClientHolder.getCurrentClient());
         boolean hasTrailer = cuttingSetting != null && cuttingSetting.getTrailerDuration() != null && cuttingSetting.getTrailerStartFromProportion() != null;
         boolean hasShort = cuttingSetting != null && cuttingSetting.getShortVideoDuration() != null && cuttingSetting.getShortVideoStartFromProportion() != null;
         fu.setHasTrailer(hasTrailer ? (byte) 1 : (byte) 0);
@@ -456,6 +481,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .type(Integer.valueOf(resourceType.getValue()).shortValue())
                 .folder(subDirName)
                 .size(new BigDecimal(multipartFile.getSize()))
+                .appCode(ClientHolder.getCurrentClient())
                 .build();
         this.saveResource(resourceDTO);
         Map<ResourcePathType, String> pathMap = new HashMap<>(0);

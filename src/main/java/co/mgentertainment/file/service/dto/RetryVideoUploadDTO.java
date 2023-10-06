@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.dto;
 
+import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,8 +15,5 @@ public class RetryVideoUploadDTO {
 
     private Long uploadId;
 
-    private Integer duration;
-
-    private Integer startFromProportion;
-
+    private CuttingSetting cuttingSetting;
 }
