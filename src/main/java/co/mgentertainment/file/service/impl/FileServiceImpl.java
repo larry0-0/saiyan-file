@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
-    private final List<String> videoTypes = Lists.newArrayList("mp4", "avi", "mov", "wmv", "flv", "f4v", "rmvb", "rm", "mkv", "3gp", "dat", "ts", "mts", "vob");
+    private final List<String> videoTypes = Lists.newArrayList("application/vnd.apple.mpegurl", "application/octet-stream", "mp4", "avi", "mov", "wmv", "flv", "f4v", "rmvb", "rm", "mkv", "3gp", "dat", "ts", "mts", "vob");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap");
     private Executor uploadExecutor;
 
