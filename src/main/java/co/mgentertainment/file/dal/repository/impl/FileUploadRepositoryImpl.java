@@ -20,6 +20,7 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     }
 
     @Override
-    public Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode) {
+    public Map<String, Long> batchAddFileUpload(List<String> filenames, ResourceTypeEnum resourceTypeEnum, String appCode, Integer trailerDuration, Integer trailerStartFromProportion) {
         if (CollectionUtils.isEmpty(filenames) || resourceTypeEnum == null) {
             return Maps.newHashMap();
         }
@@ -59,6 +60,9 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
             fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
             fileUploadDO.setAppCode(Optional.ofNullable(appCode).orElse(StringUtils.EMPTY));
+            fileUploadDO.setHasTrailer(Objects.nonNull(trailerDuration) ? (byte) 1 : (byte) 0);
+            fileUploadDO.setTrailerDuration(Optional.ofNullable(trailerDuration).orElse(0));
+            fileUploadDO.setTrailerStartPos(Optional.ofNullable(trailerStartFromProportion).orElse(0));
             return fileUploadDO;
         }).collect(Collectors.toList());
         int rowcount = fileUploadExtMapper.batchInsert(list);

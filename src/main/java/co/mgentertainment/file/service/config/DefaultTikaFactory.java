@@ -1,6 +1,6 @@
 package co.mgentertainment.file.service.config;
 
-import cn.xuyanwu.spring.file.storage.tika.TikaFactory;
+import co.mgentertainment.common.fileupload.tika.TikaFactory;
 import org.apache.tika.Tika;
 
 /**

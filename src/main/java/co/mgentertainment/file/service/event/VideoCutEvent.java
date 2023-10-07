@@ -2,6 +2,7 @@ package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEvent;
 import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.VideoType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -23,4 +24,6 @@ public class VideoCutEvent extends AbstractEvent {
     private CuttingSetting cuttingSetting;
 
     private Long rid;
+
+    private VideoType type;
 }

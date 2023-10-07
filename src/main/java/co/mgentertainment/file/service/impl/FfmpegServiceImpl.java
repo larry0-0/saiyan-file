@@ -6,6 +6,7 @@ import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.config.VideoType;
 import co.mgentertainment.file.service.utils.MediaHelper;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFmpeg;
@@ -93,22 +94,29 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public File mediaCut(File inputFile, CuttingSetting cuttingSetting) {
+    public File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting) {
+        Preconditions.checkArgument(inputFile != null && inputFile.exists() && inputFile.isFile(), "inputFile is not a file");
+        Preconditions.checkArgument(type != null && cuttingSetting != null, "VideoType and CuttingSetting can not be null");
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         double duration = mediaMetadata.getFormat().duration;
-        log.debug("the media {} duration:{}, startFromProportion:{}", inputFile.getAbsolutePath(), duration, cuttingSetting.getStartFromProportion());
+        Integer startFromProportion = type == VideoType.TRAILER ? cuttingSetting.getTrailerStartFromProportion() :
+                type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoStartFromProportion() : null;
+        log.debug("the media {} duration:{}, startFromProportion:{}", inputFile.getAbsolutePath(), duration, startFromProportion);
         long startOffset = new BigDecimal(Optional.ofNullable(duration).orElse(0.0))
-                .multiply(new BigDecimal(Optional.ofNullable(cuttingSetting.getStartFromProportion()).orElse(0)))
+                .multiply(new BigDecimal(Optional.ofNullable(startFromProportion).orElse(0)))
                 .divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
         final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
-        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
-        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.TRAILER.getValue(), ResourceSuffix.TRAILER);
+//        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
+        String suffix = type == VideoType.TRAILER ? ResourceSuffix.TRAILER : type == VideoType.SHORT_VIDEO ? ResourceSuffix.SHORT : ".mp4";
+        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, type.getValue(), suffix);
+        Integer cutDuration = type == VideoType.TRAILER ? cuttingSetting.getTrailerDuration() :
+                type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoDuration() : 0;
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setStartOffset(startOffset, TimeUnit.SECONDS)
                 .setInput(inputFile.getAbsolutePath())
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
-                .setDuration(cuttingSetting.getDuration(), TimeUnit.SECONDS)
+                .setDuration(cutDuration, TimeUnit.SECONDS)
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
                 .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)

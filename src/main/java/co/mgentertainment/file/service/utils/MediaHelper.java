@@ -1,6 +1,8 @@
 package co.mgentertainment.file.service.utils;
 
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.VideoType;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -29,7 +31,7 @@ public class MediaHelper {
     }
 
     public static File getUploadIdDir(Long uploadId) {
-        return new File("/data/mgfs/"+ uploadId.toString());
+        return new File("/data/mgfs/" + uploadId.toString());
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
@@ -38,5 +40,25 @@ public class MediaHelper {
         FileUtil.mkdir(newDir);
         String newFilename = filename + fileSuffix;
         return new File(newDir, newFilename);
+    }
+
+    public static void deleteCompletedVideoFolder(Long uploadId) {
+        File folderToDelete = getUploadIdDir(uploadId);
+        if (folderToDelete != null && folderToDelete.exists()) {
+            FileUtil.del(folderToDelete.getAbsolutePath());
+        }
+    }
+
+    public static void clearCutSettingAfterCut(VideoType videoType, CuttingSetting cuttingSetting) {
+        switch (videoType) {
+            case TRAILER:
+                cuttingSetting.setTrailerDuration(null);
+                break;
+            case SHORT_VIDEO:
+                cuttingSetting.setShortVideoDuration(null);
+                break;
+            default:
+                break;
+        }
     }
 }

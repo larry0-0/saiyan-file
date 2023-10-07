@@ -7,32 +7,32 @@ import co.mgentertainment.common.model.exception.ErrorCodeEnum;
  * @createTime 2023/9/26
  * @description UploadTrailer2CloudException
  */
-public class UploadTrailer2CloudException extends RuntimeException {
+public class UploadSingleVideo2CloudException extends RuntimeException {
 
     private ErrorCodeEnum code;
 
-    public UploadTrailer2CloudException() {
+    public UploadSingleVideo2CloudException() {
         super();
     }
 
-    public UploadTrailer2CloudException(String message) {
+    public UploadSingleVideo2CloudException(String message) {
         super(message);
     }
 
-    public UploadTrailer2CloudException(int code, String message) {
+    public UploadSingleVideo2CloudException(int code, String message) {
         super(code + "-" + message);
     }
 
-    public UploadTrailer2CloudException(ErrorCodeEnum code) {
+    public UploadSingleVideo2CloudException(ErrorCodeEnum code) {
         super(code.getCode() + "-" + code.getMessage());
         this.code = code;
     }
 
-    public UploadTrailer2CloudException(String message, Throwable cause) {
+    public UploadSingleVideo2CloudException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public UploadTrailer2CloudException(ErrorCodeEnum code, Throwable cause) {
+    public UploadSingleVideo2CloudException(ErrorCodeEnum code, Throwable cause) {
         super(code.getCode() + "-" + code.getMessage(), cause);
         this.code = code;
     }

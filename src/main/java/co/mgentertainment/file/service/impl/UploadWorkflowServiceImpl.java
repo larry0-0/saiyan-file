@@ -1,6 +1,5 @@
 package co.mgentertainment.file.service.impl;
 
-import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
@@ -8,11 +7,13 @@ import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.ResourcePathType;
+import co.mgentertainment.file.service.config.VideoType;
 import co.mgentertainment.file.service.dto.ResourceDTO;
 import co.mgentertainment.file.service.exception.MediaConvertException;
 import co.mgentertainment.file.service.exception.MediaCutException;
 import co.mgentertainment.file.service.exception.UploadFilm2CloudException;
-import co.mgentertainment.file.service.exception.UploadTrailer2CloudException;
+import co.mgentertainment.file.service.exception.UploadSingleVideo2CloudException;
 import co.mgentertainment.file.service.utils.MediaHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Override
     @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 1, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
-    public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
+    public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, boolean isLastStep, Long uploadId) {
         if (filmFolder == null || !filmFolder.exists() || filmFolder.isFile()) {
             return null;
         }
@@ -70,7 +71,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     .duration(ffmpegService.getMediaDuration(originVideo))
                     .build());
             log.debug("正片上传成功后file_upload表填充rid, uploadId:{}, rid:{}", uploadId, rid);
-            fileService.updateUploadRid(uploadId, UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
+            fileService.updateUploadRid(uploadId, isLastStep ? UploadStatusEnum.COMPLETED : UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING, rid);
             return rid;
         } catch (Throwable t) {
             throw new UploadFilm2CloudException("上传正片到云存储且更新数据表失败", t);
@@ -79,24 +80,30 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Override
     @Retryable(value = {MediaCutException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
-    public File cutVideo(File originVideo, CuttingSetting cuttingSetting, Long uploadId) {
+    public File cutVideo(File originVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
         try {
-            File trailerVideo = ffmpegService.mediaCut(originVideo, cuttingSetting);
+            File trailerVideo = ffmpegService.mediaCut(originVideo, type, cuttingSetting);
+            fileService.updateUploadStatus(uploadId, type == VideoType.TRAILER ?
+                    UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING :
+                    type == VideoType.SHORT_VIDEO ? UploadStatusEnum.SHORT_VIDEO_CUTTING_AND_UPLOADING : null);
             return trailerVideo;
         } catch (Throwable t) {
-            throw new MediaCutException("剪切预告片失败", t);
+            throw new MediaCutException("剪切" + (type == VideoType.TRAILER ? "预告片失败" : "短视频失败"), t);
         }
     }
 
     @Override
-    @Retryable(value = {UploadTrailer2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
-    public void uploadTrailer2CloudStorage(File trailerVideo, Long rid, String subDirName, Long uploadId) {
+    @Retryable(value = {UploadSingleVideo2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
+    public void uploadVideo2CloudStorage(File video, VideoType type, boolean isLastStep, Long rid, String subDirName, Long uploadId) {
         try {
-            fileService.uploadLocalTrailUnderResource(trailerVideo, rid, subDirName);
-            fileService.updateUploadStatus(uploadId, UploadStatusEnum.COMPLETED);
-            deleteCompletedVideoFolder(uploadId);
+            ResourcePathType pathType = type == VideoType.TRAILER ? ResourcePathType.TRAILER : type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT : null;
+            fileService.uploadLocalFile2Cloud(video, ResourceTypeEnum.VIDEO, pathType, rid, subDirName);
+            fileService.updateUploadStatus(uploadId, isLastStep ? UploadStatusEnum.COMPLETED : UploadStatusEnum.SHORT_VIDEO_CUTTING_AND_UPLOADING);
+            if (isLastStep) {
+                MediaHelper.deleteCompletedVideoFolder(uploadId);
+            }
         } catch (Throwable t) {
-            throw new UploadTrailer2CloudException("上传预告片失败", t);
+            throw new UploadSingleVideo2CloudException("上传" + (type == VideoType.TRAILER ? "预告片" : "短视频") + "失败", t);
         }
     }
 
@@ -108,30 +115,22 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public Long doFilmUploadRecover(UploadFilm2CloudException e, File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
+    public Long doFilmUploadRecover(UploadFilm2CloudException e, File filmFolder, String subDirName, File originVideo, String appCode, boolean isLastStep, Long uploadId) {
         log.error("重试后上传正片到云存储且更新数据表仍然失败, uploadId:{}, folderPath:{}", uploadId, filmFolder.getAbsolutePath());
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOAD_FAILURE);
         return null;
     }
 
     @Recover
-    public File doMediaCutRecover(MediaCutException e, File originVideo, CuttingSetting cuttingSetting, Long uploadId) {
-        log.error("重试后预告片剪切仍然失败, uploadId:{}, filePath:{}", uploadId, originVideo.getAbsolutePath());
-        fileService.updateUploadStatus(uploadId, UploadStatusEnum.TRAILER_CUT_FAILURE);
+    public File doMediaCutRecover(MediaCutException e, File originVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
+        log.error("重试后{}剪切仍然失败, uploadId:{}, filePath:{}", type == VideoType.TRAILER ? "预告片" : "短视频", uploadId, originVideo.getAbsolutePath());
+        fileService.updateUploadStatus(uploadId, type == VideoType.TRAILER ? UploadStatusEnum.TRAILER_CUT_FAILURE : UploadStatusEnum.SHORT_VIDEO_FAILURE);
         return null;
     }
 
     @Recover
-    public void doTrailerUploadRecover(UploadTrailer2CloudException e, File trailerVideo, Long rid, String subDirName, Long uploadId) {
-        log.error("重试后预告片上传仍然失败, uploadId:{}, filePath:{}", uploadId, trailerVideo.getAbsolutePath());
+    public void doSingleVideoUploadRecover(UploadSingleVideo2CloudException e, File video, VideoType type, boolean isLastStep, Long rid, String subDirName, Long uploadId) {
+        log.error("重试后{}上传仍然失败, uploadId:{}, filePath:{}", type == VideoType.TRAILER ? "预告片" : "短视频", uploadId, video.getAbsolutePath());
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.TRAILER_UPLOAD_FAILURE);
-    }
-
-    private void deleteCompletedVideoFolder(Long uploadId) {
-        File folderToDelete = MediaHelper.getUploadIdDir(uploadId);
-        if (folderToDelete != null && folderToDelete.exists()) {
-            log.debug("(6)删除视频目录：{}", folderToDelete.getAbsolutePath());
-            FileUtil.del(folderToDelete.getAbsolutePath());
-        }
     }
 }

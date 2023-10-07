@@ -1,6 +1,6 @@
 package co.mgentertainment.file;
 
-import cn.xuyanwu.spring.file.storage.spring.EnableFileStorage;
+import co.mgentertainment.common.fileupload.spring.EnableFileStorage;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;

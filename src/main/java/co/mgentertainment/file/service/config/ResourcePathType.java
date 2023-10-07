@@ -10,7 +10,8 @@ public enum ResourcePathType {
     IMAGE("image"),
     THUMBNAIL("thumbnail"),
     FEATURE_FILM("film"),
-    TRAILER("trailer");
+    TRAILER("trailer"),
+    SHORT("short");
 
     private final String value;
 
