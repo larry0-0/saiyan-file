@@ -157,12 +157,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("file type is not video");
         }
-        String filename = multipartFile.getOriginalFilename();
+        // 过滤文件名非法字符
+        String filename = MediaHelper.filterInvalidFilenameChars(multipartFile.getOriginalFilename());
         log.debug("(1.1)添加上传记录:{}", filename);
         Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting);
         File file;
         try {
-            file = saveMultipartFileInDisk(multipartFile, uploadId);
+            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
         } catch (IOException e) {
             throw new RuntimeException("fail to persist file", e);
         }
@@ -599,10 +600,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
     }
 
-    private File saveMultipartFileInDisk(MultipartFile multipartFile, Long uploadId) throws IOException {
+    private File saveMultipartFileInDisk(MultipartFile multipartFile, String newFilename, Long uploadId) throws IOException {
         File folder = MediaHelper.getUploadIdDir(uploadId);
         FileUtil.mkdir(folder);
-        File localFile = new File(folder, multipartFile.getOriginalFilename());
+        File localFile = new File(folder, newFilename);
         FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));
         return localFile;
     }

@@ -3,6 +3,7 @@ package co.mgentertainment.file.service.utils;
 import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.VideoType;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -60,5 +61,9 @@ public class MediaHelper {
             default:
                 break;
         }
+    }
+
+    public static String filterInvalidFilenameChars(String originFilename) {
+        return originFilename.replaceAll("[\\\\/:*#?\"<>|]", StringUtils.EMPTY);
     }
 }
