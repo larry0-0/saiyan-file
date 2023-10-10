@@ -233,7 +233,7 @@
                 </executions>
                 <configuration>
                     <includeSystemScope>true</includeSystemScope>
-                    <mainClass>co.mgentertainment.file.Boostrap</mainClass>
+                    <mainClass>co.mgentertainment.file.Bootstrap</mainClass>
                 </configuration>
             </plugin>
             <plugin>

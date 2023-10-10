@@ -9,9 +9,9 @@ import org.springframework.retry.annotation.EnableRetry;
 @SpringBootApplication(scanBasePackages = {"co.mgentertainment.file"}, exclude = {SecurityAutoConfiguration.class})
 @EnableFileStorage
 @EnableRetry(proxyTargetClass = true)
-public class Boostrap {
+public class Bootstrap {
 
     public static void main(String[] args) {
-        SpringApplication.run(Boostrap.class, args);
+        SpringApplication.run(Bootstrap.class, args);
     }
 }
