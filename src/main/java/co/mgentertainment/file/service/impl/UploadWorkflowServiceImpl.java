@@ -50,10 +50,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Retryable(value = {MediaConvertException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
-    public File convertVideo(File originVideo, Long uploadId) {
+    @Retryable(value = {MediaConvertException.class}, maxAttempts = 2, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
+    public File convertVideo(File originVideo, Long uploadId, boolean isStableMode) {
         try {
-            File filmFile = ffmpegService.mediaConvert(originVideo, true);
+            File filmFile = ffmpegService.mediaConvert(originVideo, isStableMode);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOADING);
             return filmFile;
         } catch (Throwable t) {
@@ -139,10 +139,14 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId) {
+    public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId, boolean isStableMode) {
+        File filmFile = ffmpegService.mediaConvert(originVideo, false);
+        if (filmFile != null) {
+            return filmFile;
+        }
         log.error("重试后视频转码仍然失败, uploadId:{}, filePath:{}", uploadId, originVideo.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.CONVERT_FAILURE);
-        return null;
+        return filmFile;
     }
 
     @Recover

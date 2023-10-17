@@ -15,7 +15,7 @@ public interface UploadWorkflowService {
 
     File printWatermark(File originVideo, Long uploadId);
 
-    File convertVideo(File originVideo, Long uploadId);
+    File convertVideo(File originVideo, Long uploadId, boolean isStableMode);
 
     void captureAndUploadScreenshot(File originVideo, String subDirName, Long rid, Long uploadId);
 
