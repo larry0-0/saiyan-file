@@ -38,7 +38,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     private final CachedUidGenerator cachedUidGenerator;
 
     @Override
-    @Retryable(value = {PrintWatermarkException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
+    @Retryable(value = {PrintWatermarkException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public File printWatermark(File originVideo, Long uploadId) {
         try {
             File filmFile = ffmpegService.printWatermark(originVideo);
@@ -49,7 +49,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Retryable(value = {MediaConvertException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
+    @Retryable(value = {MediaConvertException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public File convertVideo(File originVideo, Long uploadId) {
         try {
             File filmFile = ffmpegService.mediaConvert(originVideo, true);
@@ -61,8 +61,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 1, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
-    public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode) {
+    @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
+    public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
         if (filmFolder == null || !filmFolder.exists() || filmFolder.isFile()) {
             return null;
         }
@@ -100,7 +100,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Retryable(value = {UploadSingleVideo2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
+    @Retryable(value = {UploadSingleVideo2CloudException.class}, maxAttempts = 3, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
     public void uploadVideo2CloudStorage(File video, VideoType type, UploadStatusEnum nextStatus, String subDirName, Long rid, Long uploadId) {
         try {
             ResourcePathType pathType = type == VideoType.TRAILER ? ResourcePathType.TRAILER : type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT :
@@ -128,7 +128,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public File doPrintWatermarkRecover(PrintWatermarkException e, File originVideo, Long uploadId) {
         log.error("重试后打水印仍然失败, filePath:{}", originVideo.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.CONVERT_FAILURE);
-        return originVideo;
+        return null;
     }
 
     @Recover
@@ -139,7 +139,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public Long doFilmUploadRecover(UploadFilm2CloudException e, File filmFolder, String subDirName, File originVideo, String appCode, boolean isLastStep, Long uploadId) {
+    public Long doFilmUploadRecover(UploadFilm2CloudException e, File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
         log.error("重试后上传正片到云存储且更新数据表仍然失败, uploadId:{}, folderPath:{}", uploadId, filmFolder.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOAD_FAILURE);
         return null;
@@ -153,7 +153,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public void doSingleVideoUploadRecover(UploadSingleVideo2CloudException e, File video, VideoType type, boolean isLastStep, Long rid, String subDirName, Long uploadId) {
+    public void doSingleVideoUploadRecover(UploadSingleVideo2CloudException e, File video, VideoType type, UploadStatusEnum nextStatus, String subDirName, Long rid, Long uploadId) {
         log.error("重试后{}上传仍然失败, uploadId:{}, filePath:{}", type == VideoType.TRAILER ? "预告片" : "短视频", uploadId, video.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.TRAILER_UPLOAD_FAILURE);
     }

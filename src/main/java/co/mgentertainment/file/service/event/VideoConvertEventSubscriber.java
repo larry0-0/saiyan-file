@@ -41,7 +41,12 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
             log.debug("(2.1)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
             File watermarkFile = uploadWorkflowService.printWatermark(originVideo, uploadId);
             stopWatch.stop();
-            log.debug("(2.1)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
+            if (watermarkFile == null || !watermarkFile.exists()) {
+                log.error("(2)打水印失败");
+                return;
+            } else {
+                log.debug("(2.1)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
+            }
 
             stopWatch.start("转码");
             log.debug("(2.2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());

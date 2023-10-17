@@ -19,7 +19,7 @@ public interface UploadWorkflowService {
 
     void captureAndUploadScreenshot(File originVideo, String subDirName, Long rid, Long uploadId);
 
-    Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode);
+    Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId);
 
     File cutVideo(File originVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId);
 

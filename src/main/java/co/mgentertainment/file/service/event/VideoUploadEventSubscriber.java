@@ -53,7 +53,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start("上传正片并添加资源记录");
                 log.debug("(3.1)开始{}, uploadId:{}, 正片:{}", stopWatch.currentTaskName(), uploadId, processedVideo.getAbsolutePath());
-                Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppCode());
+                Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppCode(), uploadId);
                 stopWatch.stop();
                 log.debug("(3.1)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
                 if (rid == null) {
