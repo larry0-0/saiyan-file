@@ -391,11 +391,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, String subDirName, Long rid) {
+    public void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, String subDirName, Long rid, ResourcePathType pathType) {
         Preconditions.checkArgument(file != null && pathType != null, "video or pathType should not be null");
         String filename = file.getName();
         String cloudPath = getCloudPath(resourceType, subDirName, rid, pathType.getValue());
-        upload2CloudStorage(file, cloudPath, filename, false);
+        upload2CloudStorage(file, cloudPath, filename, true);
     }
 
     @Override

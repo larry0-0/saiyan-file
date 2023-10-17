@@ -47,10 +47,11 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
             log.debug("(2.2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
             File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
             stopWatch.stop();
-            log.debug("(2.2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             if (m3u8File == null || !m3u8File.exists()) {
-                log.error("(2)找不到转码后的视频文件：{}", m3u8File != null ? m3u8File.getAbsolutePath() : null);
+                log.error("(2)转码失败");
                 return;
+            } else {
+                log.debug("(2.2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             }
             eventBus.post(
                     VideoUploadEvent.builder()

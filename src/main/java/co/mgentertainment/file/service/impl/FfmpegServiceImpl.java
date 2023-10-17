@@ -1,6 +1,5 @@
 package co.mgentertainment.file.service.impl;
 
-import cn.hutool.core.collection.ListUtil;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceSuffix;
 import co.mgentertainment.common.model.media.VideoType;
@@ -10,6 +9,7 @@ import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.config.WatermarkSetting;
 import co.mgentertainment.file.service.utils.MediaHelper;
+import com.alibaba.nacos.shaded.com.google.common.collect.Lists;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -73,13 +73,13 @@ public class FfmpegServiceImpl implements FfmpegService {
 //        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
 //        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
-        List<String> extraArgs = ListUtil.of("-force_key_frames", "expr:gte(t,n_forced*2)",
+        List<String> extraArgs = Lists.newArrayList("-force_key_frames", "expr:gte(t,n_forced*2)",
                 "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
                 "-hls_list_size", "0",
                 "-hls_flags", "0",
                 "-threads", Runtime.getRuntime().availableProcessors() + "");
         if (!isStableMode) {
-            extraArgs.addAll(ListUtil.of("-c:v", "copy", "-c:a", "copy"));
+            extraArgs.addAll(Lists.newArrayList("-c:v", "copy", "-c:a", "copy"));
         }
         boolean enabled = mgfsProperties.getWatermark().isEnabled();
         if (enabled && mgfsProperties.getWatermark().getPosition() != null) {
@@ -210,7 +210,7 @@ public class FfmpegServiceImpl implements FfmpegService {
         }
         List<String> extraArgs = new ArrayList<>();
         extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(mgfsProperties.getWatermark().getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode()))));
-        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.FEATURE_FILM.getValue(), ResourceSuffix.ORIGIN_FILM);
+        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.ORIGIN.getValue(), ResourceSuffix.ORIGIN_FILM);
         FFmpegBuilder builder = new FFmpegBuilder()
                 .addInput(inputFile.getAbsolutePath())
                 .addInput(mgfsProperties.getWatermark().getWatermarkImgPath())
@@ -228,19 +228,19 @@ public class FfmpegServiceImpl implements FfmpegService {
         List<String> extraArgs = new ArrayList<>();
         switch (position) {
             case TOP_LEFT:
-                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=0:y=0"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=0:y=0"));
                 break;
             case TOP_RIGHT:
-                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=0"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=0"));
                 break;
             case BOTTOM_LEFT:
-                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=0:y=main_h-overlay_h"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=0:y=main_h-overlay_h"));
                 break;
             case BOTTOM_RIGHT:
-                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
                 break;
             default:
-                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
                 break;
         }
         return extraArgs;

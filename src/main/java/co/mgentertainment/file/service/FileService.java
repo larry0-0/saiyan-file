@@ -33,7 +33,7 @@ public interface FileService {
 
     PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
 
-    void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, String subDirName, Long rid);
+    void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, String subDirName, Long rid, ResourcePathType pathType);
 
     Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting);
 

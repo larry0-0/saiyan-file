@@ -105,7 +105,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
         try {
             ResourcePathType pathType = type == VideoType.TRAILER ? ResourcePathType.TRAILER : type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT :
                     type == VideoType.ORIGIN_VIDEO ? ResourcePathType.ORIGIN : null;
-            fileService.uploadLocalFile2Cloud(video, ResourceTypeEnum.VIDEO, pathType, subDirName, rid);
+            fileService.uploadLocalFile2Cloud(video, ResourceTypeEnum.VIDEO, subDirName, rid, pathType);
             fileService.updateUploadStatus(uploadId, nextStatus);
         } catch (Throwable t) {
             throw new UploadSingleVideo2CloudException("上传" + (type == VideoType.TRAILER ? "预告片" : "短视频") + "失败", t);
@@ -117,7 +117,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public void captureAndUploadScreenshot(File originVideo, String subDirName, Long rid, Long uploadId) {
         try {
             File imgFile = ffmpegService.captureScreenshot(originVideo);
-            fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, ResourcePathType.COVER, subDirName, rid);
+            fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.COMPLETED);
         } catch (Throwable t) {
             throw new CaptureAndUploadScreenshotException("剪切和上传封面失败", t);
