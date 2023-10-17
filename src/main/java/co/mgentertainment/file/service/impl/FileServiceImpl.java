@@ -557,8 +557,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     private static String getCloudPath(ResourceTypeEnum type, String subDirName, Long rid, String category) {
         String[] arr = StringUtils.isEmpty(category) ?
-                new String[]{type.name().toLowerCase(), subDirName, rid.toString()} :
-                new String[]{type.name().toLowerCase(), subDirName, rid.toString(), category};
+                new String[]{type.name().toLowerCase(), subDirName, String.valueOf(rid)} :
+                new String[]{type.name().toLowerCase(), subDirName, String.valueOf(rid), category};
         return StringUtils.join(arr, '/') + '/';
     }
 
