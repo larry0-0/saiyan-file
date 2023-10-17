@@ -1,10 +1,14 @@
 package co.mgentertainment.file.service.impl;
 
+import cn.hutool.core.collection.ListUtil;
+import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceSuffix;
+import co.mgentertainment.common.model.media.VideoType;
+import co.mgentertainment.common.model.media.WatermarkPosition;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
-import co.mgentertainment.file.service.config.VideoType;
+import co.mgentertainment.file.service.config.WatermarkSetting;
 import co.mgentertainment.file.service.utils.MediaHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -13,8 +17,10 @@ import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 import net.bramp.ffmpeg.probe.FFmpegStream;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,13 +68,30 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public File mediaConvert(@NotNull File inputFile) {
-        FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
-        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
-        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
+    public File mediaConvert(@NotNull File inputFile, boolean isStableMode) {
+//        FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
+//        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
+//        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
-        FFmpegBuilder builder = new FFmpegBuilder()
-                .setInput(inputFile.getAbsolutePath())
+        List<String> extraArgs = ListUtil.of("-force_key_frames", "expr:gte(t,n_forced*2)",
+                "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
+                "-hls_list_size", "0",
+                "-hls_flags", "0",
+                "-threads", Runtime.getRuntime().availableProcessors() + "");
+        if (!isStableMode) {
+            extraArgs.addAll(ListUtil.of("-c:v", "copy", "-c:a", "copy"));
+        }
+        boolean enabled = mgfsProperties.getWatermark().isEnabled();
+        if (enabled && mgfsProperties.getWatermark().getPosition() != null) {
+            Integer pos = mgfsProperties.getWatermark().getPosition();
+            WatermarkPosition position = WatermarkPosition.getByCode(pos);
+            extraArgs.addAll(getWatermarkArgsByPosition(position));
+        }
+        FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
+        if (StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
+            builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
+        }
+        FFmpegOutputBuilder outputBuilder = builder
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
@@ -77,19 +101,12 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls")
 //                .setPreset("ultrafast")
-                .addExtraArgs(
-//                        "-vsync", "2",
-//                        "-tune", "fastdecode",
-                        "-force_key_frames", "expr:gte(t,n_forced*2)",
-                        "-c:v", "copy",
-                        "-c:a", "copy",
-                        "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
-                        "-hls_list_size", "0",
-                        "-hls_flags", "0",
-                        "-threads", Runtime.getRuntime().availableProcessors() + "")
-                .done();
+                .addExtraArgs(extraArgs.toArray(new String[0]));
+        if (isStableMode) {
+            outputBuilder.setPreset("ultrafast");
+        }
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
-        executor.createJob(builder).run();
+        executor.createJob(outputBuilder.done()).run();
         return outFile;
     }
 
@@ -165,6 +182,70 @@ public class FfmpegServiceImpl implements FfmpegService {
         return outputFile;
     }
 
+    @Override
+    public File captureScreenshot(File videoFile) {
+        File coverFile = MediaHelper.getCoverFileFromInputFile(videoFile);
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(videoFile.getAbsolutePath())
+                .overrideOutputFiles(true)
+                .addOutput(coverFile.getAbsolutePath())
+                .setFormat("image2")
+                .addExtraArgs(
+                        "-vf", "select=eq(pict_type\\,I)",
+                        "-frames:v", "1",
+                        "-pix_fmt", "yuvj422p",
+                        "-vsync", "vfr",
+                        "-qscale:v", "2")
+                .done();
+        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
+        executor.createJob(builder).run();
+        return coverFile;
+    }
+
+    @Override
+    public File printWatermark(File inputFile) {
+        WatermarkSetting setting = mgfsProperties.getWatermark();
+        if (setting == null || !setting.isEnabled() || StringUtils.isEmpty(setting.getWatermarkImgPath())) {
+            return inputFile;
+        }
+        List<String> extraArgs = new ArrayList<>();
+        extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(mgfsProperties.getWatermark().getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode()))));
+        File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.FEATURE_FILM.getValue(), ResourceSuffix.ORIGIN_FILM);
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .addInput(inputFile.getAbsolutePath())
+                .addInput(mgfsProperties.getWatermark().getWatermarkImgPath())
+                .overrideOutputFiles(true)
+                .addOutput(outFile.getAbsolutePath())
+                .addExtraArgs(extraArgs.toArray(new String[0]))
+                .setFormat("mp4")
+                .done();
+        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
+        executor.createJob(builder).run();
+        return outFile;
+    }
+
+    private List<String> getWatermarkArgsByPosition(WatermarkPosition position) {
+        List<String> extraArgs = new ArrayList<>();
+        switch (position) {
+            case TOP_LEFT:
+                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=0:y=0"));
+                break;
+            case TOP_RIGHT:
+                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=0"));
+                break;
+            case BOTTOM_LEFT:
+                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=0:y=main_h-overlay_h"));
+                break;
+            case BOTTOM_RIGHT:
+                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
+                break;
+            default:
+                extraArgs.addAll(ListUtil.of("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
+                break;
+        }
+        return extraArgs;
+    }
+
     private FFmpegProbeResult getMediaMetadata(@NotNull File file) {
         return mediaMetadataCache.computeIfAbsent(file.getAbsolutePath(), s -> {
             try {
@@ -175,4 +256,5 @@ public class FfmpegServiceImpl implements FfmpegService {
             }
         });
     }
+
 }

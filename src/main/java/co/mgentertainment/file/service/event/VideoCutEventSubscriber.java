@@ -2,9 +2,9 @@ package co.mgentertainment.file.service.event;
 
 import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.config.VideoType;
 import co.mgentertainment.file.service.utils.MediaHelper;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
@@ -40,7 +40,7 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
             StopWatch stopWatch = new StopWatch();
             stopWatch.start("剪切" + (videoType == VideoType.TRAILER ? "预告片" : "短视频"));
             log.debug("(4.1)开始{}, uploadId:{}, 原始片:{}", stopWatch.currentTaskName(), event.getUploadId(), originVideo.getAbsolutePath());
-            File video = uploadWorkflowService.cutVideo(event.getOriginVideo(), videoType, cuttingSetting, event.getUploadId());
+            File video = uploadWorkflowService.cutVideo(originVideo, videoType, cuttingSetting, event.getUploadId());
             if (video == null) {
                 log.error("(4){}文件不存在", videoType == VideoType.TRAILER ? "预告片" : "短视频");
                 return;
@@ -53,7 +53,7 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
                             .processedVideo(video)
-                            .originVideo(event.getOriginVideo())
+                            .originVideo(originVideo)
                             .videoType(videoType)
                             .rid(event.getRid())
                             .cuttingSetting(cuttingSetting)

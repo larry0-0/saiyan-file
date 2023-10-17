@@ -9,9 +9,7 @@ import co.mgentertainment.common.fileupload.constant.Constant;
 import co.mgentertainment.common.fileupload.spring.SpringFileStorageProperties;
 import co.mgentertainment.common.fileupload.tika.ContentTypeDetect;
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.common.model.media.ResourceSuffix;
-import co.mgentertainment.common.model.media.ResourceTypeEnum;
-import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.common.utils.SecurityHelper;
@@ -23,8 +21,6 @@ import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
-import co.mgentertainment.file.service.config.ResourcePathType;
-import co.mgentertainment.file.service.config.VideoType;
 import co.mgentertainment.file.service.converter.FileObjectMapper;
 import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.event.VideoConvertEvent;
@@ -159,7 +155,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
         // 过滤文件名非法字符
         String filename = MediaHelper.filterInvalidFilenameChars(multipartFile.getOriginalFilename());
-        log.debug("(1.1)添加上传记录:{}", filename);
+        log.debug("(1)添加上传记录:{}", filename);
         Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting);
         File file;
         try {
@@ -167,7 +163,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         } catch (IOException e) {
             throw new RuntimeException("fail to persist file", e);
         }
-        log.debug("(1.2)已上传记录:{} uploadId:{}", filename, uploadId);
+        log.debug("(1)已上传记录:{} uploadId:{}", filename, uploadId);
         eventBus.post(
                 VideoConvertEvent.builder()
                         .uploadId(uploadId)
@@ -395,7 +391,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, Long rid, String subDirName) {
+    public void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, String subDirName, Long rid) {
         Preconditions.checkArgument(file != null && pathType != null, "video or pathType should not be null");
         String filename = file.getName();
         String cloudPath = getCloudPath(resourceType, subDirName, rid, pathType.getValue());

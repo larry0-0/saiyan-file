@@ -2,8 +2,8 @@ package co.mgentertainment.file.service.event;
 
 import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.UploadWorkflowService;
-import co.mgentertainment.file.service.config.VideoType;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
@@ -37,8 +37,14 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
             Long uploadId = event.getUploadId();
             File originVideo = event.getOriginVideo();
             StopWatch stopWatch = new StopWatch();
-            stopWatch.start("转码");
+            stopWatch.start("打水印");
             log.debug("(2.1)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
+            File watermarkFile = uploadWorkflowService.printWatermark(originVideo, uploadId);
+            stopWatch.stop();
+            log.debug("(2.1)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
+
+            stopWatch.start("转码");
+            log.debug("(2.2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
             File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
             stopWatch.stop();
             log.debug("(2.2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
@@ -50,6 +56,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
                             .processedVideo(m3u8File)
+                            .watermarkVideo(watermarkFile)
                             .originVideo(event.getOriginVideo())
                             .videoType(VideoType.FEATURE_FILM)
                             .cuttingSetting(event.getCuttingSetting())

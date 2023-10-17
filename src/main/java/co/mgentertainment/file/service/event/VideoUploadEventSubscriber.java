@@ -2,10 +2,11 @@ package co.mgentertainment.file.service.event;
 
 import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.config.VideoType;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
@@ -43,6 +44,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
             Long uploadId = event.getUploadId();
             File originVideo = event.getOriginVideo();
             File processedVideo = event.getProcessedVideo();
+            File watermarkVideo = event.getWatermarkVideo();
             String subDirName = Optional.ofNullable(event.getSubDirName()).orElse(DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD));
             VideoType videoType = event.getVideoType();
             CuttingSetting cuttingSetting = event.getCuttingSetting();
@@ -51,21 +53,34 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start("上传正片并添加资源记录");
                 log.debug("(3.1)开始{}, uploadId:{}, 正片:{}", stopWatch.currentTaskName(), uploadId, processedVideo.getAbsolutePath());
-                Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppCode(), isLastStep, uploadId);
+                Long rid = uploadWorkflowService.uploadFilmFolder2CloudStorage(processedVideo.getParentFile(), subDirName, originVideo, event.getAppCode());
                 stopWatch.stop();
-                log.debug("(3.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
+                log.debug("(3.1)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
                 if (rid == null) {
                     log.error("(3)rid返回为空");
                     return;
                 }
+                stopWatch.start("上传水印视频或原始视频");
+                log.debug("(3.2)开始{}, uploadId:{}, 原片:{}", stopWatch.currentTaskName(), uploadId, watermarkVideo.getAbsolutePath());
+                uploadWorkflowService.uploadVideo2CloudStorage(event.getWatermarkVideo(), VideoType.ORIGIN_VIDEO,
+                        isLastStep ? UploadStatusEnum.DEFAULT_COVER_CUTTING_AND_UPLOADING : UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING,
+                        subDirName, rid, uploadId);
+                stopWatch.stop();
+                log.debug("(3.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
                 if (isLastStep) {
+                    eventBus.post(
+                            VideoScreenshotEvent.builder()
+                                    .originVideo(originVideo)
+                                    .uploadId(uploadId)
+                                    .subDirName(subDirName)
+                                    .rid(event.getRid()).build());
                     return;
                 }
                 VideoType nextVideoType = cuttingSetting.getTrailerDuration() != null ? VideoType.TRAILER : VideoType.SHORT_VIDEO;
                 eventBus.post(
                         VideoCutEvent.builder()
                                 .uploadId(event.getUploadId())
-                                .originVideo(event.getOriginVideo())
+                                .originVideo(originVideo)
                                 .cuttingSetting(cuttingSetting)
                                 .rid(rid)
                                 .type(nextVideoType)
@@ -75,17 +90,25 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                 stopWatch.start("上传" + (videoType == VideoType.TRAILER ? "预告片" : "短视频"));
                 log.debug("(5.1)开始{}, uploadId:{}, video:{}", stopWatch.currentTaskName(), uploadId, processedVideo.getAbsolutePath());
                 boolean isLastStep = (videoType == VideoType.TRAILER && cuttingSetting.getShortVideoDuration() == null) || (videoType == VideoType.SHORT_VIDEO && cuttingSetting.getTrailerDuration() == null);
-                uploadWorkflowService.uploadVideo2CloudStorage(event.getProcessedVideo(), videoType, isLastStep, event.getRid(), subDirName, event.getUploadId());
+                uploadWorkflowService.uploadVideo2CloudStorage(event.getProcessedVideo(), videoType,
+                        isLastStep ? UploadStatusEnum.DEFAULT_COVER_CUTTING_AND_UPLOADING : UploadStatusEnum.SHORT_VIDEO_CUTTING_AND_UPLOADING,
+                        subDirName, event.getRid(), event.getUploadId());
                 stopWatch.stop();
                 log.debug("(5.2)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
                 if (isLastStep) {
+                    eventBus.post(
+                            VideoScreenshotEvent.builder()
+                                    .originVideo(originVideo)
+                                    .uploadId(uploadId)
+                                    .subDirName(subDirName)
+                                    .rid(event.getRid()).build());
                     return;
                 }
                 VideoType nextVideoType = cuttingSetting.getShortVideoDuration() != null ? VideoType.SHORT_VIDEO : VideoType.TRAILER;
                 eventBus.post(
                         VideoCutEvent.builder()
                                 .uploadId(event.getUploadId())
-                                .originVideo(event.getOriginVideo())
+                                .originVideo(originVideo)
                                 .cuttingSetting(cuttingSetting)
                                 .type(nextVideoType)
                                 .build());

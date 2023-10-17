@@ -1,10 +1,10 @@
 package co.mgentertainment.file.service;
 
 import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.config.ResourcePathType;
 import co.mgentertainment.file.service.dto.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +33,7 @@ public interface FileService {
 
     PageResult<VideoUploadInfoDTO> queryFileUpload(QueryUploadConditionDTO condition);
 
-    void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, Long rid, String subDirName);
+    void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, ResourcePathType pathType, String subDirName, Long rid);
 
     Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting);
 

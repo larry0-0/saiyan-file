@@ -1,8 +1,8 @@
 package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEvent;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.config.VideoType;
 import lombok.Builder;
 import lombok.Data;
 

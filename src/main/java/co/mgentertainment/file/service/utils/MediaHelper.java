@@ -1,8 +1,10 @@
 package co.mgentertainment.file.service.utils;
 
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.ResourcePathType;
+import co.mgentertainment.common.model.media.ResourceSuffix;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.config.CuttingSetting;
-import co.mgentertainment.file.service.config.VideoType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -31,14 +33,20 @@ public class MediaHelper {
         return String.format("%d:%02d:%02d", hours, minutes, remainingSeconds);
     }
 
+    public static File getCoverFileFromInputFile(File inputFile) {
+        File newDir = new File(inputFile.getParentFile(), ResourcePathType.COVER.getValue());
+        FileUtil.mkdir(newDir);
+        return new File(newDir, ResourceSuffix.SCREENSHOT);
+    }
+
     public static File getUploadIdDir(Long uploadId) {
         return new File("/data/mgfs/" + uploadId.toString());
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
-        String filename = org.apache.commons.lang.StringUtils.substringBeforeLast(inputFile.getName(), ".");
         File newDir = new File(inputFile.getParentFile(), folderName);
         FileUtil.mkdir(newDir);
+        String filename = StringUtils.substringBeforeLast(inputFile.getName(), ".");
         String newFilename = filename + fileSuffix;
         return new File(newDir, newFilename);
     }

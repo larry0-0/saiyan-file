@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author larry
  * @createTime 2023/9/16
- * @description FileServiceProperties
+ * @description MgfsProperties
  */
 @Configuration
 @ConfigurationProperties(prefix = "mgfs")
@@ -52,6 +52,11 @@ public class MgfsProperties {
      * hls文件存放目录
      */
     private String hlsDir = StringUtils.EMPTY;
+
+    /**
+     * 水印设置
+     */
+    private WatermarkSetting watermark = new WatermarkSetting();
 
     @Data
     public static class AccessApply {
