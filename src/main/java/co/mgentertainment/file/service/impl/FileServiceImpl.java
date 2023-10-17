@@ -395,7 +395,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Preconditions.checkArgument(file != null && pathType != null, "video or pathType should not be null");
         String filename = file.getName();
         String cloudPath = getCloudPath(resourceType, subDirName, rid, pathType.getValue());
-        upload2CloudStorage(file, cloudPath, filename, true);
+        upload2CloudStorage(file, cloudPath, filename, false);
     }
 
     @Override

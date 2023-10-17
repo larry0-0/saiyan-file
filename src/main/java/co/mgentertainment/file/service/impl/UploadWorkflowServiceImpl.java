@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.impl;
 
+import cn.hutool.core.date.StopWatch;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
@@ -106,7 +107,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             ResourcePathType pathType = type == VideoType.TRAILER ? ResourcePathType.TRAILER : type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT :
                     type == VideoType.ORIGIN_VIDEO ? ResourcePathType.ORIGIN : null;
             fileService.uploadLocalFile2Cloud(video, ResourceTypeEnum.VIDEO, subDirName, rid, pathType);
-            fileService.updateUploadStatus(uploadId, nextStatus);
+            fileService.updateUploadRid(uploadId, nextStatus, rid);
         } catch (Throwable t) {
             throw new UploadSingleVideo2CloudException("上传" + (type == VideoType.TRAILER ? "预告片" : "短视频") + "失败", t);
         }
@@ -116,9 +117,15 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {CaptureAndUploadScreenshotException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public void captureAndUploadScreenshot(File originVideo, String subDirName, Long rid, Long uploadId) {
         try {
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start("剪切和上传封面");
+            log.debug("(6.1)开始剪切封面, video:{}", originVideo.getAbsolutePath());
             File imgFile = ffmpegService.captureScreenshot(originVideo);
+            log.debug("(6.2)开始上传封面, video:{}", originVideo.getAbsolutePath());
             fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.COMPLETED);
+            stopWatch.stop();
+            log.debug("(6.3){}流程结束，已完成. uploadId:{}, rid:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, rid, stopWatch.getLastTaskTimeMillis());
         } catch (Throwable t) {
             throw new CaptureAndUploadScreenshotException("剪切和上传封面失败", t);
         }
