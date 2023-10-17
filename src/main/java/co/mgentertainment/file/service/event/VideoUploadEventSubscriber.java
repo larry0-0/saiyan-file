@@ -73,7 +73,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                                     .originVideo(originVideo)
                                     .uploadId(uploadId)
                                     .subDirName(subDirName)
-                                    .rid(event.getRid()).build());
+                                    .rid(rid).build());
                     return;
                 }
                 VideoType nextVideoType = cuttingSetting.getTrailerDuration() != null ? VideoType.TRAILER : VideoType.SHORT_VIDEO;
@@ -111,6 +111,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                                 .originVideo(originVideo)
                                 .cuttingSetting(cuttingSetting)
                                 .type(nextVideoType)
+                                .rid(event.getRid())
                                 .build());
             }
         } catch (Exception e) {
