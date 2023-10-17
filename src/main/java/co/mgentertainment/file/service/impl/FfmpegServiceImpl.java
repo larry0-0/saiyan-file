@@ -88,7 +88,7 @@ public class FfmpegServiceImpl implements FfmpegService {
             extraArgs.addAll(getWatermarkArgsByPosition(position));
         }
         FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
-        if (StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
+        if (enabled && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
             builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
         }
         FFmpegOutputBuilder outputBuilder = builder
