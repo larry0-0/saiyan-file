@@ -23,12 +23,16 @@ public class VideoUploadInfoDTO {
     private String size;
     @Schema(description = "视频时长")
     private String duration;
-    @Schema(description = "正片相对路径 仅状态已完成时有值")
+    @Schema(description = "原片(可设水印)相对路径 仅状态已完成时有值")
+    private String originPath;
+    @Schema(description = "转码片(可设水印)相对路径 仅状态已完成时有值")
     private String filmPath;
-    @Schema(description = "预告片相对路径 仅状态已完成时有值")
+    @Schema(description = "预告片(可设水印)相对路径 仅状态已完成时有值")
     private String trailerPath;
-    @Schema(description = "短视频相对路径 仅状态已完成时有值")
+    @Schema(description = "短视频(可设水印)相对路径 仅状态已完成时有值")
     private String shortPath;
+    @Schema(description = "截图封面相对路径 仅状态已完成时有值")
+    private String screenshotPath;
     @Schema(description = "上传状态")
     private String status;
     @Schema(description = "上传状态码")

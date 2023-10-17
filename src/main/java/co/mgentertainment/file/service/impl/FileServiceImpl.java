@@ -395,6 +395,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Preconditions.checkArgument(file != null && pathType != null, "video or pathType should not be null");
         String filename = file.getName();
         String cloudPath = getCloudPath(resourceType, subDirName, rid, pathType.getValue());
+        log.debug("文件名:{}, 云存储路径:{}, 上传资源目录:{}", pathType.getValue(), cloudPath, filename);
         upload2CloudStorage(file, cloudPath, filename, false);
     }
 
@@ -544,8 +545,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .uploadId(fileUploadDO.getUploadId())
                 .status(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getDesc())
                 .statusCode(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getValue())
+                .originPath(ridMap.containsKey(fileUploadDO.getRid()) ?
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.ORIGIN.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.ORIGIN_FILM) : null)
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
+                .screenshotPath(ridMap.containsKey(fileUploadDO.getRid()) ?
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT) : null)
                 .trailerPath(fileUploadDO.getHasTrailer() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
                 .shortPath(fileUploadDO.getHasShort() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
