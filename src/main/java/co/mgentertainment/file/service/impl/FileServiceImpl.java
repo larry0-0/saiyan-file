@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
-    private final List<String> videoTypes = Lists.newArrayList("application/vnd.apple.mpegurl", "application/octet-stream", "mp4", "avi", "mov", "wmv", "flv", "f4v", "rmvb", "rm", "mkv", "3gp", "dat", "ts", "mts", "vob");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap", "zip", "bzip", "application/x-bzip");
     private Executor uploadExecutor;
 
@@ -501,9 +500,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
             fileType = StringUtils.lowerCase(StringUtils.substringAfterLast(filename, "."));
         }
         String finalFileType = fileType;
-        return imageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ?
-                ResourceTypeEnum.IMAGE : videoTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.VIDEO :
-                packageTypes.stream().anyMatch(type -> finalFileType.contains(type)) ? ResourceTypeEnum.PACKAGE : ResourceTypeEnum.OTHER;
+        return imageTypes.stream().anyMatch(finalFileType::contains) ?
+                ResourceTypeEnum.IMAGE : mgfsProperties.getSupportVideoFormat().stream().anyMatch(finalFileType::contains) ? ResourceTypeEnum.VIDEO :
+                packageTypes.stream().anyMatch(finalFileType::contains) ? ResourceTypeEnum.PACKAGE : ResourceTypeEnum.OTHER;
     }
 
     private String retrieveResourcePath(String resourceFolderLocation, String filename, String suffix) {

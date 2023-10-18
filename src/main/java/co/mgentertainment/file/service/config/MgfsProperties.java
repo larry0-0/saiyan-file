@@ -58,6 +58,11 @@ public class MgfsProperties {
      */
     private WatermarkSetting watermark = new WatermarkSetting();
 
+    /**
+     * 支付的视频格式
+     */
+    private List<String> supportVideoFormat = Lists.newArrayList();
+
     @Data
     public static class AccessApply {
         private boolean enabled;
