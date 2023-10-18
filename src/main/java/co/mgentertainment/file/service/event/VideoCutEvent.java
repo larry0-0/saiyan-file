@@ -21,6 +21,8 @@ public class VideoCutEvent extends AbstractEvent {
 
     private File originVideo;
 
+    private File watermarkVideo;
+
     private CuttingSetting cuttingSetting;
 
     private Long rid;

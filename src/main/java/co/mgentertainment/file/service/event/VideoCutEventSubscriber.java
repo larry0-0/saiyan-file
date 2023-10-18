@@ -35,12 +35,12 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
     public void subscribe(VideoCutEvent event) {
         VideoType videoType = event.getType();
         try {
-            File originVideo = event.getOriginVideo();
+            File watermarkVideo = event.getWatermarkVideo();
             CuttingSetting cuttingSetting = event.getCuttingSetting();
             StopWatch stopWatch = new StopWatch();
             stopWatch.start("剪切" + (videoType == VideoType.TRAILER ? "预告片" : "短视频"));
-            log.debug("(4.1)开始{}, uploadId:{}, 原始片:{}", stopWatch.currentTaskName(), event.getUploadId(), originVideo.getAbsolutePath());
-            File video = uploadWorkflowService.cutVideo(originVideo, videoType, cuttingSetting, event.getUploadId());
+            log.debug("(4.1)开始{}, uploadId:{}, 水印片:{}", stopWatch.currentTaskName(), event.getUploadId(), watermarkVideo.getAbsolutePath());
+            File video = uploadWorkflowService.cutVideo(watermarkVideo, videoType, cuttingSetting, event.getUploadId());
             if (video == null) {
                 log.error("(4){}文件不存在", videoType == VideoType.TRAILER ? "预告片" : "短视频");
                 return;
@@ -53,7 +53,8 @@ public class VideoCutEventSubscriber extends AbstractEventSubscriber<VideoCutEve
                     VideoUploadEvent.builder()
                             .uploadId(event.getUploadId())
                             .processedVideo(video)
-                            .originVideo(originVideo)
+                            .originVideo(event.getOriginVideo())
+                            .watermarkVideo(watermarkVideo)
                             .videoType(videoType)
                             .rid(event.getRid())
                             .cuttingSetting(cuttingSetting)

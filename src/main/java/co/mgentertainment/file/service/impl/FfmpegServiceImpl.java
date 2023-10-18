@@ -81,14 +81,14 @@ public class FfmpegServiceImpl implements FfmpegService {
         if (!isStableMode) {
             extraArgs.addAll(Lists.newArrayList("-c:v", "copy", "-c:a", "copy"));
         }
-        boolean enabled = mgfsProperties.getWatermark().isEnabled();
-        if (enabled && mgfsProperties.getWatermark().getPosition() != null) {
+        boolean supportWatermark = mgfsProperties.getWatermark().isEnabled();
+        if (supportWatermark && mgfsProperties.getWatermark().getPosition() != null) {
             Integer pos = mgfsProperties.getWatermark().getPosition();
             WatermarkPosition position = WatermarkPosition.getByCode(pos);
             extraArgs.addAll(getWatermarkArgsByPosition(position));
         }
         FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
-        if (enabled && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
+        if (supportWatermark && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
             builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
         }
         FFmpegOutputBuilder outputBuilder = builder
