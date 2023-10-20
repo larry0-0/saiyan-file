@@ -38,6 +38,9 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
             return true;
         }
         String token = request.getHeader(mgfsProperties.getApiToken());
+        if (StringUtils.isEmpty(token)) {
+            return false;
+        }
         String algorithm = mgfsProperties.getAuthentication().getAlgorithm();
         String appCode;
         if (MgfsProperties.AlgorithmType.RSA.name().equalsIgnoreCase(algorithm)) {

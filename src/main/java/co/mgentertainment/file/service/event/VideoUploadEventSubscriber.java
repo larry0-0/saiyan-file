@@ -61,7 +61,7 @@ public class VideoUploadEventSubscriber extends AbstractEventSubscriber<VideoUpl
                     return;
                 }
                 stopWatch.start("上传水印视频或原始视频");
-                log.debug("(3.2)开始{}, uploadId:{}, 原片:{}", stopWatch.currentTaskName(), uploadId, watermarkVideo.getAbsolutePath());
+                log.debug("(3.2)开始{}, uploadId:{}, 原片:{}", stopWatch.currentTaskName(), uploadId, watermarkVideo != null ? watermarkVideo.getAbsolutePath() : "unknown");
                 uploadWorkflowService.uploadVideo2CloudStorage(event.getWatermarkVideo(), VideoType.ORIGIN_VIDEO,
                         isLastStep ? UploadStatusEnum.DEFAULT_COVER_CUTTING_AND_UPLOADING : UploadStatusEnum.TRAILER_CUTTING_AND_UPLOADING,
                         subDirName, rid, uploadId);

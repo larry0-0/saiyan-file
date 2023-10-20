@@ -140,7 +140,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Recover
     public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId, boolean isStableMode) {
-        File filmFile = ffmpegService.mediaConvert(originVideo, false);
+        File filmFile = ffmpegService.mediaConvert(originVideo, isStableMode);
         if (filmFile != null) {
             return filmFile;
         }
