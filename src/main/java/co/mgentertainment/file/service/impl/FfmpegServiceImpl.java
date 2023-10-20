@@ -100,7 +100,6 @@ public class FfmpegServiceImpl implements FfmpegService {
 //                .setVideoBitRate(64000)
                 .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls")
-//                .setPreset("ultrafast")
                 .addExtraArgs(extraArgs.toArray(new String[0]));
         if (isStableMode) {
             outputBuilder.setPreset("ultrafast");
