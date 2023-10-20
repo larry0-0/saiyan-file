@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * @author larry
  * @createTime 2023/9/16
- * @description FileUploadInfoDTO
+ * @description VideoUploadInfoDTO
  */
 @Data
 @Builder
@@ -22,7 +22,9 @@ public class VideoUploadInfoDTO {
     @Schema(description = "视频大小")
     private String size;
     @Schema(description = "视频时长")
-    private String duration;
+    private Integer duration;
+    @Schema(description = "视频时长格式字符串")
+    private String durationStr;
     @Schema(description = "原片(可设水印)相对路径 仅状态已完成时有值")
     private String originPath;
     @Schema(description = "转码片(可设水印)相对路径 仅状态已完成时有值")
