@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
 public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap", "zip", "bzip", "application/x-bzip");
+
     private Executor uploadExecutor;
 
     @Resource
@@ -130,8 +131,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (getResourceType(multipartFile) != ResourceTypeEnum.IMAGE) {
             throw new IllegalArgumentException("file type is not image");
         }
-        Map<ResourcePathType, String> map = file2CloudStorage(multipartFile, ResourceTypeEnum.IMAGE);
-        return UploadedImageDTO.builder().filename(multipartFile.getOriginalFilename()).imagePath(map.get(ResourcePathType.IMAGE)).thumbnailPath(map.get(ResourcePathType.THUMBNAIL)).build();
+        Map<Integer, String> map = file2CloudStorage(multipartFile, ResourceTypeEnum.IMAGE);
+        return UploadedImageDTO.builder().filename(multipartFile.getOriginalFilename()).imagePath(map.get(ResourceFileType.IMAGE)).thumbnailPath(map.get(ResourceFileType.THUMBNAIL)).build();
     }
 
     @Override
@@ -141,8 +142,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (resourceType == ResourceTypeEnum.IMAGE || resourceType == ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("wrong file type");
         }
-        Map<ResourcePathType, String> map = file2CloudStorage(multipartFile, resourceType);
-        return UploadedFileDTO.builder().filename(multipartFile.getOriginalFilename()).remotePath(map.get(ResourcePathType.DEFAULT)).build();
+        Map<Integer, String> map = file2CloudStorage(multipartFile, resourceType);
+        return UploadedFileDTO.builder().filename(multipartFile.getOriginalFilename()).remotePath(map.get(ResourceFileType.DEFAULT)).build();
     }
 
     @Override
@@ -395,7 +396,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String filename = file.getName();
         String cloudPath = getCloudPath(resourceType, subDirName, rid, pathType.getValue());
         log.debug("文件名:{}, 云存储路径:{}, 上传资源目录:{}", pathType.getValue(), cloudPath, filename);
-        upload2CloudStorage(file, cloudPath, filename, false);
+        upload2CloudStorage(file, cloudPath, filename, ResourcePathType.COVER.equals(pathType));
     }
 
     @Override
@@ -464,7 +465,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return resourceRepository.saveResource(resourceDO);
     }
 
-    private Map<ResourcePathType, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {
+    private Map<Integer, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {
         String filename = multipartFile.getOriginalFilename();
         String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
         long rid = cachedUidGenerator.getUID();
@@ -481,12 +482,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .appCode(ClientHolder.getCurrentClient())
                 .build();
         this.saveResource(resourceDTO);
-        Map<ResourcePathType, String> pathMap = new HashMap<>(0);
+        Map<Integer, String> pathMap = new HashMap<>(0);
         if (isImage) {
-            pathMap.put(ResourcePathType.IMAGE, retrieveResourcePath(cloudPath, filename, null));
-            pathMap.put(ResourcePathType.THUMBNAIL, retrieveResourcePath(cloudPath, filename, springFileStorageProperties.getThumbnailSuffix()));
+            pathMap.put(ResourceFileType.IMAGE, retrieveResourcePath(cloudPath, filename, null));
+            pathMap.put(ResourceFileType.THUMBNAIL, retrieveResourcePath(cloudPath, filename, springFileStorageProperties.getThumbnailSuffix()));
         } else {
-            pathMap.put(ResourcePathType.DEFAULT, retrieveResourcePath(cloudPath, filename, null));
+            pathMap.put(ResourceFileType.DEFAULT, retrieveResourcePath(cloudPath, filename, null));
         }
         return pathMap;
     }
@@ -609,5 +610,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
         File localFile = new File(folder, newFilename);
         FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));
         return localFile;
+    }
+
+    private static class ResourceFileType {
+        private static Integer DEFAULT = 0;
+        private static Integer IMAGE = 1;
+        private static Integer THUMBNAIL = 2;
     }
 }
