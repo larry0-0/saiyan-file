@@ -8,6 +8,7 @@ import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.impl.ResourceLineService;
+import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.Data;
@@ -81,7 +82,7 @@ public class FileController {
     @Operation(summary = "根据uploadId获取视频上传进展")
     public R<List<VideoUploadInfoDTO>> listUploadInfo(@RequestBody List<Long> uploadIds) {
         if (CollectionUtils.isEmpty(uploadIds)) {
-            return R.failed("uploadIds不能为空");
+            return R.failed(Lists.newArrayList(), "uploadIds不能为空");
         }
         return R.ok(fileService.getUploadInfos(uploadIds));
     }
