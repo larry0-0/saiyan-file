@@ -82,7 +82,7 @@ public class FileController {
     @Operation(summary = "根据uploadId获取视频上传进展")
     public R<List<VideoUploadInfoDTO>> listUploadInfo(@RequestBody List<Long> uploadIds) {
         if (CollectionUtils.isEmpty(uploadIds)) {
-            return R.failed(Lists.newArrayList(), "uploadIds不能为空");
+            return R.ok(Lists.newArrayList());
         }
         return R.ok(fileService.getUploadInfos(uploadIds));
     }
