@@ -12,6 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,6 +80,9 @@ public class FileController {
     @PostMapping("/listUploadProgress")
     @Operation(summary = "根据uploadId获取视频上传进展")
     public R<List<VideoUploadInfoDTO>> listUploadInfo(@RequestBody List<Long> uploadIds) {
+        if (CollectionUtils.isEmpty(uploadIds)) {
+            return R.failed("uploadIds不能为空");
+        }
         return R.ok(fileService.getUploadInfos(uploadIds));
     }
 
