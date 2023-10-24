@@ -166,7 +166,9 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Recover
     public void doSingleVideoUploadRecover(UploadSingleVideo2CloudException e, File video, VideoType type, UploadStatusEnum nextStatus, String subDirName, Long rid, Long uploadId) {
         log.error("重试后{}上传仍然失败, uploadId:{}, filePath:{}", type == VideoType.TRAILER ? "预告片" : "短视频", uploadId, video.getAbsolutePath(), e);
-        fileService.updateUploadStatus(uploadId, UploadStatusEnum.TRAILER_UPLOAD_FAILURE);
+        fileService.updateUploadStatus(uploadId,
+                type == VideoType.TRAILER ? UploadStatusEnum.TRAILER_UPLOAD_FAILURE :
+                        type == VideoType.SHORT_VIDEO ? UploadStatusEnum.SHORT_VIDEO_FAILURE : null);
     }
 
     @Recover

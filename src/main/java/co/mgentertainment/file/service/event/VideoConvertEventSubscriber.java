@@ -45,7 +45,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
                 log.error("(2)打水印失败");
                 return;
             } else {
-                log.debug("(2.1)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
+                log.debug("(2.1)结束{}, 水印视频位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkFile.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             }
 
             stopWatch.start("转码");

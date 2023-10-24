@@ -194,30 +194,20 @@ public class FileServiceImpl implements FileService, InitializingBean {
         File filmVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         File trailerVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.TRAILER.getValue(), ResourceSuffix.TRAILER);
         File shortVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.SHORT_VIDEO.getValue(), ResourceSuffix.TRAILER);
+        Long rid = fileUploadDO.getRid();
+        boolean hasTrailer = fileUploadDO.getHasTrailer().equals(1);
         switch (oldStatus) {
             case CONVERT_FAILURE:
-                if (filmVideo.exists()) {
-                    eventBus.post(
-                            VideoUploadEvent.builder()
-                                    .uploadId(uploadId)
-                                    .processedVideo(filmVideo)
-                                    .originVideo(originVideo)
-                                    .videoType(VideoType.FEATURE_FILM)
-                                    .cuttingSetting(cuttingSetting)
-                                    .appCode(ClientHolder.getCurrentClient())
-                                    .build());
-                } else {
-                    eventBus.post(
-                            VideoConvertEvent.builder()
-                                    .uploadId(uploadId)
-                                    .originVideo(originVideo)
-                                    .cuttingSetting(cuttingSetting)
-                                    .appCode(ClientHolder.getCurrentClient())
-                                    .build());
-                }
+                eventBus.post(
+                        VideoConvertEvent.builder()
+                                .uploadId(uploadId)
+                                .originVideo(originVideo)
+                                .cuttingSetting(cuttingSetting)
+                                .appCode(ClientHolder.getCurrentClient())
+                                .build());
                 break;
             case UPLOAD_FAILURE:
-                if (fileUploadDO.getRid() == null) {
+                if (rid == null || resourceRepository.getResourceByRid(rid) == null) {
                     eventBus.post(
                             VideoUploadEvent.builder()
                                     .uploadId(uploadId)
@@ -227,69 +217,52 @@ public class FileServiceImpl implements FileService, InitializingBean {
                                     .cuttingSetting(cuttingSetting)
                                     .appCode(ClientHolder.getCurrentClient())
                                     .build());
-                } else {
-                    ResourceDO resourceDO = resourceRepository.getResourceByRid(fileUploadDO.getRid());
-                    if (resourceDO == null) {
-                        eventBus.post(
-                                VideoUploadEvent.builder()
-                                        .uploadId(uploadId)
-                                        .processedVideo(filmVideo)
-                                        .originVideo(originVideo)
-                                        .videoType(VideoType.FEATURE_FILM)
-                                        .cuttingSetting(cuttingSetting)
-                                        .appCode(ClientHolder.getCurrentClient())
-                                        .build());
-                        break;
-                    }
+                } else if (hasTrailer) {
                     eventBus.post(
                             VideoCutEvent.builder()
+                                    .rid(rid)
                                     .uploadId(uploadId)
                                     .originVideo(originVideo)
                                     .cuttingSetting(cuttingSetting)
-                                    .rid(fileUploadDO.getRid())
+                                    .type(VideoType.TRAILER)
                                     .build());
                 }
                 break;
             case TRAILER_CUT_FAILURE:
             case TRAILER_UPLOAD_FAILURE:
+                if (resourceRepository.getResourceByRid(rid) == null) {
+                    break;
+                }
                 if (trailerVideo.exists()) {
-                    ResourceDO resourceDO = resourceRepository.getResourceByRid(fileUploadDO.getRid());
-                    if (resourceDO == null) {
-                        eventBus.post(
-                                VideoUploadEvent.builder()
-                                        .uploadId(uploadId)
-                                        .processedVideo(filmVideo)
-                                        .originVideo(originVideo)
-                                        .videoType(VideoType.FEATURE_FILM)
-                                        .cuttingSetting(cuttingSetting)
-                                        .appCode(ClientHolder.getCurrentClient())
-                                        .build());
-                    } else {
-                        eventBus.post(
-                                VideoUploadEvent.builder()
-                                        .uploadId(uploadId)
-                                        .processedVideo(trailerVideo)
-                                        .originVideo(originVideo)
-                                        .videoType(VideoType.TRAILER)
-                                        .rid(resourceDO.getRid())
-                                        .cuttingSetting(cuttingSetting)
-                                        .build());
-                    }
+                    eventBus.post(
+                            VideoUploadEvent.builder()
+                                    .rid(rid)
+                                    .uploadId(uploadId)
+                                    .processedVideo(trailerVideo)
+                                    .originVideo(originVideo)
+                                    .videoType(VideoType.TRAILER)
+                                    .cuttingSetting(cuttingSetting)
+                                    .build());
                 } else {
                     eventBus.post(
                             VideoCutEvent.builder()
+                                    .rid(rid)
                                     .uploadId(uploadId)
                                     .originVideo(originVideo)
                                     .cuttingSetting(cuttingSetting)
                                     .type(VideoType.TRAILER)
-                                    .rid(fileUploadDO.getRid())
+                                    .rid(rid)
                                     .build());
                 }
                 break;
             case SHORT_VIDEO_FAILURE:
+                if (resourceRepository.getResourceByRid(rid) == null) {
+                    break;
+                }
                 if (shortVideo.exists()) {
                     eventBus.post(
                             VideoUploadEvent.builder()
+                                    .rid(rid)
                                     .uploadId(uploadId)
                                     .processedVideo(shortVideo)
                                     .originVideo(originVideo)
@@ -300,6 +273,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 } else {
                     eventBus.post(
                             VideoCutEvent.builder()
+                                    .rid(rid)
                                     .uploadId(uploadId)
                                     .originVideo(originVideo)
                                     .cuttingSetting(cuttingSetting)
@@ -441,6 +415,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     public void updateUploadStatus(Long uploadId, UploadStatusEnum status) {
+        if (uploadId == null || status == null) {
+            return;
+        }
         FileUploadDO fileUploadDO = new FileUploadDO();
         fileUploadDO.setUploadId(uploadId);
         fileUploadDO.setStatus(status.getValue().shortValue());

@@ -65,6 +65,9 @@ public class ResourceRepositoryImpl implements ResourceRepository {
 
     @Override
     public ResourceDO getResourceByRid(Long rid) {
+        if (rid == null) {
+            return null;
+        }
         return resourceMapper.selectByPrimaryKey(rid);
     }
 
