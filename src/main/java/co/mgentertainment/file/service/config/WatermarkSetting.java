@@ -18,4 +18,10 @@ public class WatermarkSetting {
 
     // WatermarkPosition code
     private Integer position;
+
+    // Watermark margin-x
+    private Integer marginX;
+
+    // Watermark margin-y
+    private Integer marginY;
 }

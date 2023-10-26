@@ -84,8 +84,10 @@ public class FfmpegServiceImpl implements FfmpegService {
         boolean supportWatermark = mgfsProperties.getWatermark().isEnabled();
         if (supportWatermark && mgfsProperties.getWatermark().getPosition() != null) {
             Integer pos = mgfsProperties.getWatermark().getPosition();
+            Integer marginX = mgfsProperties.getWatermark().getMarginX();
+            Integer marginY = mgfsProperties.getWatermark().getMarginY();
             WatermarkPosition position = WatermarkPosition.getByCode(pos);
-            extraArgs.addAll(getWatermarkArgsByPosition(position));
+            extraArgs.addAll(getWatermarkArgsByPosition(position, marginX, marginY));
         }
         FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
         if (supportWatermark && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
@@ -208,7 +210,7 @@ public class FfmpegServiceImpl implements FfmpegService {
             return inputFile;
         }
         List<String> extraArgs = new ArrayList<>();
-        extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(mgfsProperties.getWatermark().getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode()))));
+        extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(setting.getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode())), setting.getMarginX(), setting.getMarginY()));
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.ORIGIN.getValue(), ResourceSuffix.ORIGIN_FILM);
         FFmpegBuilder builder = new FFmpegBuilder()
                 .addInput(inputFile.getAbsolutePath())
@@ -223,20 +225,22 @@ public class FfmpegServiceImpl implements FfmpegService {
         return outFile;
     }
 
-    private List<String> getWatermarkArgsByPosition(WatermarkPosition position) {
+    private List<String> getWatermarkArgsByPosition(WatermarkPosition position, Integer marginX, Integer marginY) {
         List<String> extraArgs = new ArrayList<>();
+        marginX = Optional.ofNullable(marginX).orElse(0);
+        marginY = Optional.ofNullable(marginY).orElse(0);
         switch (position) {
             case TOP_LEFT:
-                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=0:y=0"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=" + marginX + ":y=" + marginY));
                 break;
             case TOP_RIGHT:
-                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=0"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w-" + marginX + ":y=" + marginY));
                 break;
             case BOTTOM_LEFT:
-                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=0:y=main_h-overlay_h"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=" + marginX + ":y=main_h-overlay_h-" + marginY));
                 break;
             case BOTTOM_RIGHT:
-                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
+                extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w-" + marginX + ":y=main_h-overlay_h-" + marginY));
                 break;
             default:
                 extraArgs.addAll(Lists.newArrayList("-filter_complex", "overlay=x=main_w-overlay_w:y=main_h-overlay_h"));
