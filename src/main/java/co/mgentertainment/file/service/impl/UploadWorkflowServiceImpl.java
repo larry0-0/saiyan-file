@@ -51,9 +51,9 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Override
     @Retryable(value = {MediaConvertException.class}, maxAttempts = 2, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
-    public File convertVideo(File originVideo, Long uploadId, boolean isStableMode) {
+    public File convertVideo(File originVideo, Long uploadId) {
         try {
-            File filmFile = ffmpegService.mediaConvert(originVideo, isStableMode);
+            File filmFile = ffmpegService.mediaConvert(originVideo);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOADING);
             return filmFile;
         } catch (Throwable t) {
@@ -139,8 +139,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId, boolean isStableMode) {
-        File filmFile = ffmpegService.mediaConvert(originVideo, isStableMode);
+    public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId) {
+        File filmFile = ffmpegService.mediaConvert(originVideo);
         if (filmFile != null) {
             return filmFile;
         }

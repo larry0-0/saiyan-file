@@ -50,7 +50,7 @@ public class VideoConvertEventSubscriber extends AbstractEventSubscriber<VideoCo
 
             stopWatch.start("转码");
             log.debug("(2.2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideo.getAbsolutePath());
-            File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId, true);
+            File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
             stopWatch.stop();
             if (m3u8File == null || !m3u8File.exists()) {
                 log.error("(2)转码失败");
