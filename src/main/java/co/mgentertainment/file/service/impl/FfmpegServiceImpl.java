@@ -91,16 +91,16 @@ public class FfmpegServiceImpl implements FfmpegService {
             builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
         }
         FFmpegOutputBuilder outputBuilder = builder
-                .addExtraArgs(extraArgs.toArray(new String[0]))
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
-//                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
+                .addExtraArgs(extraArgs.toArray(new String[0]))
+                .setPreset("ultrafast")
+                //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
                 .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)
 //                .setVideoBitRate(64000)
                 .setVideoCodec("h264")
-                .setPreset("ultrafast")
-                .setStrict(FFmpegBuilder.Strict.NORMAL)
+//                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls");
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(outputBuilder.done()).run();
@@ -126,21 +126,22 @@ public class FfmpegServiceImpl implements FfmpegService {
         Integer cutDuration = type == VideoType.TRAILER ? cuttingSetting.getTrailerDuration() :
                 type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoDuration() : 0;
         FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(inputFile.getAbsolutePath())
+                .setStartOffset(startOffset, TimeUnit.SECONDS)
+                .overrideOutputFiles(true)
+                .addOutput(outFile.getAbsolutePath())
+                .setDuration(cutDuration, TimeUnit.SECONDS)
                 .addExtraArgs(
                         "-c:v", "libx264",
                         "-threads", Runtime.getRuntime().availableProcessors() + "",
                         "-force_key_frames", "expr:gte(t,n_forced*2)")
-                .setStartOffset(startOffset, TimeUnit.SECONDS)
-                .setInput(inputFile.getAbsolutePath())
-                .overrideOutputFiles(true)
-                .addOutput(outFile.getAbsolutePath())
-                .setDuration(cutDuration, TimeUnit.SECONDS)
+                .setPreset("ultrafast")
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
+                .setVideoCodec("h264")
                 .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)
 //                .setVideoBitRate(64000)
-                .setPreset("ultrafast")
-                .setStrict(FFmpegBuilder.Strict.NORMAL)
+//                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("mp4")
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
@@ -208,15 +209,15 @@ public class FfmpegServiceImpl implements FfmpegService {
         extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(setting.getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode())), setting.getMarginX(), setting.getMarginY()));
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.ORIGIN.getValue(), ResourceSuffix.ORIGIN_FILM);
         FFmpegBuilder builder = new FFmpegBuilder()
-                .addExtraArgs(extraArgs.toArray(new String[0]))
                 .addInput(inputFile.getAbsolutePath())
                 .addInput(mgfsProperties.getWatermark().getWatermarkImgPath())
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
+                .addExtraArgs(extraArgs.toArray(new String[0]))
                 .setPreset("ultrafast")
+                .setFormat("mp4")
                 .setVideoCodec("h264")
                 .setAudioCodec("aac")
-                .setFormat("mp4")
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(builder).run();
