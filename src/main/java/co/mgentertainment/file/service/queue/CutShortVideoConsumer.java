@@ -60,7 +60,7 @@ public class CutShortVideoConsumer extends AbstractDisruptorWorkConsumer<CutShor
                 return;
             }
             stopWatch.stop();
-            log.debug("(4)结束{}, 视频位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), shortVideo.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
+            log.debug("(9)结束{}, 视频位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), shortVideo.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
             uploadShortVideoQueue.put(UploadShortVideoParameter.builder()
                     .uploadId(uploadId)
                     .shortVideoPath(shortVideo.getAbsolutePath())

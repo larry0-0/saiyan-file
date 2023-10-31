@@ -567,13 +567,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
             return null;
         }
         File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.VICE);
-        File watermarkDir = new File(uploadIdDir, resourcePathType.getValue());
+        File watermarkDir = new File(uploadIdDir, ResourcePathType.ORIGIN.getValue());
+        File targetDir = new File(watermarkDir, resourcePathType.getValue());
         String suffix = resourcePathType == ResourcePathType.FEATURE_FILM ? ResourceSuffix.FEATURE_FILM :
                 resourcePathType == ResourcePathType.ORIGIN ? ResourceSuffix.ORIGIN_FILM :
                         resourcePathType == ResourcePathType.TRAILER ? ResourceSuffix.TRAILER :
                                 resourcePathType == ResourcePathType.SHORT ? ResourceSuffix.SHORT :
                                         resourcePathType == ResourcePathType.COVER ? ResourceSuffix.SCREENSHOT : ResourceSuffix.ORIGIN_FILM;
-        return new File(watermarkDir, StringUtils.substringBeforeLast(fileUploadDO.getFilename(), ".") + suffix);
+        return new File(targetDir, StringUtils.substringBeforeLast(fileUploadDO.getFilename(), ".") + suffix);
     }
 
     private Map<Integer, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {

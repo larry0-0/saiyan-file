@@ -2,6 +2,7 @@ package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.FileService;
@@ -48,7 +49,10 @@ public class UploadOriginVideoConsumer extends AbstractDisruptorWorkConsumer<Upl
                 return;
             }
             Long rid = uploadResource.getRid();
-            uploadWorkflowService.uploadVideo2CloudStorage(watermarkVideo, VideoType.ORIGIN_VIDEO, null, uploadResource.getFolder(), rid, uploadId);
+            UploadSubStatusEnum subStatus = uploadResource.getHasTrailer().equals((byte) 1) ? UploadSubStatusEnum.CUTTING_TRAILER :
+                    uploadResource.getHasShort().equals((byte) 1) ? UploadSubStatusEnum.CUTTING_SHORT :
+                            UploadSubStatusEnum.END;
+            uploadWorkflowService.uploadVideo2CloudStorage(watermarkVideo, VideoType.ORIGIN_VIDEO, subStatus, uploadResource.getFolder(), rid, uploadId);
             stopWatch.stop();
             log.debug("(6)结束{}, uploadId:{}, rid:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, rid, stopWatch.getLastTaskTimeMillis());
             boolean needTrailer = new Byte((byte) 1).equals(uploadResource.getHasTrailer());

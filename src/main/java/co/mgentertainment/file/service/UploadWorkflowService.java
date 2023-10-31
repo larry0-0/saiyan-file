@@ -21,7 +21,7 @@ public interface UploadWorkflowService {
 
     Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId);
 
-    File cutVideo(File originVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId);
+    File cutVideo(File watermarkVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId);
 
     void uploadVideo2CloudStorage(File video, VideoType type, UploadSubStatusEnum nextStatus, String subDirName, Long rid, Long uploadId);
 

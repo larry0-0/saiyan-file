@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.UploadWorkflowService;
@@ -44,7 +45,7 @@ public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailer
             File watermarkVideo = new File(watermarkVideoPath);
             CuttingSetting setting = CuttingSetting.builder().trailerDuration(trailerDuration).trailerStartFromProportion(trailerStartFromProportion).build();
             File trailerVideo = uploadWorkflowService.cutVideo(watermarkVideo, VideoType.TRAILER, setting, uploadId);
-            if (trailerVideo == null || trailerVideo.exists()) {
+            if (!FileUtil.exist(trailerVideo)) {
                 log.error("(7)预告片文件不存在");
                 return;
             }
