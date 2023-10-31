@@ -20,8 +20,13 @@ public class UploadShortVideoQueue<T> implements Queueable<T>, InitializingBean,
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // worker size = cpu core number
+        UploadShortVideoConsumer[] consumers = new UploadShortVideoConsumer[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < consumers.length; i++) {
+            consumers[i] = uploadShortVideoConsumer;
+        }
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, uploadShortVideoConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, consumers);
     }
 
     @Override

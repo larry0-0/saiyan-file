@@ -20,8 +20,13 @@ public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // worker size = cpu core number
+        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < consumers.length; i++) {
+            consumers[i] = uploadOriginVideoConsumer;
+        }
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, uploadOriginVideoConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, consumers);
     }
 
     @Override

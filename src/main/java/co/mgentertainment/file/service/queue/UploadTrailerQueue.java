@@ -21,8 +21,13 @@ public class UploadTrailerQueue<T> implements Queueable<T>, InitializingBean, Di
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // worker size = cpu core number
+        UploadTrailerConsumer[] consumers = new UploadTrailerConsumer[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < consumers.length; i++) {
+            consumers[i] = uploadTrailerConsumer;
+        }
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, uploadTrailerConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, consumers);
     }
 
     @Override

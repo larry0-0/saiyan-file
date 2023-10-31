@@ -81,7 +81,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     .appCode(appCode)
                     .duration(ffmpegService.getMediaDuration(originVideo))
                     .build());
-            fileService.updateUploadStatusAndRid(uploadId, UploadStatusEnum.UPLOADING_FILM, rid);
+            fileService.updateUploadStatusAndRid(uploadId, UploadStatusEnum.CAPTURING_AND_UPLOADING_COVER, rid);
             log.debug("正片上传成功后file_upload表填充rid, film folder:{}, rid:{}", filmFolder.getAbsolutePath(), rid);
             return rid;
         } catch (Throwable t) {
