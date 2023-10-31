@@ -390,6 +390,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (cuttingSetting.getShortVideoStartFromProportion() != null) {
             fu.setShortStartPos(cuttingSetting.getShortVideoStartFromProportion());
         }
+        if (cuttingSetting.getAutoCaptureCover()) {
+            fu.setHasCover((byte) 1);
+        }
         return fileUploadRepository.addFileUpload(fu);
     }
 
@@ -482,7 +485,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             originVideo = getMainOriginFile(uploadId);
         }
         // 移动原视频
-        File newOriginFile = MediaHelper.moveFileToViceUploadDir(originVideo, uploadId);
+        File newOriginFile = MediaHelper.moveFileToUploadDir(originVideo, uploadId, MgfsPath.MgfsPathType.VICE);
         // 删除已处理目录
         MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.MAIN);
         // 入水印处理队列
