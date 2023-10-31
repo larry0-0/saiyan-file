@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service.utils;
 
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.MgfsPath;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceSuffix;
 import co.mgentertainment.common.model.media.VideoType;
@@ -39,8 +40,8 @@ public class MediaHelper {
         return new File(newDir, ResourceSuffix.SCREENSHOT);
     }
 
-    public static File getUploadIdDir(Long uploadId) {
-        return new File("/data/mgfs/" + uploadId.toString());
+    public static File getUploadIdDir(Long uploadId, MgfsPath.MgfsPathType pathType) {
+        return new File(pathType.getValue(), String.valueOf(uploadId));
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
@@ -51,8 +52,8 @@ public class MediaHelper {
         return new File(newDir, newFilename);
     }
 
-    public static void deleteCompletedVideoFolder(Long uploadId) {
-        File folderToDelete = getUploadIdDir(uploadId);
+    public static void deleteCompletedVideoFolder(Long uploadId, MgfsPath.MgfsPathType pathType) {
+        File folderToDelete = getUploadIdDir(uploadId, pathType);
         if (folderToDelete != null && folderToDelete.exists()) {
             FileUtil.del(folderToDelete.getAbsolutePath());
         }
@@ -73,5 +74,13 @@ public class MediaHelper {
 
     public static String filterInvalidFilenameChars(String originFilename) {
         return originFilename.replaceAll("[\\\\/:*#?\"<>|]", StringUtils.EMPTY);
+    }
+
+    public static File moveFileToViceUploadDir(File srcFile, Long uploadId) {
+        File targetDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
+        FileUtil.mkdir(targetDir);
+        File targetFile = new File(targetDir, srcFile.getName());
+        FileUtil.move(srcFile, targetFile, true);
+        return targetFile;
     }
 }

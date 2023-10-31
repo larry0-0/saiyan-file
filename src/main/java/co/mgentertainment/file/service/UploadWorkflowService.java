@@ -1,6 +1,6 @@
 package co.mgentertainment.file.service;
 
-import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.config.CuttingSetting;
 
@@ -23,6 +23,6 @@ public interface UploadWorkflowService {
 
     File cutVideo(File originVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId);
 
-    void uploadVideo2CloudStorage(File video, VideoType type, UploadStatusEnum nextStatus, String subDirName, Long rid, Long uploadId);
+    void uploadVideo2CloudStorage(File video, VideoType type, UploadSubStatusEnum nextStatus, String subDirName, Long rid, Long uploadId);
 
 }

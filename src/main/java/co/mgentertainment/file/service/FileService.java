@@ -4,6 +4,7 @@ import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,8 +46,31 @@ public interface FileService {
 
     void updateUploadStatus(Long uploadId, UploadStatusEnum status);
 
-    void updateUploadRid(Long uploadId, UploadStatusEnum status, Long rid);
+    void updateSubStatus(Long uploadId, UploadSubStatusEnum subStatus);
+
+    void updateUploadStatusAndRid(Long uploadId, UploadStatusEnum status, Long rid);
+
+    void updateUploadRid(Long uploadId, Long rid);
+
+    void updateStatus(Long uploadId, UploadStatusEnum status, UploadSubStatusEnum subStatus);
 
     Long saveResource(ResourceDTO resourceDTO);
 
+    void afterMainProcessComplete(Long uploadId, File originVideo);
+
+    void afterViceProcessComplete(Long uploadId);
+
+    File getMainOriginFile(Long uploadId);
+
+    File getViceOriginFile(Long uploadId);
+
+    File getConvertedFilmDir(Long uploadId);
+
+    File getWatermarkFile(Long uploadId);
+
+    File getTrailerFile(Long uploadId);
+
+    File getShortVideoFile(Long uploadId);
+
+    UploadResourceDTO getUploadResource(Long uploadId);
 }
