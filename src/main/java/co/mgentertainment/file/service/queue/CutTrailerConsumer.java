@@ -54,6 +54,7 @@ public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailer
             uploadTrailerQueue.put(UploadTrailerParameter.builder()
                     .uploadId(uploadId)
                     .trailerVideoPath(trailerVideo.getAbsolutePath())
+                    .watermarkVideoPath(watermarkVideo.getAbsolutePath())
                     .build());
         } catch (Exception e) {
             log.error("CutTrailerConsumer异常", e);

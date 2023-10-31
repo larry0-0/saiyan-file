@@ -53,7 +53,7 @@ public class UploadTrailerConsumer extends AbstractDisruptorWorkConsumer<UploadT
             stopWatch.stop();
             log.debug("(8)结束{}, uploadId:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, stopWatch.getLastTaskTimeMillis());
             if (needShort) {
-                File watermarkVideo = FileUtil.exist(trailerVideoPath) ? new File(trailerVideoPath) : fileService.getWatermarkFile(uploadId);
+                File watermarkVideo = FileUtil.exist(parameter.getWatermarkVideoPath()) ? new File(parameter.getWatermarkVideoPath()) : fileService.getWatermarkFile(uploadId);
                 cutShortVideoQueue.put(CutShortVideoParameter.builder()
                         .uploadId(uploadId)
                         .watermarkVideoPath(watermarkVideo.getAbsolutePath())
