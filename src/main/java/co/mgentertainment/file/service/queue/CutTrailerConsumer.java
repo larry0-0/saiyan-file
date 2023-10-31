@@ -2,8 +2,10 @@ package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
+import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ import java.io.File;
 public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailerParameter> {
 
     private final UploadWorkflowService uploadWorkflowService;
-
+    private final FileService fileService;
     private final UploadTrailerQueue uploadTrailerQueue;
 
     @Override
@@ -47,6 +49,7 @@ public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailer
             File trailerVideo = uploadWorkflowService.cutVideo(watermarkVideo, VideoType.TRAILER, setting, uploadId);
             if (!FileUtil.exist(trailerVideo)) {
                 log.error("(7)预告片文件不存在");
+                fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
             stopWatch.stop();

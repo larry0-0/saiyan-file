@@ -56,6 +56,7 @@ public class PatrolUploadStatusJob {
         FileUploadExample example2 = new FileUploadExample();
         example2.createCriteria()
                 .andDeletedEqualTo((byte) 0)
+                .andStatusNotEqualTo(Integer.valueOf(UploadStatusEnum.VIDEO_DAMAGED_OR_LOST.getValue()).shortValue())
                 .andSubStatusIn(ListUtil.of(
                         Integer.valueOf(UploadSubStatusEnum.PRINT_FAILURE.getValue()).shortValue(),
                         Integer.valueOf(UploadSubStatusEnum.UPLOAD_ORIGIN_FAILURE.getValue()).shortValue(),
@@ -79,7 +80,7 @@ public class PatrolUploadStatusJob {
                             .autoCaptureCover(hasCover)
                             .build());
             try {
-                Thread.sleep(5000L);
+                Thread.sleep(1000L);
             } catch (InterruptedException ignored) {
             }
         });

@@ -2,6 +2,7 @@ package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.FileService;
@@ -44,6 +45,7 @@ public class UploadFilmConsumer extends AbstractDisruptorWorkConsumer<UploadFilm
             File folderToUpload = FileUtil.exist(originVideoPath) ? new File(processedVideoPath).getParentFile() : fileService.getConvertedFilmDir(uploadId);
             if (!FileUtil.exist(folderToUpload) || folderToUpload.isFile()) {
                 log.error("待上传的视频文件夹{}不存在", folderToUpload.getAbsolutePath());
+                fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
             String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);

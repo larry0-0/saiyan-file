@@ -76,8 +76,8 @@ public class MediaHelper {
         return originFilename.replaceAll("[\\\\/:*#?\"<>|]", StringUtils.EMPTY);
     }
 
-    public static File moveFileToViceUploadDir(File srcFile, Long uploadId) {
-        File targetDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
+    public static File moveFileToUploadDir(File srcFile, Long uploadId, MgfsPath.MgfsPathType pathType) {
+        File targetDir = MediaHelper.getUploadIdDir(uploadId, pathType);
         FileUtil.mkdir(targetDir);
         File targetFile = new File(targetDir, srcFile.getName());
         FileUtil.move(srcFile, targetFile, true);

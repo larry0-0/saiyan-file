@@ -51,7 +51,7 @@ public class MediaResourceUploadJob {
                     .trailerStartFromProportion(0)
                     .autoCaptureCover(true)
                     .build());
-            File newOriginFile = MediaHelper.moveFileToViceUploadDir(file, uploadId);
+            File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
             convertVideoQueue.put(ConvertVideoParameter.builder()
                     .uploadId(uploadId)
                     .originVideoPath(newOriginFile.getAbsolutePath())
