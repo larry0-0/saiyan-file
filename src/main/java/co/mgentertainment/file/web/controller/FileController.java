@@ -1,8 +1,10 @@
 package co.mgentertainment.file.web.controller;
 
+import cn.hutool.core.lang.mutable.MutablePair;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
@@ -11,6 +13,7 @@ import co.mgentertainment.file.service.impl.ResourceLineService;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,10 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author larry
@@ -99,6 +100,14 @@ public class FileController {
         return R.ok(resourceLineService.listResourceLine());
     }
 
+    @PostMapping("/list/status")
+    @Operation(summary = "获取状态列表")
+    public R<ListStatusResponse> getUploadStatus() {
+        return R.ok(new ListStatusResponse(Arrays.stream(UploadStatusEnum.values()).map(e -> new MutablePair(e.getValue(), e.getDesc())).collect(Collectors.toList()),
+                Arrays.stream(UploadSubStatusEnum.values()).map(e -> new MutablePair(e.getValue(), e.getDesc())).collect(Collectors.toList())));
+    }
+
+
     @PostMapping("/batchAddUploadRecord")
     @Operation(summary = "供上传器批量添加上传记录")
     public R<Map<String, Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
@@ -140,5 +149,12 @@ public class FileController {
     public static class UpdateUploadsRequest {
         private List<Long> uploadIds;
         private Integer statusCode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ListStatusResponse {
+        private List<MutablePair> mainStatus;
+        private List<MutablePair> viceStatus;
     }
 }

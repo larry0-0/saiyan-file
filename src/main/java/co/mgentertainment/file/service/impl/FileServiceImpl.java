@@ -342,6 +342,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (null != condition.getStatus()) {
             criteria.andStatusEqualTo(condition.getStatus().shortValue());
         }
+        if (null != condition.getSubStatus()) {
+            criteria.andSubStatusEqualTo(condition.getSubStatus().shortValue());
+        }
         if (null != condition.getUploadStartDate() && null != condition.getUploadEndDate()) {
             criteria.andCreateTimeBetween(condition.getUploadStartDate(), condition.getUploadEndDate());
         }
@@ -651,18 +654,20 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .uploadId(fileUploadDO.getUploadId())
                 .status(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getDesc())
                 .statusCode(UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue()).getValue())
+                .subStatus(UploadSubStatusEnum.getByValue(fileUploadDO.getSubStatus().intValue()).getDesc())
+                .subStatusCode(UploadSubStatusEnum.getByValue(fileUploadDO.getSubStatus().intValue()).getValue())
                 .originPath(ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.ORIGIN.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.ORIGIN_FILM) : null)
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
-                .screenshotPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT) : null)
-                .screenshotThumbnailPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT_THUMBNAIL) : null)
                 .trailerPath(fileUploadDO.getHasTrailer() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
                 .shortPath(fileUploadDO.getHasShort() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
                         retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.SHORT.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.SHORT) : null)
+                .screenshotPath(fileUploadDO.getHasCover() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT) : null)
+                .screenshotThumbnailPath(fileUploadDO.getHasCover() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT_THUMBNAIL) : null)
                 .uploadStartTime(fileUploadDO.getCreateTime())
                 .statusUpdateTime(fileUploadDO.getUpdatedTime())
                 .build()).collect(Lists::newArrayList, List::add, List::addAll);

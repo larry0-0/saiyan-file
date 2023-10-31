@@ -25,8 +25,10 @@ public class QueryUploadConditionDTO {
     private String filename;
     @Schema(description = "文件类型")
     private Integer resourceType;
-    @Schema(description = "上传状态")
+    @Schema(description = "主上传状态")
     private Integer status;
+    @Schema(description = "子上传状态")
+    private Integer subStatus;
     @Schema(description = "上传开始时间")
     private Date uploadStartDate;
     @Schema(description = "上传结束时间")

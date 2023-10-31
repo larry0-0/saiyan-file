@@ -37,10 +37,14 @@ public class VideoUploadInfoDTO {
     private String screenshotPath;
     @Schema(description = "截图缩略图相对路径 仅状态已完成时有值")
     private String screenshotThumbnailPath;
-    @Schema(description = "上传状态")
+    @Schema(description = "主流程上传状态")
     private String status;
-    @Schema(description = "上传状态码")
+    @Schema(description = "主流程上传状态码")
     private Integer statusCode;
+    @Schema(description = "子流程上传状态")
+    private String subStatus;
+    @Schema(description = "子流程上传状态码")
+    private Integer subStatusCode;
     @Schema(description = "上传开始时间")
     private Date uploadStartTime;
     @Schema(description = "状态更新时间")
