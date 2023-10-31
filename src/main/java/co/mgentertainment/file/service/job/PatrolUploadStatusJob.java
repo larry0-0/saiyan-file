@@ -11,6 +11,7 @@ import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,7 @@ public class PatrolUploadStatusJob {
      * 每10分钟检查一次执行中的file upload
      */
     @Scheduled(fixedRate = 600 * 1000, initialDelay = 30000)
+    @SchedulerLock(name = "PatrolUploadStatusJob.checkUploadStatus", lockAtLeastFor = "30s", lockAtMostFor = "60s")
     public void checkUploadStatus() {
         // 获取执行超过10分钟的未完成记录
         FileUploadExample example = new FileUploadExample();

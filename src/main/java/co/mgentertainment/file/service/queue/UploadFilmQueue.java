@@ -20,7 +20,7 @@ public class UploadFilmQueue<T> implements Queueable<T>, InitializingBean, Dispo
     private DisruptorQueue<T> queue;
 
     @Override
-    public void destroy() throws Exception {
+    public void afterPropertiesSet() throws Exception {
         // buffer size:131072
         this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, uploadFilmConsumer);
     }
@@ -36,7 +36,7 @@ public class UploadFilmQueue<T> implements Queueable<T>, InitializingBean, Dispo
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void destroy() throws Exception {
         close();
     }
 }

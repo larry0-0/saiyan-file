@@ -9,6 +9,7 @@ import co.mgentertainment.file.service.utils.MediaHelper;
 import co.mgentertainment.file.web.cache.ClientHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class MediaResourceUploadJob {
      * 每分钟检查一次需要执行中的视频
      */
     @Scheduled(fixedRate = 60 * 1000, initialDelay = 50000)
+    @SchedulerLock(name = "MediaResourceUploadJob.uploadFromLocalPath", lockAtLeastFor = "30s", lockAtMostFor = "60s")
     public void uploadFromLocalPath() {
         File mediaResourceRootDir = new File(MgfsPath.MZK_PATH);
         if (!mediaResourceRootDir.exists()) {
