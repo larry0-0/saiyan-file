@@ -42,7 +42,7 @@ public class UploadFilmConsumer extends AbstractDisruptorWorkConsumer<UploadFilm
         try {
             File originVideo = FileUtil.exist(originVideoPath) ? new File(originVideoPath) : fileService.getMainOriginFile(uploadId);
             File folderToUpload = FileUtil.exist(originVideoPath) ? new File(processedVideoPath).getParentFile() : fileService.getConvertedFilmDir(uploadId);
-            if (folderToUpload == null || !folderToUpload.exists() || folderToUpload.isFile()) {
+            if (!FileUtil.exist(folderToUpload) || folderToUpload.isFile()) {
                 log.error("待上传的视频文件夹{}不存在", folderToUpload.getAbsolutePath());
                 return;
             }

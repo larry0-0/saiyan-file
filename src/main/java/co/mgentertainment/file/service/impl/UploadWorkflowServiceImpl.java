@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service.impl;
 
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.file.service.FfmpegService;
@@ -66,7 +67,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
     public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
-        if (filmFolder == null || !filmFolder.exists() || filmFolder.isFile()) {
+        if (!FileUtil.exist(filmFolder) || filmFolder.isFile()) {
             return null;
         }
         try {

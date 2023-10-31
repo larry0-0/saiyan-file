@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceSuffix;
 import co.mgentertainment.common.model.media.VideoType;
@@ -109,7 +110,7 @@ public class FfmpegServiceImpl implements FfmpegService {
 
     @Override
     public File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting) {
-        Preconditions.checkArgument(inputFile != null && inputFile.exists() && inputFile.isFile(), "inputFile is not a file");
+        Preconditions.checkArgument(FileUtil.exist(inputFile) && inputFile.isFile(), "inputFile is not a file");
         Preconditions.checkArgument(type != null && cuttingSetting != null, "VideoType and CuttingSetting can not be null");
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
         double duration = mediaMetadata.getFormat().duration;

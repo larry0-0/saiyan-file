@@ -40,7 +40,7 @@ public class ConvertVideoConsumer extends AbstractDisruptorWorkConsumer<ConvertV
             log.debug("(2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideoPath);
             File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
             stopWatch.stop();
-            if (m3u8File == null || !m3u8File.exists()) {
+            if (!FileUtil.exist(m3u8File)) {
                 log.error("(2)转码失败");
                 return;
             } else {

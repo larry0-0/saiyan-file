@@ -481,7 +481,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void afterMainProcessComplete(Long uploadId, File originVideo) {
-        if (originVideo == null || !originVideo.exists()) {
+        if (!FileUtil.exist(originVideo)) {
             originVideo = getMainOriginFile(uploadId);
         }
         // 移动原视频

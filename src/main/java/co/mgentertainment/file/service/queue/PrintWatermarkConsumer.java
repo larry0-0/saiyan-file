@@ -41,7 +41,7 @@ public class PrintWatermarkConsumer extends AbstractDisruptorWorkConsumer<PrintW
             log.debug("(5)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, newOriginVideoPath);
             File watermarkVideo = uploadWorkflowService.printWatermark(originVideo, uploadId);
             stopWatch.stop();
-            if (watermarkVideo == null || !watermarkVideo.exists()) {
+            if (!FileUtil.exist(watermarkVideo)) {
                 log.error("(5)打水印失败");
             } else {
                 log.debug("(5)结束{}, 水印视频位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), watermarkVideo.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
