@@ -63,6 +63,13 @@ public class AccessClientRepositoryImpl implements AccessClientRepository {
 //                updateAccessClient(accessClientDO);
                 return accessClientDO.getAppCode();
             }
+        } else if (StringUtils.isNotBlank(accessClientDO.getAppName())) {
+            AccessClientExample example = new AccessClientExample();
+            example.createCriteria().andAppNameEqualTo(accessClientDO.getAppName()).andDisabledEqualTo((byte) 0);
+            boolean exists = accessClientMapper.countByExample(example) > 0;
+            if (exists) {
+                return accessClientDO.getAppCode();
+            }
         }
         return addAccessClient(accessClientDO);
     }

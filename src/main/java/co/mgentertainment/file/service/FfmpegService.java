@@ -14,7 +14,7 @@ public interface FfmpegService {
 
     Integer getMediaDuration(File file);
 
-    File mediaConvert(File inputFile);
+    File mediaConvert(File inputFile, boolean disabledWatermark, boolean fastMode);
 
     File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting);
 

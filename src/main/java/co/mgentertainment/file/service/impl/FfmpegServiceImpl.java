@@ -67,20 +67,22 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public File mediaConvert(@NotNull File inputFile) {
+    public File mediaConvert(@NotNull File inputFile, boolean disabledWatermark, boolean fastMode) {
 //        FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
 //        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
 //        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
-        List<String> extraArgs = Lists.newArrayList(
-                "-c:v", "libx264",
+        List<String> extraArgs = disabledWatermark && fastMode ?
+                Lists.newArrayList("-c:v", "copy", "-c:v", "copy") :
+                Lists.newArrayList("-c:v", "libx264");
+        extraArgs.addAll(Lists.newArrayList(
                 "-threads", Runtime.getRuntime().availableProcessors() + "",
                 "-force_key_frames", "expr:gte(t,n_forced*2)",
                 "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
                 "-hls_list_size", "0",
-                "-hls_flags", "0");
+                "-hls_flags", "0"));
         boolean supportWatermark = mgfsProperties.getWatermark().isEnabled();
-        if (supportWatermark && mgfsProperties.getWatermark().getPosition() != null) {
+        if (!disabledWatermark && supportWatermark && mgfsProperties.getWatermark().getPosition() != null) {
             Integer pos = mgfsProperties.getWatermark().getPosition();
             Integer marginX = mgfsProperties.getWatermark().getMarginX();
             Integer marginY = mgfsProperties.getWatermark().getMarginY();
@@ -88,7 +90,7 @@ public class FfmpegServiceImpl implements FfmpegService {
             extraArgs.addAll(getWatermarkArgsByPosition(position, marginX, marginY));
         }
         FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
-        if (supportWatermark && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
+        if (!disabledWatermark && supportWatermark && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
             builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
         }
         FFmpegOutputBuilder outputBuilder = builder
@@ -96,11 +98,11 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .addOutput(outFile.getAbsolutePath())
                 .addExtraArgs(extraArgs.toArray(new String[0]))
                 .setPreset("ultrafast")
-                //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
-                .setAudioCodec("aac")
+//                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
+//                .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)
 //                .setVideoBitRate(64000)
-                .setVideoCodec("h264")
+//                .setVideoCodec("h264")
 //                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls");
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
