@@ -14,10 +14,8 @@ import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.common.utils.SecurityHelper;
 import co.mgentertainment.file.dal.mapper.ResourceExtMapper;
-import co.mgentertainment.file.dal.po.FileUploadDO;
-import co.mgentertainment.file.dal.po.FileUploadExample;
-import co.mgentertainment.file.dal.po.ResourceDO;
-import co.mgentertainment.file.dal.po.ResourceExtDO;
+import co.mgentertainment.file.dal.po.*;
+import co.mgentertainment.file.dal.repository.AccessClientRepository;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
 import co.mgentertainment.file.service.FileService;
@@ -83,6 +81,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private ResourceRepository resourceRepository;
 
     @Resource
+    private AccessClientRepository accessClientRepository;
+
+    @Resource
     private FileUploadRepository fileUploadRepository;
 
     @Resource
@@ -126,6 +127,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     private AmazonS3 s3Client;
 
+    // 数据初始化
     @Override
     public void afterPropertiesSet() {
         List<? extends FileStorageProperties.AmazonS3Config> s3Configs = springFileStorageProperties.getAmazonS3();
@@ -150,6 +152,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
             return thread;
         });
+        autoAddInnerAccessClient("inner");
     }
 
     @Override
@@ -183,7 +186,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         // 过滤文件名非法字符
         String filename = MediaHelper.filterInvalidFilenameChars(multipartFile.getOriginalFilename());
         log.debug("(1)添加上传记录:{}", filename);
-        Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting);
+        Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting, Optional.empty());
         File file;
         try {
             file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
@@ -330,8 +333,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
         if (StringUtils.isNotBlank(condition.getAppCode())) {
             criteria.andAppCodeEqualTo(condition.getAppCode());
-        } else if (StringUtils.isNotBlank(ClientHolder.getCurrentClient())) {
-            criteria.andAppCodeEqualTo(ClientHolder.getCurrentClient());
+        } else {
+            criteria.andAppCodeEqualTo(SERVER_INNER_APP_CODE);
         }
         if (StringUtils.isNotBlank(condition.getFilename())) {
             criteria.andFilenameLike(String.format("%%%s%%", condition.getFilename()));
@@ -370,10 +373,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting) {
+    public Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting, Optional<String> appCode) {
         FileUploadDO fu = new FileUploadDO();
         fu.setFilename(filename);
-        fu.setAppCode(ClientHolder.getCurrentClient());
+        fu.setAppCode(appCode.isPresent() ? appCode.get() : ClientHolder.getCurrentClient());
         boolean hasTrailer = cuttingSetting != null && cuttingSetting.getTrailerDuration() != null && cuttingSetting.getTrailerStartFromProportion() != null;
         boolean hasShort = cuttingSetting != null && cuttingSetting.getShortVideoDuration() != null && cuttingSetting.getShortVideoStartFromProportion() != null;
         fu.setHasTrailer(hasTrailer ? (byte) 1 : (byte) 0);
@@ -715,6 +718,17 @@ public class FileServiceImpl implements FileService, InitializingBean {
             log.debug("new bucket {} created", bucket.getName());
         } catch (Exception e) {
             log.error("error to create bucket", e);
+        }
+    }
+
+    private void autoAddInnerAccessClient(String appName) {
+        AccessClientDO accessClientDO = new AccessClientDO();
+        accessClientDO.setAppCode(SERVER_INNER_APP_CODE);
+        accessClientDO.setAppName(appName);
+        accessClientDO.setEncryptAlgorithm(MgfsProperties.AlgorithmType.RSA.name());
+        try {
+            accessClientRepository.saveAccessClient(accessClientDO);
+        } catch (Exception ignored) {
         }
     }
 

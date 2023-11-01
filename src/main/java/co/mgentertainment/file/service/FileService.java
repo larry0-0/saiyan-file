@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author larry
@@ -19,6 +20,7 @@ import java.util.Map;
  * @description FileService
  */
 public interface FileService {
+    String SERVER_INNER_APP_CODE = "888888";
 
     UploadedImageDTO uploadImage(MultipartFile file);
 
@@ -38,7 +40,7 @@ public interface FileService {
 
     Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting);
 
-    Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting);
+    Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting, Optional<String> appCode);
 
     void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status);
 

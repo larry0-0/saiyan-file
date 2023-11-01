@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.Optional;
 
 /**
  * @author larry
@@ -47,10 +48,11 @@ public class MediaResourceUploadJob {
             // 过滤文件名非法字符
             String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
             Long uploadId = fileService.addUploadVideoRecord(filename, CuttingSetting.builder()
-                    .trailerDuration(30)
-                    .trailerStartFromProportion(0)
-                    .autoCaptureCover(true)
-                    .build());
+                            .trailerDuration(30)
+                            .trailerStartFromProportion(0)
+                            .autoCaptureCover(true)
+                            .build(),
+                    Optional.of(FileService.SERVER_INNER_APP_CODE));
             File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
             convertVideoQueue.put(ConvertVideoParameter.builder()
                     .uploadId(uploadId)

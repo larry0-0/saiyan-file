@@ -24,10 +24,9 @@ public interface AccessClientRepository {
      * update AccessClient
      *
      * @param accessClientDO
-     * @param accessClientExample
      * @return
      */
-    Boolean updateAccessClient(AccessClientDO accessClientDO, AccessClientExample accessClientExample);
+    Boolean updateAccessClient(AccessClientDO accessClientDO);
 
     /**
      * save AccessClient

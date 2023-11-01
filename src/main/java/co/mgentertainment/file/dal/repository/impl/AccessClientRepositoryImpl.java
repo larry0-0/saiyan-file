@@ -31,37 +31,40 @@ public class AccessClientRepositoryImpl implements AccessClientRepository {
 
     @Override
     public String addAccessClient(AccessClientDO accessClientDO) {
-        if (accessClientDO != null) {
+        Preconditions.checkArgument(accessClientDO != null);
+        if (StringUtils.isBlank(accessClientDO.getAppCode())) {
             accessClientDO.setAppCode(RandomStringUtils.randomNumeric(6));
-            if (accessClientDO.getEncryptAlgorithm() == null) {
-                accessClientDO.setEncryptAlgorithm(MgfsProperties.AlgorithmType.RSA.name());
-            }
+        }
+        if (accessClientDO.getEncryptAlgorithm() == null) {
+            accessClientDO.setEncryptAlgorithm(MgfsProperties.AlgorithmType.RSA.name());
         }
         accessClientMapper.insertSelective(accessClientDO);
         return accessClientDO.getAppCode();
     }
 
     @Override
-    public Boolean updateAccessClient(AccessClientDO accessClientDO, AccessClientExample accessClientExample) {
+    public Boolean updateAccessClient(AccessClientDO accessClientDO) {
         Assert.notNull(accessClientDO, "accessClientDO can not be null");
-        Assert.notNull(accessClientDO.getAppName(), "appName can not be null");
-        int rowcount = accessClientMapper.updateByExampleSelective(accessClientDO, accessClientExample);
+        Assert.notNull(accessClientDO.getAppCode(), "appCode can not be null");
+        AccessClientExample example = new AccessClientExample();
+        example.createCriteria().andAppCodeEqualTo(accessClientDO.getAppCode());
+        int rowcount = accessClientMapper.updateByExampleSelective(accessClientDO, example);
         return rowcount > 0;
     }
 
     @Override
     public String saveAccessClient(AccessClientDO accessClientDO) {
         Preconditions.checkArgument(accessClientDO != null, "accessClientDO can not be null");
-        Preconditions.checkArgument(StringUtils.isNotBlank(accessClientDO.getAppName()), "appName can not be blank");
-        AccessClientExample example = new AccessClientExample();
-        example.createCriteria().andAppNameEqualTo(accessClientDO.getAppName()).andDisabledEqualTo((byte) 0);
-        List<AccessClientDO> accessClientDOS = accessClientMapper.selectByExample(example);
-        if (CollectionUtils.isNotEmpty(accessClientDOS)) {
-            updateAccessClient(accessClientDO, example);
-            return accessClientDOS.get(0).getAppCode();
-        } else {
-            return addAccessClient(accessClientDO);
+        if (StringUtils.isNotBlank(accessClientDO.getAppCode())) {
+            AccessClientExample example = new AccessClientExample();
+            example.createCriteria().andAppCodeEqualTo(accessClientDO.getAppCode()).andDisabledEqualTo((byte) 0);
+            boolean exists = accessClientMapper.countByExample(example) > 0;
+            if (exists) {
+//                updateAccessClient(accessClientDO);
+                return accessClientDO.getAppCode();
+            }
         }
+        return addAccessClient(accessClientDO);
     }
 
     @Override

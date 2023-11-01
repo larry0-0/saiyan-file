@@ -101,16 +101,16 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     @Override
     public Long saveFileUpload(FileUploadDO fileUploadDO) {
         Assert.notNull(fileUploadDO, "fileUploadDO can not be null");
-        Assert.notNull(fileUploadDO.getUploadId(), "uploadId can not be null");
-        FileUploadExample example = new FileUploadExample();
-        example.createCriteria().andUploadIdEqualTo(fileUploadDO.getUploadId());
-        boolean exists = fileUploadMapper.countByExample(example) > 0;
-        if (exists) {
-            updateFileUpload(fileUploadDO, example);
-            return fileUploadDO.getUploadId();
-        } else {
-            return addFileUpload(fileUploadDO);
+        if (fileUploadDO.getUploadId() != null) {
+            FileUploadExample example = new FileUploadExample();
+            example.createCriteria().andUploadIdEqualTo(fileUploadDO.getUploadId());
+            boolean exists = fileUploadMapper.countByExample(example) > 0;
+            if (exists) {
+                updateFileUpload(fileUploadDO, example);
+                return fileUploadDO.getUploadId();
+            }
         }
+        return addFileUpload(fileUploadDO);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             fileUploadDOS = fileUploadMapper.selectByExample(example);
         }
         int pageNo = example.getLimit() > 0 ? example.getOffset() / example.getLimit() + 1 : 0;
-        return PageResult.createPageResult(pageNo, example.getLimit(), count.intValue(), fileUploadDOS);
+        return PageResult.createPageResult(pageNo, example.getLimit(), count, fileUploadDOS);
     }
 
     @Override
