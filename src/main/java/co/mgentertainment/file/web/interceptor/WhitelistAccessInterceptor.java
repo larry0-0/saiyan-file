@@ -3,7 +3,6 @@ package co.mgentertainment.file.web.interceptor;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -24,10 +23,10 @@ public class WhitelistAccessInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!mgfsProperties.getApplyAccess().isEnabled()) {
+//        if (!mgfsProperties.getApplyAccess().isEnabled()) {
             return true;
-        }
-        log.info("当前请求来源：{}", request.getRemoteAddr());
-        return mgfsProperties.getApplyAccess().getWhiteList().stream().anyMatch(subnet -> new IpAddressMatcher(subnet).matches(request));
+//        }
+//        log.info("当前请求来源：{}", request.getRemoteAddr());
+//        return mgfsProperties.getApplyAccess().getWhiteList().stream().anyMatch(subnet -> new IpAddressMatcher(subnet).matches(request));
     }
 }
