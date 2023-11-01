@@ -9,6 +9,7 @@ import co.mgentertainment.common.fileupload.constant.Constant;
 import co.mgentertainment.common.fileupload.spring.SpringFileStorageProperties;
 import co.mgentertainment.common.fileupload.tika.ContentTypeDetect;
 import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
@@ -551,6 +552,31 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public UploadResourceDTO getUploadResource(Long uploadId) {
         ResourceExtDO resourceExtDO = resourceExtMapper.selectByUploadId(uploadId);
         return FileObjectMapper.INSTANCE.toUploadResourceDTO(resourceExtDO);
+    }
+
+    @Override
+    public R<Void> startInnerUploads(File innerDirToUpload) {
+        if (!FileUtil.exist(innerDirToUpload) || FileUtil.isDirEmpty(innerDirToUpload)) {
+            return R.failed("内部服务器目录不存在或没有文件");
+        }
+        File[] files = innerDirToUpload.listFiles();
+        for (File file : files) {
+            // 过滤文件名非法字符
+            String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
+            Long uploadId = addUploadVideoRecord(filename, CuttingSetting.builder()
+                            .trailerDuration(30)
+                            .trailerStartFromProportion(0)
+                            .autoCaptureCover(true)
+                            .build(),
+                    Optional.of(FileService.SERVER_INNER_APP_CODE));
+            File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
+            convertVideoQueue.put(ConvertVideoParameter.builder()
+                    .uploadId(uploadId)
+                    .originVideoPath(newOriginFile.getAbsolutePath())
+                    .appCode(ClientHolder.getCurrentClient())
+                    .build());
+        }
+        return R.ok();
     }
 
     private File getOriginFile(Long uploadId, MgfsPath.MgfsPathType pathType) {

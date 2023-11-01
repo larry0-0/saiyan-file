@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service;
 
 import co.mgentertainment.common.model.PageResult;
+import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
@@ -75,4 +76,6 @@ public interface FileService {
     File getShortVideoFile(Long uploadId);
 
     UploadResourceDTO getUploadResource(Long uploadId);
+
+    R<Void> startInnerUploads(File innerDirToUpload);
 }

@@ -5,11 +5,13 @@ spring:
     active: @env@
   cloud:
     nacos:
-      server-addr: @nacos.server@
       username: @nacos.username@
       password: @nacos.password@
+      discovery:
+        server-addr: @nacos.server@
+        namespace: mg_${spring.profiles.active}
       config:
-        # 自定义命名空间id：修改nacos数据库三张表后重启nacos:tenant_info,config_info,his_config_info
+        server-addr: @nacos.server@
         namespace: file_${spring.profiles.active}
         group: DEFAULT_GROUP
         file-extension: yml

@@ -1,21 +1,26 @@
 package co.mgentertainment.file.web.controller;
 
 import cn.hutool.core.lang.mutable.MutablePair;
+import co.mgentertainment.common.devent.DistributedEventProvider;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
+import co.mgentertainment.common.model.media.MgfsPath;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.*;
+import co.mgentertainment.file.service.event.listener.DistributedEventKey;
 import co.mgentertainment.file.service.impl.ResourceLineService;
+import com.alibaba.nacos.api.exception.NacosException;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,10 +38,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/file")
 @Api(tags = "文件服务")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final FileService fileService;
     private final ResourceLineService resourceLineService;
+    private final DistributedEventProvider distributedEventProvider;
 
     @PostMapping("/upload/image")
     @Operation(summary = "图片上传")
@@ -77,6 +84,18 @@ public class FileController {
             list.add(res.getData());
         }
         return R.ok(list);
+    }
+
+    @PostMapping("/upload/start")
+    @Operation(summary = "开始服务器内部上传")
+    @SysLog(value = "开始服务器内部上传", ignoredArgs = true)
+    public R<Void> startInnerUploads() {
+        try {
+            distributedEventProvider.fire(DistributedEventKey.UPLOADS, MgfsPath.MZK_PATH);
+        } catch (NacosException e) {
+            log.error("添加定时任务事件失败", e);
+        }
+        return R.ok();
     }
 
     @PostMapping("/listUploadProgress")
