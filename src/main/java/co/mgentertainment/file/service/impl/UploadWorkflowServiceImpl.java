@@ -17,8 +17,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 
@@ -51,7 +49,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {MediaConvertException.class}, maxAttempts = 2, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public File convertVideo(File originVideo, Long uploadId) {
         try {
@@ -64,7 +61,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
     public Long uploadFilmFolder2CloudStorage(File filmFolder, String subDirName, File originVideo, String appCode, Long uploadId) {
         if (!FileUtil.exist(filmFolder) || filmFolder.isFile()) {
@@ -91,7 +87,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {MediaCutException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public File cutVideo(File watermarkVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
         try {
@@ -106,7 +101,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {UploadSingleVideo2CloudException.class}, maxAttempts = 3, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
     public void uploadVideo2CloudStorage(File video, VideoType type, UploadSubStatusEnum nextStatus, String subDirName, Long rid, Long uploadId) {
         try {
@@ -121,7 +115,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Retryable(value = {CaptureAndUploadScreenshotException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public void captureAndUploadScreenshot(File originVideo, String subDirName, Long rid, Long uploadId) {
         try {
@@ -148,12 +141,12 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Recover
     public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId) {
         File filmFile = ffmpegService.mediaConvert(originVideo, true, false);
-        if (filmFile != null) {
+        if (FileUtil.exist(filmFile)) {
             return filmFile;
         }
         log.error("重试后视频转码仍然失败, uploadId:{}, filePath:{}", uploadId, originVideo.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.CONVERT_FAILURE);
-        return filmFile;
+        return null;
     }
 
     @Recover
