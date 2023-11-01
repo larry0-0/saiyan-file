@@ -11,12 +11,15 @@ import java.io.File;
  * @description FfmpegUtils
  */
 public interface FfmpegService {
+    String NVIDIA_CODEC = "h264_cuvid";
+    String DEFAULT_CODEC = "libx264";
+    String COPY_STREAM_CODEC = "copy";
 
     Integer getMediaDuration(File file);
 
     File mediaConvert(File inputFile, boolean disabledWatermark, boolean fastMode);
 
-    File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting);
+    File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting, boolean fastMode);
 
     File mediaConcat(File inputFile, File subFilesTxt);
 

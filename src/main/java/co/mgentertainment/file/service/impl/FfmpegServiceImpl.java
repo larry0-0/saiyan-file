@@ -71,10 +71,14 @@ public class FfmpegServiceImpl implements FfmpegService {
 //        FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
 //        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
 //        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
+        Boolean isGpu = mgfsProperties.getGpuBased();
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
-        List<String> extraArgs = disabledWatermark && fastMode ?
-                Lists.newArrayList("-c:v", "copy", "-c:a", "copy") :
-                Lists.newArrayList("-c:v", "libx264");
+        List<String> extraArgs = new ArrayList<>();
+        if (!isGpu) {
+            extraArgs = disabledWatermark && fastMode ?
+                    Lists.newArrayList("-c:v", COPY_STREAM_CODEC, "-c:a", COPY_STREAM_CODEC) :
+                    Lists.newArrayList("-c:v", DEFAULT_CODEC);
+        }
         extraArgs.addAll(Lists.newArrayList(
                 "-threads", Runtime.getRuntime().availableProcessors() + "",
                 "-force_key_frames", "expr:gte(t,n_forced*2)",
@@ -89,7 +93,11 @@ public class FfmpegServiceImpl implements FfmpegService {
             WatermarkPosition position = WatermarkPosition.getByCode(pos);
             extraArgs.addAll(getWatermarkArgsByPosition(position, marginX, marginY));
         }
-        FFmpegBuilder builder = new FFmpegBuilder().addInput(inputFile.getAbsolutePath());
+        FFmpegBuilder builder = new FFmpegBuilder();
+        if (isGpu) {
+            builder.addExtraArgs("-c:v", NVIDIA_CODEC);
+        }
+        builder.addInput(inputFile.getAbsolutePath());
         if (!disabledWatermark && supportWatermark && StringUtils.isNotEmpty(mgfsProperties.getWatermark().getWatermarkImgPath())) {
             builder.addInput(mgfsProperties.getWatermark().getWatermarkImgPath());
         }
@@ -97,7 +105,6 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
                 .addExtraArgs(extraArgs.toArray(new String[0]))
-                .setPreset("ultrafast")
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
 //                .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)
@@ -105,13 +112,16 @@ public class FfmpegServiceImpl implements FfmpegService {
 //                .setVideoCodec("h264")
 //                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls");
+        if (fastMode) {
+            outputBuilder.setPreset("ultrafast");
+        }
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(outputBuilder.done()).run();
         return outFile;
     }
 
     @Override
-    public File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting) {
+    public File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting, boolean fastMode) {
         Preconditions.checkArgument(FileUtil.exist(inputFile) && inputFile.isFile(), "inputFile is not a file");
         Preconditions.checkArgument(type != null && cuttingSetting != null, "VideoType and CuttingSetting can not be null");
         FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
@@ -128,27 +138,38 @@ public class FfmpegServiceImpl implements FfmpegService {
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, type.getValue(), suffix);
         Integer cutDuration = type == VideoType.TRAILER ? cuttingSetting.getTrailerDuration() :
                 type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoDuration() : 0;
-        FFmpegBuilder builder = new FFmpegBuilder()
-                .setInput(inputFile.getAbsolutePath())
+        Boolean isGpu = mgfsProperties.getGpuBased();
+        List<String> extraArgs = new ArrayList<>();
+        if (!isGpu) {
+            extraArgs = fastMode ?
+                    Lists.newArrayList("-c:v", COPY_STREAM_CODEC, "-c:a", COPY_STREAM_CODEC) :
+                    Lists.newArrayList("-c:v", DEFAULT_CODEC);
+        }
+        extraArgs.addAll(Lists.newArrayList(
+                "-threads", Runtime.getRuntime().availableProcessors() + "",
+                "-force_key_frames", "expr:gte(t,n_forced*2)"));
+        FFmpegBuilder builder = new FFmpegBuilder();
+        if (isGpu) {
+            builder.addExtraArgs("-c:v", NVIDIA_CODEC);
+        }
+        FFmpegOutputBuilder outputBuilder = builder.setInput(inputFile.getAbsolutePath())
                 .setStartOffset(startOffset, TimeUnit.SECONDS)
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
                 .setDuration(cutDuration, TimeUnit.SECONDS)
-                .addExtraArgs(
-                        "-c:v", "libx264",
-                        "-threads", Runtime.getRuntime().availableProcessors() + "",
-                        "-force_key_frames", "expr:gte(t,n_forced*2)")
-                .setPreset("ultrafast")
+                .addExtraArgs(extraArgs.toArray(new String[0]))
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
-                .setVideoCodec("h264")
-                .setAudioCodec("aac")
+//                .setVideoCodec("h264")
+//                .setAudioCodec("aac")
 //                .setAudioSampleRate(audioStream.get().sample_rate)
 //                .setVideoBitRate(64000)
 //                .setStrict(FFmpegBuilder.Strict.NORMAL)
-                .setFormat("mp4")
-                .done();
+                .setFormat("mp4");
+        if (fastMode) {
+            outputBuilder.setPreset("ultrafast");
+        }
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
-        executor.createJob(builder).run();
+        executor.createJob(outputBuilder.done()).run();
         // remove cache
         mediaMetadataCache.remove(inputFile.getAbsolutePath());
         return outFile;
@@ -206,12 +227,20 @@ public class FfmpegServiceImpl implements FfmpegService {
         if (setting == null || !setting.isEnabled() || StringUtils.isEmpty(setting.getWatermarkImgPath())) {
             return inputFile;
         }
-        List<String> extraArgs = Lists.newArrayList(
-                "-c:v", "libx264",
-                "-threads", Runtime.getRuntime().availableProcessors() + "");
+        Boolean isGpu = mgfsProperties.getGpuBased();
+        List<String> extraArgs = new ArrayList<>();
+        if (!isGpu) {
+            extraArgs = Lists.newArrayList("-c:v", DEFAULT_CODEC);
+        }
+        extraArgs.addAll(Lists.newArrayList("-threads", Runtime.getRuntime().availableProcessors() + ""));
         extraArgs.addAll(getWatermarkArgsByPosition(WatermarkPosition.getByCode(Optional.ofNullable(setting.getPosition()).orElse(WatermarkPosition.BOTTOM_RIGHT.getCode())), setting.getMarginX(), setting.getMarginY()));
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, ResourcePathType.ORIGIN.getValue(), ResourceSuffix.ORIGIN_FILM);
-        FFmpegBuilder builder = new FFmpegBuilder()
+
+        FFmpegBuilder builder = new FFmpegBuilder();
+        if (isGpu) {
+            builder.addExtraArgs("-c:v", NVIDIA_CODEC);
+        }
+        builder
                 .addInput(inputFile.getAbsolutePath())
                 .addInput(mgfsProperties.getWatermark().getWatermarkImgPath())
                 .overrideOutputFiles(true)
@@ -219,9 +248,9 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .addExtraArgs(extraArgs.toArray(new String[0]))
                 .setPreset("ultrafast")
                 .setFormat("mp4")
-                .setVideoCodec("h264")
-                .setAudioCodec("aac")
                 .done();
+//                .setVideoCodec("h264")
+//                .setAudioCodec("aac")
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         executor.createJob(builder).run();
         return outFile;

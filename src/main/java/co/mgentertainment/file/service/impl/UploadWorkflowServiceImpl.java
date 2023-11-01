@@ -90,7 +90,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {MediaCutException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public File cutVideo(File watermarkVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
         try {
-            File trailerVideo = ffmpegService.mediaCut(watermarkVideo, type, cuttingSetting);
+            File trailerVideo = ffmpegService.mediaCut(watermarkVideo, type, cuttingSetting, true);
             fileService.updateSubStatus(uploadId,
                     type == VideoType.TRAILER ? UploadSubStatusEnum.UPLOADING_TRAILER :
                             type == VideoType.SHORT_VIDEO ? UploadSubStatusEnum.UPLOADING_SHORT : null);
@@ -161,6 +161,13 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Recover
     public File doMediaCutRecover(MediaCutException e, File watermarkVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
+        try {
+            File filmFile = ffmpegService.mediaCut(watermarkVideo, type, cuttingSetting, false);
+            if (FileUtil.exist(filmFile)) {
+                return filmFile;
+            }
+        } catch (Exception ignored) {
+        }
         log.error("重试后{}剪切仍然失败, uploadId:{}, filePath:{}", type == VideoType.TRAILER ? "预告片" : "短视频", uploadId, watermarkVideo.getAbsolutePath(), e);
         fileService.updateSubStatus(uploadId, type == VideoType.TRAILER ? UploadSubStatusEnum.CUT_TRAILER_FAILURE : UploadSubStatusEnum.CUT_SHORT_FAILURE);
         return null;

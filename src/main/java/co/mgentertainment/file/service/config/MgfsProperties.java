@@ -19,6 +19,11 @@ import java.util.List;
 public class MgfsProperties {
 
     /**
+     * 是否开启gpu加速
+     */
+    private Boolean gpuBased = false;
+
+    /**
      * 口令header name
      */
     private String apiToken = StringUtils.EMPTY;
