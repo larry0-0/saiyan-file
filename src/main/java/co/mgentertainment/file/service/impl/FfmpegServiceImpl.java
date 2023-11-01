@@ -73,7 +73,7 @@ public class FfmpegServiceImpl implements FfmpegService {
 //        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
         List<String> extraArgs = disabledWatermark && fastMode ?
-                Lists.newArrayList("-c:v", "copy", "-c:v", "copy") :
+                Lists.newArrayList("-c:v", "copy", "-c:a", "copy") :
                 Lists.newArrayList("-c:v", "libx264");
         extraArgs.addAll(Lists.newArrayList(
                 "-threads", Runtime.getRuntime().availableProcessors() + "",
