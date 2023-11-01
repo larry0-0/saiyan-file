@@ -140,12 +140,15 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Recover
     public File doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId) {
-        File filmFile = ffmpegService.mediaConvert(originVideo, true, false);
-        if (FileUtil.exist(filmFile)) {
-            return filmFile;
+        try {
+            File filmFile = ffmpegService.mediaConvert(originVideo, true, false);
+            if (FileUtil.exist(filmFile)) {
+                return filmFile;
+            }
+        } catch (Exception e1) {
+            fileService.updateUploadStatus(uploadId, UploadStatusEnum.CONVERT_FAILURE);
         }
         log.error("重试后视频转码仍然失败, uploadId:{}, filePath:{}", uploadId, originVideo.getAbsolutePath(), e);
-        fileService.updateUploadStatus(uploadId, UploadStatusEnum.CONVERT_FAILURE);
         return null;
     }
 
