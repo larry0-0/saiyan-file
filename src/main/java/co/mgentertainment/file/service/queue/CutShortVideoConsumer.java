@@ -58,7 +58,6 @@ public class CutShortVideoConsumer extends AbstractDisruptorWorkConsumer<CutShor
             File shortVideo = uploadWorkflowService.cutVideo(watermarkVideo, VideoType.SHORT_VIDEO, setting, uploadId);
             if (!FileUtil.exist(shortVideo)) {
                 log.error("(9)短视频文件不存在");
-                fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
             stopWatch.stop();

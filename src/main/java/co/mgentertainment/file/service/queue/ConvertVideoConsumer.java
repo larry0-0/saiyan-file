@@ -2,7 +2,6 @@ package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
-import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
@@ -43,7 +42,6 @@ public class ConvertVideoConsumer extends AbstractDisruptorWorkConsumer<ConvertV
             stopWatch.stop();
             if (!FileUtil.exist(m3u8File)) {
                 log.error("(2)转码失败");
-                fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
             log.debug("(2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());

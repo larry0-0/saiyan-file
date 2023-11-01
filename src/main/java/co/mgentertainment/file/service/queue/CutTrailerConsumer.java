@@ -49,7 +49,6 @@ public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailer
             File trailerVideo = uploadWorkflowService.cutVideo(watermarkVideo, VideoType.TRAILER, setting, uploadId);
             if (!FileUtil.exist(trailerVideo)) {
                 log.error("(7)预告片文件不存在");
-                fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
             stopWatch.stop();
