@@ -6,6 +6,8 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * @author larry
  * @createTime 2023/9/23
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-
+    private final ThreadPoolExecutor disruptorWorkPool;
     private final PrintWatermarkConsumer printWatermarkConsumer;
 
     private DisruptorQueue<T> queue;
@@ -22,7 +24,7 @@ public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, D
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, printWatermarkConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, printWatermarkConsumer);
     }
 
     @Override

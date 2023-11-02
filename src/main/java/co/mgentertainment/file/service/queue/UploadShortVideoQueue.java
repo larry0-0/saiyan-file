@@ -6,6 +6,8 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * @author larry
  * @createTime 2023/9/23
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class UploadShortVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-
+    private final ThreadPoolExecutor disruptorWorkPool;
     private final UploadShortVideoConsumer uploadShortVideoConsumer;
     private DisruptorQueue<T> queue;
 
@@ -26,7 +28,7 @@ public class UploadShortVideoQueue<T> implements Queueable<T>, InitializingBean,
             consumers[i] = uploadShortVideoConsumer;
         }
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, consumers);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, consumers);
     }
 
     @Override
