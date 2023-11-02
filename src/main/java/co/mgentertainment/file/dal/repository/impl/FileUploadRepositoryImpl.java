@@ -3,6 +3,7 @@ package co.mgentertainment.file.dal.repository.impl;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.file.dal.mapper.FileUploadExtMapper;
 import co.mgentertainment.file.dal.mapper.FileUploadMapper;
@@ -18,10 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -148,5 +146,12 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
         Assert.notNull(uploadDO, "fileUploadDO can not be null");
         Assert.notNull(uploadDO.getUploadId(), "uploadId can not be null");
         return fileUploadMapper.updateByPrimaryKeySelective(uploadDO) > 0;
+    }
+
+    @Override
+    public List<FileUploadDO> getUploadsByStatusInTime(List<UploadStatusEnum> statusList, List<UploadSubStatusEnum> subStatusList, Date deadline) {
+        List<Integer> statusCollection = statusList.stream().map(UploadStatusEnum::getValue).collect(Collectors.toList());
+        List<Integer> subStatusCollection = subStatusList.stream().map(UploadSubStatusEnum::getValue).collect(Collectors.toList());
+        return fileUploadExtMapper.selectByStatusAndInTime(statusCollection, subStatusCollection, deadline);
     }
 }

@@ -5,7 +5,6 @@ import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.file.dal.po.FileUploadDO;
-import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.config.CuttingSetting;
@@ -38,34 +37,25 @@ public class PatrolUploadStatusJob {
     @Scheduled(fixedRate = 600 * 1000, initialDelay = 30000)
     public void checkUploadStatus() {
         // 获取执行超过10分钟的未完成记录
-        FileUploadExample example = new FileUploadExample();
-        example.createCriteria()
-                .andDeletedEqualTo((byte) 0)
-                .andStatusIn(ListUtil.of(
-                        Integer.valueOf(UploadStatusEnum.CONVERT_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadStatusEnum.UPLOAD_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadStatusEnum.CAPTURE_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadStatusEnum.UPLOAD_COVER_FAILURE.getValue()).shortValue()))
-                .andCreateTimeLessThan(DateUtils.addMinutes(new Date(), -10));
-        List<FileUploadDO> fileUploadDOS = fileUploadRepository.getFileUploadsByExample(example);
-        if (CollectionUtils.isEmpty(fileUploadDOS)) {
+        List<FileUploadDO> uploads = fileUploadRepository.getUploadsByStatusInTime(
+                ListUtil.of(
+                        UploadStatusEnum.CONVERT_FAILURE,
+                        UploadStatusEnum.UPLOAD_FAILURE,
+                        UploadStatusEnum.CAPTURE_FAILURE,
+                        UploadStatusEnum.UPLOAD_COVER_FAILURE),
+                ListUtil.of(
+                        UploadSubStatusEnum.PRINT_FAILURE,
+                        UploadSubStatusEnum.UPLOAD_ORIGIN_FAILURE,
+                        UploadSubStatusEnum.CUT_TRAILER_FAILURE,
+                        UploadSubStatusEnum.UPLOAD_TRAILER_FAILURE,
+                        UploadSubStatusEnum.CUT_SHORT_FAILURE,
+                        UploadSubStatusEnum.UPLOAD_SHORT_FAILURE),
+                DateUtils.addMinutes(new Date(), -10));
+        if (CollectionUtils.isEmpty(uploads)) {
             return;
         }
-        FileUploadExample example2 = new FileUploadExample();
-        example2.createCriteria()
-                .andDeletedEqualTo((byte) 0)
-                .andStatusNotEqualTo(Integer.valueOf(UploadStatusEnum.VIDEO_DAMAGED_OR_LOST.getValue()).shortValue())
-                .andSubStatusIn(ListUtil.of(
-                        Integer.valueOf(UploadSubStatusEnum.PRINT_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadSubStatusEnum.UPLOAD_ORIGIN_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadSubStatusEnum.CUT_TRAILER_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadSubStatusEnum.UPLOAD_TRAILER_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadSubStatusEnum.CUT_SHORT_FAILURE.getValue()).shortValue(),
-                        Integer.valueOf(UploadSubStatusEnum.UPLOAD_SHORT_FAILURE.getValue()).shortValue()))
-                .andCreateTimeLessThan(DateUtils.addMinutes(new Date(), -10));
-        List<FileUploadDO> fileUploadDOList = fileUploadRepository.getFileUploadsByExample(example);
-        fileUploadDOS.addAll(fileUploadDOList);
-        fileUploadDOS.stream().filter(fu -> StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
+
+        uploads.stream().filter(fu -> StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
             boolean hasTrailer = fu.getHasTrailer().equals(1);
             boolean hasShort = fu.getHasShort().equals(1);
             boolean hasCover = fu.getHasCover().equals(1);

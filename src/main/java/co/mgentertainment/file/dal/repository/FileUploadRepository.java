@@ -3,9 +3,11 @@ package co.mgentertainment.file.dal.repository;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
+import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -97,4 +99,6 @@ public interface FileUploadRepository {
      * @return
      */
     Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO);
+
+    List<FileUploadDO> getUploadsByStatusInTime(List<UploadStatusEnum> statusList, List<UploadSubStatusEnum> subStatusEnums, Date deadline);
 }

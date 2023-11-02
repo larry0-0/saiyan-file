@@ -41,7 +41,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
@@ -56,7 +55,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -148,11 +148,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .withChunkedEncodingDisabled(true)
                 .build();
         createBucketIfNotExists(s3Config);
-        this.uploadExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
-            Thread thread = new Thread(r);
-            thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
-            return thread;
-        });
+//        this.uploadExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+//            Thread thread = new Thread(r);
+//            thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
+//            return thread;
+//        });
         autoAddInnerAccessClient("inner");
     }
 
@@ -208,13 +208,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
         File originVideoDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
         File originVideo = new File(originVideoDir, fileUploadDO.getFilename());
-        if (fileUploadDO == null) {
-            if (originVideoDir.exists()) {
-                FileUtil.del(originVideoDir);
-            }
-            throw new IllegalArgumentException("uploadId not exists");
-        }
-        if (!originVideo.exists()) {
+        if (!FileUtil.exist(originVideo)) {
             // 多实例下本地磁盘找不到则忽略
             return;
         }
@@ -289,7 +283,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 CompletableFuture.supplyAsync(() -> {
                     prepareUploadPretreatment(file, cloudPath, false).upload();
                     return null;
-                }, this.uploadExecutor).exceptionally(throwable -> {
+                }).exceptionally(throwable -> {
                     String filePath = file.getAbsolutePath();
                     log.error("fail to upload file:{}", filePath, throwable);
                     return filePath;

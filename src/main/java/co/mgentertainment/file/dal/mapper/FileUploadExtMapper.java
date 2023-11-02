@@ -1,7 +1,9 @@
 package co.mgentertainment.file.dal.mapper;
 
 import co.mgentertainment.file.dal.po.FileUploadDO;
+import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 public interface FileUploadExtMapper {
@@ -13,4 +15,8 @@ public interface FileUploadExtMapper {
      * @mbg.generated Fri Sep 22 01:39:50 GST 2023
      */
     int batchInsert(List<FileUploadDO> rows);
+
+    List<FileUploadDO> selectByStatusAndInTime(@Param("statusList") List<Integer> statusList,
+                                               @Param("subStatusList") List<Integer> subStatusList,
+                                               @Param("deadline") Date deadline);
 }
