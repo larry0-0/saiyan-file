@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Component
 @RequiredArgsConstructor
 public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor ffmpegWorkPool;
     private final PrintWatermarkConsumer printWatermarkConsumer;
 
     private DisruptorQueue<T> queue;
@@ -24,7 +24,7 @@ public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, D
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, printWatermarkConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, printWatermarkConsumer);
     }
 
     @Override

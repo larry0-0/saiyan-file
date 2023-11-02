@@ -5,9 +5,11 @@ import co.mgentertainment.common.doc.annonation.EnableCommonDoc;
 import co.mgentertainment.common.eventbus.annonation.EnableCommonEventBus;
 import co.mgentertainment.common.syslog.annotation.EnableCommonSyslog;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -22,23 +24,25 @@ import java.util.concurrent.TimeUnit;
 @EnableCommonDoc
 @EnableCommonSyslog
 @EnableDistributedEvent
+@EnableConfigurationProperties(MgfsProperties.class)
 public class CommonConfig {
 
     @Bean(name = "fileUploadThreadPool")
-    ThreadPoolExecutor fileUploadThreadPool() {
-        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), 50, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+    ThreadPoolExecutor fileUploadThreadPool(final MgfsProperties mgfsProperties) {
+        Integer maxUploadPoolSize = Optional.ofNullable(mgfsProperties.getMaxUploadPoolSize()).orElse(50);
+        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), maxUploadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
             Thread thread = new Thread(r);
             thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
             return thread;
         });
     }
 
-    @Bean(name = "disruptorWorkPool")
-    ThreadPoolExecutor disruptorWorkPool() {
+    @Bean(name = "ffmpegWorkPool")
+    ThreadPoolExecutor ffmpegWorkPool() {
         int coreSize = Runtime.getRuntime().availableProcessors();
-        return new ThreadPoolExecutor(1, coreSize * 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+        return new ThreadPoolExecutor(coreSize, coreSize * coreSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
             Thread thread = new Thread(r);
-            thread.setName("disruptor-executor-" + RandomStringUtils.randomAlphanumeric(4));
+            thread.setName("ffmpeg-worker-" + RandomStringUtils.randomAlphanumeric(4));
             return thread;
         });
     }

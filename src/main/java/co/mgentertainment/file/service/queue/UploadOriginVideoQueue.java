@@ -17,19 +17,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RequiredArgsConstructor
 public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
 
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor fileUploadThreadPool;
     private final UploadOriginVideoConsumer uploadOriginVideoConsumer;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-//        // worker size = cpu core number
-//        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[4];
-//        for (int i = 0; i < consumers.length; i++) {
-//            consumers[i] = uploadOriginVideoConsumer;
-//        }
+        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < consumers.length; i++) {
+            consumers[i] = uploadOriginVideoConsumer;
+        }
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, uploadOriginVideoConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, fileUploadThreadPool, consumers);
     }
 
     @Override

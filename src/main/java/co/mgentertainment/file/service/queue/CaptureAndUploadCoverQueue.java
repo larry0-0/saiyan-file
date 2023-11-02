@@ -16,15 +16,20 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Component
 @RequiredArgsConstructor
 public class CaptureAndUploadCoverQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor ffmpegWorkPool;
     private final CaptureAndUploadCoverConsumer captureAndUploadCoverConsumer;
     private DisruptorQueue<T> queue;
 
 
     @Override
     public void afterPropertiesSet() {
+        // worker size = cpu core number
+        CaptureAndUploadCoverConsumer[] consumers = new CaptureAndUploadCoverConsumer[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < consumers.length; i++) {
+            consumers[i] = captureAndUploadCoverConsumer;
+        }
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, captureAndUploadCoverConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, consumers);
     }
 
     @Override

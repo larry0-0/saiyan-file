@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Component
 @RequiredArgsConstructor
 public class CutTrailerQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor ffmpegWorkPool;
     private final CutTrailerConsumer cutTrailerConsumer;
 
     private DisruptorQueue<T> queue;
@@ -24,7 +24,7 @@ public class CutTrailerQueue<T> implements Queueable<T>, InitializingBean, Dispo
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, cutTrailerConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, cutTrailerConsumer);
     }
 
     @Override

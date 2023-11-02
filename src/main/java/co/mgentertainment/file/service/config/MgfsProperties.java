@@ -19,6 +19,11 @@ import java.util.List;
 public class MgfsProperties {
 
     /**
+     * 文件上传线程池max-pool-size
+     */
+    private Integer maxUploadPoolSize = 50;
+
+    /**
      * 是否开启gpu加速
      */
     private Boolean gpuBased = false;

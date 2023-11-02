@@ -16,14 +16,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Component
 @RequiredArgsConstructor
 public class UploadShortVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor fileUploadThreadPool;
     private final UploadShortVideoConsumer uploadShortVideoConsumer;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, uploadShortVideoConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, fileUploadThreadPool, uploadShortVideoConsumer);
     }
 
     @Override

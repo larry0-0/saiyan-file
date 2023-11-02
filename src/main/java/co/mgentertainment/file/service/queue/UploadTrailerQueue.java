@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Component
 @RequiredArgsConstructor
 public class UploadTrailerQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor disruptorWorkPool;
+    private final ThreadPoolExecutor fileUploadThreadPool;
     private final UploadTrailerConsumer uploadTrailerConsumer;
 
     private DisruptorQueue<T> queue;
@@ -24,7 +24,7 @@ public class UploadTrailerQueue<T> implements Queueable<T>, InitializingBean, Di
     @Override
     public void afterPropertiesSet() throws Exception {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, uploadTrailerConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, fileUploadThreadPool, uploadTrailerConsumer);
     }
 
     @Override
