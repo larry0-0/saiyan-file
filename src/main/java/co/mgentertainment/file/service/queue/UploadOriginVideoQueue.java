@@ -2,11 +2,16 @@ package co.mgentertainment.file.service.queue;
 
 import co.mgentertainment.common.utils.queue.DisruptorQueue;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author larry
@@ -14,21 +19,26 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @description UploadOriginVideoQueue
  */
 @Component
+@DependsOn("uploadOriginVideoConsumer")
 @RequiredArgsConstructor
 public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-
-    private final ThreadPoolExecutor fileUploadThreadPool;
-    private final UploadOriginVideoConsumer uploadOriginVideoConsumer;
+    private final ObjectProvider<UploadOriginVideoConsumer> objectProvider;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[Runtime.getRuntime().availableProcessors()];
+        int workerSize = Runtime.getRuntime().availableProcessors();
+        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[workerSize];
         for (int i = 0; i < consumers.length; i++) {
-            consumers[i] = uploadOriginVideoConsumer;
+            consumers[i] = objectProvider.getIfAvailable();
         }
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(workerSize, workerSize * 3, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+            Thread thread = new Thread(r);
+            thread.setName("upload-origin-worker-" + RandomStringUtils.randomAlphanumeric(4));
+            return thread;
+        });
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, fileUploadThreadPool, consumers);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, executor, consumers);
     }
 
     @Override

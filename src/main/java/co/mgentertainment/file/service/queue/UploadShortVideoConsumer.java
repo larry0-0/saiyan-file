@@ -11,6 +11,8 @@ import co.mgentertainment.file.service.dto.UploadResourceDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -23,6 +25,7 @@ import java.io.File;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class UploadShortVideoConsumer extends AbstractDisruptorWorkConsumer<UploadShortVideoParameter> {
 
     private final UploadWorkflowService uploadWorkflowService;

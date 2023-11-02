@@ -2,7 +2,6 @@ package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
-import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.FileService;
@@ -11,6 +10,8 @@ import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.io.File;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailerParameter> {
 
     private final UploadWorkflowService uploadWorkflowService;

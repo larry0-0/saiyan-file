@@ -2,11 +2,14 @@ package co.mgentertainment.file.service.queue;
 
 import co.mgentertainment.common.utils.queue.DisruptorQueue;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 /**
  * @author larry
@@ -14,22 +17,27 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @description ConvertVideoQueue
  */
 @Component
+@DependsOn("convertVideoConsumer")
 @RequiredArgsConstructor
 public class ConvertVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
-    private final ThreadPoolExecutor ffmpegWorkPool;
-    private final ConvertVideoConsumer convertVideoConsumer;
-
+    private final ObjectProvider<ConvertVideoConsumer> objectProvider;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() {
         // worker size = cpu core number
-        ConvertVideoConsumer[] consumers = new ConvertVideoConsumer[Runtime.getRuntime().availableProcessors()];
-        for (int i = 0; i < consumers.length; i++) {
-            consumers[i] = convertVideoConsumer;
+        int workerSize = Runtime.getRuntime().availableProcessors();
+        ConvertVideoConsumer[] consumers = new ConvertVideoConsumer[workerSize];
+        for (int i = 0; i < workerSize; i++) {
+            consumers[i] = objectProvider.getIfAvailable();
         }
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(workerSize, workerSize * 4 + 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+            Thread thread = new Thread(r);
+            thread.setName("convert-video-worker-" + RandomStringUtils.randomAlphanumeric(4));
+            return thread;
+        });
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, ffmpegWorkPool, consumers);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, executor, consumers);
     }
 
     @Override

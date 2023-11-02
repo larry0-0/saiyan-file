@@ -72,7 +72,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> IGNORED_DIRS = Arrays.asList(".localized", ".DS_Store", "desktop.ini");
 
     @Resource
-    private ThreadPoolExecutor fileUploadThreadPool;
+    private ThreadPoolExecutor file2s3ThreadPool;
 
     @Resource
     private SpringFileStorageProperties springFileStorageProperties;
@@ -285,7 +285,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 CompletableFuture.supplyAsync(() -> {
                     prepareUploadPretreatment(file, cloudPath, false).upload();
                     return null;
-                }, this.fileUploadThreadPool).exceptionally(throwable -> {
+                }, this.file2s3ThreadPool).exceptionally(throwable -> {
                     String filePath = file.getAbsolutePath();
                     log.error("fail to upload file:{}", filePath, throwable);
                     return filePath;
