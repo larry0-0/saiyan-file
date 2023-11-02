@@ -56,7 +56,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -70,7 +70,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap", "zip", "bzip", "application/x-bzip");
 
-    private Executor uploadExecutor;
+    @Resource
+    private ThreadPoolExecutor fileUploadThreadPool;
 
     @Resource
     private SpringFileStorageProperties springFileStorageProperties;
@@ -283,7 +284,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 CompletableFuture.supplyAsync(() -> {
                     prepareUploadPretreatment(file, cloudPath, false).upload();
                     return null;
-                }).exceptionally(throwable -> {
+                }, this.fileUploadThreadPool).exceptionally(throwable -> {
                     String filePath = file.getAbsolutePath();
                     log.error("fail to upload file:{}", filePath, throwable);
                     return filePath;
