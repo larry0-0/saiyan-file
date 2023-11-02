@@ -23,13 +23,13 @@ public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // worker size = cpu core number
-        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[4];
-        for (int i = 0; i < consumers.length; i++) {
-            consumers[i] = uploadOriginVideoConsumer;
-        }
+//        // worker size = cpu core number
+//        UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[4];
+//        for (int i = 0; i < consumers.length; i++) {
+//            consumers[i] = uploadOriginVideoConsumer;
+//        }
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, consumers);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, uploadOriginVideoConsumer);
     }
 
     @Override
