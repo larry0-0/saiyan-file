@@ -22,7 +22,7 @@ public class CutTrailerQueue<T> implements Queueable<T> , InitializingBean, Disp
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, cutTrailerConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, cutTrailerConsumer);
     }
 
     @Override

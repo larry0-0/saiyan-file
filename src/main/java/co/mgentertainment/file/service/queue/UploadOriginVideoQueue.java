@@ -26,7 +26,7 @@ public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean
             consumers[i] = uploadOriginVideoConsumer;
         }
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, consumers);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, consumers);
     }
 
     @Override

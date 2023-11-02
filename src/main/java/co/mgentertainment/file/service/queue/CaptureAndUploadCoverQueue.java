@@ -22,7 +22,7 @@ public class CaptureAndUploadCoverQueue<T> implements Queueable<T>, Initializing
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, captureAndUploadCoverConsumer);
+        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, captureAndUploadCoverConsumer);
     }
 
     @Override
