@@ -24,12 +24,12 @@ public class UploadFilmQueue<T> implements Queueable<T>, InitializingBean, Dispo
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // buffer size:131072
         // worker size = cpu core number
         UploadFilmConsumer[] consumers = new UploadFilmConsumer[Runtime.getRuntime().availableProcessors()];
         for (int i = 0; i < consumers.length; i++) {
             consumers[i] = uploadFilmConsumer;
         }
-        // buffer size:131072
         this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, disruptorWorkPool, consumers);
     }
 
