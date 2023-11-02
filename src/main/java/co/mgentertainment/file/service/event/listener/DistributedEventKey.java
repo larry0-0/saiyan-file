@@ -7,5 +7,5 @@ package co.mgentertainment.file.service.event.listener;
  */
 public interface DistributedEventKey {
 
-    String UPLOADS = "innerUploads";
+    String UPLOADS = "inner";
 }
