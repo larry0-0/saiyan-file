@@ -41,7 +41,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
@@ -278,9 +278,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid) {
+    public void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid, boolean canRetry) {
         if (Objects.isNull(files) || files.length == 0) {
-            log.error("no files need to be upload");
+            log.error("上传目录为空");
             return;
         }
         String cloudPath = getCloudPath(resourceType, subDirName, rid,
@@ -305,10 +305,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 failedFilePaths = cf.get().stream().filter(Objects::nonNull).collect(Collectors.toList());
             } catch (Exception ignored) {
             } finally {
-                // 失败的文件再次上传
-                if (CollectionUtils.isNotEmpty(failedFilePaths)) {
+                // 失败的文件再上传一次
+                if (canRetry && CollectionUtils.isNotEmpty(failedFilePaths)) {
                     File[] retryFiles = failedFilePaths.stream().map(f -> new File(String.valueOf(f))).toArray(File[]::new);
-                    files2CloudStorage(retryFiles, resourceType, subDirName, rid);
+                    files2CloudStorage(retryFiles, resourceType, subDirName, rid, false);
                 }
             }
         }

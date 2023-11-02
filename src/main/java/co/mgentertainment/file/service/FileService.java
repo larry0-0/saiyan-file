@@ -31,7 +31,7 @@ public interface FileService {
 
     void reuploadVideo(Long uploadId, CuttingSetting cuttingSetting);
 
-    void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid);
+    void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid, boolean canRetry);
 
     List<VideoUploadInfoDTO> getUploadInfos(List<Long> uploadIds);
 

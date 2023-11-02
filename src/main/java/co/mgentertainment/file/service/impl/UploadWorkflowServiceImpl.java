@@ -68,7 +68,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
         }
         try {
             long rid = cachedUidGenerator.getUID();
-            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid);
+            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid, true);
             rid = fileService.saveResource(ResourceDTO.builder()
                     .rid(rid)
                     .filename(originVideo.getName())

@@ -112,7 +112,7 @@ public class FfmpegServiceImpl implements FfmpegService {
 //                .setVideoCodec("h264")
 //                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("hls");
-        if (fastMode) {
+        if (!fastMode) {
             outputBuilder.setPreset("ultrafast");
         }
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
@@ -165,7 +165,7 @@ public class FfmpegServiceImpl implements FfmpegService {
 //                .setVideoBitRate(64000)
 //                .setStrict(FFmpegBuilder.Strict.NORMAL)
                 .setFormat("mp4");
-        if (fastMode) {
+        if (!fastMode) {
             outputBuilder.setPreset("ultrafast");
         }
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
