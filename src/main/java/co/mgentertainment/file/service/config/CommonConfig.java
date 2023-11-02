@@ -34,10 +34,9 @@ public class CommonConfig {
     }
 
     @Bean(name = "disruptorWorkPool")
-    ThreadPoolExecutor disruptorWorkThreadPool() {
+    ThreadPoolExecutor disruptorWorkPool() {
         int coreSize = Runtime.getRuntime().availableProcessors();
-        int maxSize = coreSize * coreSize;
-        return new ThreadPoolExecutor(coreSize, maxSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+        return new ThreadPoolExecutor(1, coreSize * 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
             Thread thread = new Thread(r);
             thread.setName("disruptor-executor-" + RandomStringUtils.randomAlphanumeric(4));
             return thread;
