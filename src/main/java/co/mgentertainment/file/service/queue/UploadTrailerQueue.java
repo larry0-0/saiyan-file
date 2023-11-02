@@ -24,7 +24,7 @@ public class UploadTrailerQueue<T> implements Queueable<T>, InitializingBean, Di
     @Override
     public void afterPropertiesSet() throws Exception {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, fileUploadThreadPool, uploadTrailerConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, fileUploadThreadPool, uploadTrailerConsumer);
     }
 
     @Override

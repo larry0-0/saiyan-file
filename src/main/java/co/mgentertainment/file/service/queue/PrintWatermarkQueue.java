@@ -24,7 +24,7 @@ public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, D
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, printWatermarkConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, ffmpegWorkPool, printWatermarkConsumer);
     }
 
     @Override

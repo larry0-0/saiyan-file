@@ -24,7 +24,7 @@ public class CutTrailerQueue<T> implements Queueable<T>, InitializingBean, Dispo
     @Override
     public void afterPropertiesSet() {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, cutTrailerConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, ffmpegWorkPool, cutTrailerConsumer);
     }
 
     @Override

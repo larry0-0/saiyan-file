@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap", "zip", "bzip", "application/x-bzip");
+    private final List<String> IGNORED_DIRS = Arrays.asList(".localized", ".DS_Store", "desktop.ini");
 
     @Resource
     private ThreadPoolExecutor fileUploadThreadPool;
@@ -555,9 +556,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
         File[] files = innerDirToUpload.listFiles();
         for (File file : files) {
+            if (IGNORED_DIRS.contains(file.getName())) {
+                continue;
+            }
             // 过滤文件名非法字符
             String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
-            Long uploadId = addUploadVideoRecord(filename, CuttingSetting.builder()
+            Long uploadId = addUploadVideoRecord(
+                    filename,
+                    CuttingSetting.builder()
                             .trailerDuration(30)
                             .trailerStartFromProportion(0)
                             .autoCaptureCover(true)

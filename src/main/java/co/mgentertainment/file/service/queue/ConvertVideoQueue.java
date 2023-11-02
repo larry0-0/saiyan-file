@@ -29,7 +29,7 @@ public class ConvertVideoQueue<T> implements Queueable<T>, InitializingBean, Dis
             consumers[i] = convertVideoConsumer;
         }
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, ffmpegWorkPool, consumers);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, ffmpegWorkPool, consumers);
     }
 
     @Override

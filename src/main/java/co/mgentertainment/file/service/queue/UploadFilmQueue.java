@@ -25,7 +25,7 @@ public class UploadFilmQueue<T> implements Queueable<T>, InitializingBean, Dispo
     @Override
     public void afterPropertiesSet() throws Exception {
         // buffer size:131072
-        this.queue = DisruptorQueue.independentPubSubInstance(2 << 17, false, fileUploadThreadPool, uploadFilmConsumer);
+        this.queue = (DisruptorQueue<T>) new DisruptorQueue<>(2 << 17, false, fileUploadThreadPool, uploadFilmConsumer);
     }
 
     @Override
