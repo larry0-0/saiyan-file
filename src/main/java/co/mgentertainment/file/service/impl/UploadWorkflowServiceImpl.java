@@ -1,6 +1,5 @@
 package co.mgentertainment.file.service.impl;
 
-import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
@@ -203,20 +202,13 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             }
             boolean hasCover = new Byte((byte) 1).equals(uploadResource.getHasCover());
             if (!hasCover) {
-                fileService.afterMainProcessComplete(uploadId, originVideo);
-                return;
+                originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
+                File imgFile = ffmpegService.captureScreenshot(originVideo);
+                Long rid = uploadResource.getRid();
+                String subDirName = uploadResource.getFolder();
+                fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
             }
-            originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start("剪切和上传封面");
-            log.debug("(6.1)开始剪切封面, video:{}", originVideo.getAbsolutePath());
-            File imgFile = ffmpegService.captureScreenshot(originVideo);
-            log.debug("(6.2)开始上传封面, video:{}", originVideo.getAbsolutePath());
-            Long rid = uploadResource.getRid();
-            String subDirName = uploadResource.getFolder();
-            fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
-            stopWatch.stop();
-            log.debug("(6.3){}流程结束，已完成. uploadId:{}, rid:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), uploadId, rid, stopWatch.getLastTaskTimeMillis());
+            fileService.afterMainProcessComplete(uploadId, originVideo);
         } catch (Throwable t) {
             throw new CaptureAndUploadScreenshotException("剪切和上传封面失败", t);
         }
