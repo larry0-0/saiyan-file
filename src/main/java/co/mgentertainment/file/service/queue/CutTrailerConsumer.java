@@ -7,7 +7,6 @@ import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -33,15 +32,14 @@ public class CutTrailerConsumer extends AbstractDisruptorWorkConsumer<CutTrailer
         String watermarkVideoPath = parameter.getWatermarkVideoPath();
         Integer trailerDuration = parameter.getTrailerDuration();
         Integer trailerStartFromProportion = parameter.getTrailerStartFromProportion();
-        Long rid = parameter.getRid();
-        if (StringUtils.isBlank(watermarkVideoPath) || !new File(watermarkVideoPath).exists() || trailerDuration == null || trailerStartFromProportion == null || rid == null) {
+        if (uploadId == null) {
             log.error("CutTrailerConsumer参数异常");
             return;
         }
         StopWatch stopWatch = new StopWatch();
         stopWatch.start("剪切预告片");
         log.debug("(7)开始{}, uploadId:{}, 原片:{}", stopWatch.currentTaskName(), uploadId, watermarkVideoPath);
-        File watermarkVideo = new File(watermarkVideoPath);
+        File watermarkVideo = watermarkVideoPath == null ? null : new File(watermarkVideoPath);
         CuttingSetting setting = CuttingSetting.builder().trailerDuration(trailerDuration).trailerStartFromProportion(trailerStartFromProportion).build();
         uploadWorkflowService.cutVideo(watermarkVideo, VideoType.TRAILER, setting, uploadId);
         stopWatch.stop();

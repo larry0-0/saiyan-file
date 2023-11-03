@@ -120,6 +120,7 @@ public class FfmpegServiceImpl implements FfmpegService {
         return outFile;
     }
 
+    // 设置为空时默认截取前十秒
     @Override
     public File mediaCut(File inputFile, VideoType type, CuttingSetting cuttingSetting, boolean fastMode) {
         Preconditions.checkArgument(FileUtil.exist(inputFile) && inputFile.isFile(), "inputFile is not a file");
@@ -129,7 +130,7 @@ public class FfmpegServiceImpl implements FfmpegService {
         Integer startFromProportion = type == VideoType.TRAILER ? cuttingSetting.getTrailerStartFromProportion() :
                 type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoStartFromProportion() : null;
         log.debug("the media {} duration:{}, startFromProportion:{}", inputFile.getAbsolutePath(), duration, startFromProportion);
-        long startOffset = new BigDecimal(Optional.ofNullable(duration).orElse(0.0))
+        long startOffset = new BigDecimal(Optional.ofNullable(duration).orElse(10.0))
                 .multiply(new BigDecimal(Optional.ofNullable(startFromProportion).orElse(0)))
                 .divide(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
 //        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
@@ -137,7 +138,7 @@ public class FfmpegServiceImpl implements FfmpegService {
         String suffix = type == VideoType.TRAILER ? ResourceSuffix.TRAILER : type == VideoType.SHORT_VIDEO ? ResourceSuffix.SHORT : ".mp4";
         File outFile = MediaHelper.getProcessedFileByOriginFile(inputFile, type.getValue(), suffix);
         Integer cutDuration = type == VideoType.TRAILER ? cuttingSetting.getTrailerDuration() :
-                type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoDuration() : 0;
+                type == VideoType.SHORT_VIDEO ? cuttingSetting.getShortVideoDuration() : null;
         Boolean isGpu = mgfsProperties.getGpuBased();
         List<String> extraArgs = new ArrayList<>();
         if (!isGpu) {
@@ -156,7 +157,7 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .setStartOffset(startOffset, TimeUnit.SECONDS)
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
-                .setDuration(cutDuration, TimeUnit.SECONDS)
+                .setDuration(Optional.ofNullable(cutDuration).orElse(10), TimeUnit.SECONDS)
                 .addExtraArgs(extraArgs.toArray(new String[0]))
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
 //                .setVideoCodec("h264")

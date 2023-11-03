@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service.event;//package co.mgentertainment.file.service.event;
 
 import co.mgentertainment.common.eventbus.AbstractEventSubscriber;
+import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.queue.*;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -29,8 +30,9 @@ public class CutVideoEventSubscriber extends AbstractEventSubscriber<CutVideoEve
         String watermarkVideoPath = event.getWatermarkVideoPath();
         Integer cutDuration = event.getCutDuration();
         Integer cutStartPos = event.getCutStartPos();
+        VideoType type = event.getType();
         try {
-            switch (event.getType()) {
+            switch (type) {
                 case TRAILER:
                     cutTrailerQueue.put(CutTrailerParameter.builder()
                             .uploadId(uploadId)

@@ -41,7 +41,8 @@ public class CutShortVideoConsumer extends AbstractDisruptorWorkConsumer<CutShor
         stopWatch.start("剪切短视频");
         log.debug("(9)开始{}, uploadId:{}, 原片:{}", stopWatch.currentTaskName(), uploadId, watermarkVideoPath);
         CuttingSetting setting = CuttingSetting.builder().shortVideoDuration(shortVideoDuration).shortVideoStartFromProportion(shortVideoStartPos).build();
-        uploadWorkflowService.cutVideo(new File(watermarkVideoPath), VideoType.SHORT_VIDEO, setting, uploadId);
+        File watermarkVideo = watermarkVideoPath == null ? null : new File(watermarkVideoPath);
+        uploadWorkflowService.cutVideo(watermarkVideo, VideoType.SHORT_VIDEO, setting, uploadId);
         stopWatch.stop();
         log.debug("(9)结束{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), stopWatch.getLastTaskTimeMillis());
     }

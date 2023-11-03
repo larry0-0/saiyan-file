@@ -24,5 +24,4 @@ public class CutTrailerParameter implements Serializable {
 
     private Integer trailerStartFromProportion;
 
-    private Long rid;
 }

@@ -132,7 +132,25 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {MediaCutException.class}, maxAttempts = 1, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public void cutVideo(File watermarkVideo, VideoType type, CuttingSetting cuttingSetting, Long uploadId) {
         try {
+            Integer trailerDuration = cuttingSetting.getTrailerDuration();
+            Integer shortDuration = cuttingSetting.getShortVideoDuration();
+            if (type == VideoType.TRAILER && trailerDuration == null) {
+                UploadResourceDTO uploadResource = fileService.getUploadResource(uploadId);
+                if (uploadResource != null || uploadResource.getUploadId() == null) {
+                    log.error("cut Trailer参数异常,未找到uploadId:{}", uploadId);
+                    return;
+                }
+                cuttingSetting = CuttingSetting.builder().trailerDuration(uploadResource.getTrailerDuration()).trailerStartFromProportion(uploadResource.getTrailerStartPos()).build();
+            } else if (type == VideoType.SHORT_VIDEO && shortDuration == null) {
+                UploadResourceDTO uploadResource = fileService.getUploadResource(uploadId);
+                if (uploadResource != null || uploadResource.getUploadId() == null) {
+                    log.error("cut Short参数异常,未找到uploadId:{}", uploadId);
+                    return;
+                }
+                cuttingSetting = CuttingSetting.builder().shortVideoDuration(uploadResource.getShortDuration()).shortVideoStartFromProportion(uploadResource.getShortStartPos()).build();
+            }
             watermarkVideo = FileUtil.exist(watermarkVideo) ? watermarkVideo : fileService.getWatermarkFile(uploadId);
+
             File cutVideo = ffmpegService.mediaCut(watermarkVideo, type, cuttingSetting, true);
             if (!FileUtil.exist(cutVideo)) {
                 throw new MediaCutException("剪切" + (type == VideoType.TRAILER ? "预告片失败" : "短视频失败"));
