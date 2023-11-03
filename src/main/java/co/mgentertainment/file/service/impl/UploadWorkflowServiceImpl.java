@@ -226,6 +226,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 Long rid = uploadResource.getRid();
                 String subDirName = uploadResource.getFolder();
                 fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
+            } else {
+                log.debug("无截取封面需求，直接跳过结束主流程");
             }
             fileService.afterMainProcessComplete(uploadId, originVideo);
         } catch (Throwable t) {
