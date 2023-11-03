@@ -3,7 +3,7 @@ package co.mgentertainment.file.service.event.listener;
 import co.mgentertainment.common.devent.DistributedEventCallback;
 import co.mgentertainment.common.devent.annonation.DistributedEventListener;
 import co.mgentertainment.common.utils.cache.CacheStore;
-import co.mgentertainment.file.service.FileService;
+import co.mgentertainment.file.service.UploadWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.io.File;
 @Slf4j
 public class InnerUploadEventListener implements DistributedEventCallback {
 
-    private final FileService fileService;
+    private final UploadWorkflowService uploadWorkflowService;
 
     private CacheStore localCache = new CacheStore.Builder().setCapacity(10).setExpireSec(3600).build();
 
@@ -32,7 +32,7 @@ public class InnerUploadEventListener implements DistributedEventCallback {
             return;
         }
         localCache.put(dirPath, "locker");
-        fileService.startInnerUploads(new File(dirPath));
+        uploadWorkflowService.startUploadingWithInnerDir(new File(dirPath));
         localCache.remove(dirPath);
     }
 }

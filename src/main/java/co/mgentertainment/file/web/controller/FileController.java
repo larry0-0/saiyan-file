@@ -9,6 +9,7 @@ import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.FileService;
+import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.event.listener.DistributedEventKey;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 public class FileController {
 
     private final FileService fileService;
+    private final UploadWorkflowService uploadWorkflowService;
     private final ResourceLineService resourceLineService;
     private final DistributedEventProvider distributedEventProvider;
 
@@ -63,14 +65,14 @@ public class FileController {
     @Operation(summary = "视频上传")
     @SysLog("上传视频")
     public R<VideoUploadInfoDTO> uploadVideo(@RequestParam(value = "file") MultipartFile file, CuttingSetting cuttingSetting) {
-        return R.ok(fileService.uploadVideo(file, cuttingSetting));
+        return R.ok(uploadWorkflowService.startUploadingWithMultipartFile(file, cuttingSetting));
     }
 
     @PostMapping("/upload/retry")
     @Operation(summary = "重试失败的视频")
     @SysLog("失败重试")
     public R<Void> retryUploadVideo(@RequestBody RetryVideoUploadDTO retryVideoUploadDTO) {
-        fileService.reuploadVideo(retryVideoUploadDTO.getUploadId(), retryVideoUploadDTO.getCuttingSetting());
+        uploadWorkflowService.recoverUploading(retryVideoUploadDTO.getUploadId(), retryVideoUploadDTO.getCuttingSetting());
         return R.ok();
     }
 

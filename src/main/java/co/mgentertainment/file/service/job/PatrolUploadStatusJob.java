@@ -6,7 +6,7 @@ import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
-import co.mgentertainment.file.service.FileService;
+import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +29,14 @@ import java.util.List;
 public class PatrolUploadStatusJob {
 
     private final FileUploadRepository fileUploadRepository;
-    private final FileService fileService;
+    private final UploadWorkflowService uploadWorkflowService;
 
     /**
-     * 每10分钟检查一次执行中的file upload，全节点执行
+     * 每60分钟检查一次执行中的file upload，全节点执行
      */
-    @Scheduled(fixedRate = 600 * 1000, initialDelay = 30000)
+    @Scheduled(fixedRate = 3600 * 1000, initialDelay = 30000)
     public void checkUploadStatus() {
-        // 获取执行超过10分钟的未完成记录
+        // 获取执行超过60分钟的未完成记录
         List<FileUploadDO> uploads = fileUploadRepository.getUploadsByStatusInTime(
                 ListUtil.of(
                         UploadStatusEnum.CONVERT_FAILURE,
@@ -50,7 +50,7 @@ public class PatrolUploadStatusJob {
                         UploadSubStatusEnum.UPLOAD_TRAILER_FAILURE,
                         UploadSubStatusEnum.CUT_SHORT_FAILURE,
                         UploadSubStatusEnum.UPLOAD_SHORT_FAILURE),
-                DateUtils.addMinutes(new Date(), -10));
+                DateUtils.addMinutes(new Date(), -60));
         if (CollectionUtils.isEmpty(uploads)) {
             return;
         }
@@ -59,7 +59,7 @@ public class PatrolUploadStatusJob {
             boolean hasTrailer = fu.getHasTrailer().equals(1);
             boolean hasShort = fu.getHasShort().equals(1);
             boolean hasCover = fu.getHasCover().equals(1);
-            fileService.reuploadVideo(fu.getUploadId(),
+            uploadWorkflowService.recoverUploading(fu.getUploadId(),
                     CuttingSetting.builder()
                             .trailerDuration(hasTrailer ? fu.getTrailerDuration() : null)
                             .trailerStartFromProportion(hasTrailer ? fu.getTrailerStartPos() : null)

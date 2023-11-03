@@ -91,7 +91,6 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     @Override
     public Boolean updateFileUpload(FileUploadDO fileUploadDO, FileUploadExample fileUploadExample) {
         Assert.notNull(fileUploadDO, "fileUploadDO can not be null");
-        Assert.notNull(fileUploadDO.getUploadId(), "uploadId can not be null");
         int rowcount = fileUploadMapper.updateByExampleSelective(fileUploadDO, fileUploadExample);
         return rowcount > 0;
     }

@@ -1,6 +1,5 @@
 package co.mgentertainment.file.service.impl;
 
-import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.fileupload.FileInfo;
 import co.mgentertainment.common.fileupload.FileStorageProperties;
 import co.mgentertainment.common.fileupload.FileStorageService;
@@ -9,12 +8,10 @@ import co.mgentertainment.common.fileupload.constant.Constant;
 import co.mgentertainment.common.fileupload.spring.SpringFileStorageProperties;
 import co.mgentertainment.common.fileupload.tika.ContentTypeDetect;
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.common.utils.SecurityHelper;
-import co.mgentertainment.file.dal.mapper.ResourceExtMapper;
 import co.mgentertainment.file.dal.po.*;
 import co.mgentertainment.file.dal.repository.AccessClientRepository;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
@@ -24,7 +21,6 @@ import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.converter.FileObjectMapper;
 import co.mgentertainment.file.service.dto.*;
-import co.mgentertainment.file.service.queue.*;
 import co.mgentertainment.file.service.utils.MediaHelper;
 import co.mgentertainment.file.web.cache.ClientHolder;
 import com.amazonaws.ClientConfiguration;
@@ -44,16 +40,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -69,7 +62,6 @@ import java.util.stream.Collectors;
 public class FileServiceImpl implements FileService, InitializingBean {
     private final List<String> imageTypes = Lists.newArrayList("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg");
     private final List<String> packageTypes = Lists.newArrayList("apk", "ipa", "hap", "zip", "bzip", "application/x-bzip");
-    private final List<String> IGNORED_DIRS = Arrays.asList(".localized", ".DS_Store", "desktop.ini");
 
     @Resource
     private ThreadPoolExecutor file2s3ThreadPool;
@@ -98,36 +90,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
     @Resource
     private CachedUidGenerator cachedUidGenerator;
 
-    @Resource
-    private ResourceExtMapper resourceExtMapper;
-
-    @Resource
-    private ConvertVideoQueue convertVideoQueue;
-
-    @Resource
-    private UploadFilmQueue uploadFilmQueue;
-
-    @Resource
-    private CaptureAndUploadCoverQueue captureAndUploadCoverQueue;
-
-    @Resource
-    private PrintWatermarkQueue printWatermarkQueue;
-
-    @Resource
-    private UploadOriginVideoQueue uploadOriginVideoQueue;
-
-    @Resource
-    private CutTrailerQueue cutTrailerQueue;
-
-    @Resource
-    private CutShortVideoQueue cutShortVideoQueue;
-
-    @Resource
-    private UploadTrailerQueue uploadTrailerQueue;
-
-    @Resource
-    private UploadShortVideoQueue uploadShortVideoQueue;
-
     private AmazonS3 s3Client;
 
     // 数据初始化
@@ -150,11 +112,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .withChunkedEncodingDisabled(true)
                 .build();
         createBucketIfNotExists(s3Config);
-//        this.uploadExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
-//            Thread thread = new Thread(r);
-//            thread.setName("upload-executor-" + RandomStringUtils.randomAlphanumeric(4));
-//            return thread;
-//        });
         autoAddInnerAccessClient("inner");
     }
 
@@ -190,85 +147,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         String filename = MediaHelper.filterInvalidFilenameChars(multipartFile.getOriginalFilename());
         log.debug("(1)添加上传记录:{}", filename);
         Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting, Optional.empty());
-        File file;
-        try {
-            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
-        } catch (IOException e) {
-            throw new RuntimeException("fail to persist file", e);
-        }
         log.debug("(1)已上传记录:{} uploadId:{}", filename, uploadId);
-        convertVideoQueue.put(ConvertVideoParameter.builder()
-                .uploadId(uploadId)
-                .originVideoPath(file.getAbsolutePath())
-                .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
-    }
-
-    @Override
-    public void reuploadVideo(Long uploadId, CuttingSetting cuttingSetting) {
-        FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
-        File originVideoDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
-        File originVideo = new File(originVideoDir, fileUploadDO.getFilename());
-        if (!FileUtil.exist(originVideo)) {
-            // 多实例下本地磁盘找不到则忽略
-            return;
-        }
-        UploadStatusEnum oldStatus = UploadStatusEnum.getByValue(fileUploadDO.getStatus().intValue());
-        File filmVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
-        Long rid = fileUploadDO.getRid();
-        switch (oldStatus) {
-            case CONVERT_FAILURE:
-                convertVideoQueue.put(ConvertVideoParameter.builder()
-                        .uploadId(uploadId)
-                        .originVideoPath(originVideo.getAbsolutePath())
-                        .build());
-                break;
-            case UPLOAD_FAILURE:
-                if (rid == null || resourceRepository.getResourceByRid(rid) == null) {
-                    uploadFilmQueue.put(UploadFilmParameter.builder()
-                            .uploadId(uploadId)
-                            .originVideoPath(originVideo.getAbsolutePath())
-                            .processedVideoPath(filmVideo.getAbsolutePath())
-                            .appCode(ClientHolder.getCurrentClient())
-                            .build());
-                }
-                break;
-            case CAPTURE_FAILURE:
-            case UPLOAD_COVER_FAILURE:
-                if (resourceRepository.getResourceByRid(rid) == null) {
-                    break;
-                }
-                captureAndUploadCoverQueue.put(CaptureAndUploadCoverParameter.builder()
-                        .uploadId(uploadId)
-                        .originVideoPath(originVideo.getAbsolutePath())
-                        .build());
-                break;
-            default:
-                break;
-        }
-        UploadSubStatusEnum oldSubStatus = UploadSubStatusEnum.getByValue(fileUploadDO.getSubStatus().intValue());
-        switch (oldSubStatus) {
-            case PRINT_FAILURE:
-                printWatermarkQueue.put(PrintWatermarkParameter.builder().uploadId(uploadId).build());
-                break;
-            case UPLOAD_ORIGIN_FAILURE:
-                uploadOriginVideoQueue.put(UploadOriginVideoParameter.builder().uploadId(uploadId).build());
-                break;
-            case CUT_TRAILER_FAILURE:
-                cutTrailerQueue.put(CutTrailerParameter.builder().uploadId(uploadId).build());
-                break;
-            case UPLOAD_TRAILER_FAILURE:
-                uploadTrailerQueue.put(UploadTrailerParameter.builder().uploadId(uploadId).build());
-                break;
-            case CUT_SHORT_FAILURE:
-                cutShortVideoQueue.put(CutShortVideoParameter.builder().uploadId(uploadId).build());
-                break;
-            case UPLOAD_SHORT_FAILURE:
-                uploadShortVideoQueue.put(UploadShortVideoParameter.builder().uploadId(uploadId).build());
-                break;
-            default:
-                break;
-        }
     }
 
     @Override
@@ -476,34 +356,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
-    public void afterMainProcessComplete(Long uploadId, File originVideo) {
-        if (!FileUtil.exist(originVideo)) {
-            originVideo = getMainOriginFile(uploadId);
-        }
-        // 移动原视频
-        File newOriginFile = MediaHelper.moveFileToUploadDir(originVideo, uploadId, MgfsPath.MgfsPathType.VICE);
-        // 删除已处理目录
-        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.MAIN);
-        // 入水印处理队列
-        printWatermarkQueue.put(PrintWatermarkParameter.builder()
-                .uploadId(uploadId)
-                .newOriginVideoPath(newOriginFile.getAbsolutePath())
-                .build());
-        // 更新状态
-        updateStatus(uploadId, UploadStatusEnum.COMPLETED, UploadSubStatusEnum.PRINTING);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
-    public void afterViceProcessComplete(Long uploadId) {
-        // 删除已处理目录
-        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.VICE);
-        // 更新状态
-        updateSubStatus(uploadId, UploadSubStatusEnum.END);
-    }
-
-    @Override
     public File getMainOriginFile(Long uploadId) {
         return getOriginFile(uploadId, MgfsPath.MgfsPathType.MAIN);
     }
@@ -514,8 +366,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
+    public FileUploadDO getUploadRecord(Long uploadId) {
+        return fileUploadRepository.getFileUploadByUploadId(uploadId);
+    }
+
+    @Override
     public File getWatermarkFile(Long uploadId) {
-        FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
+        FileUploadDO fileUploadDO = getUploadRecord(uploadId);
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
             log.error("uploadId:{} not exists", uploadId);
             return null;
@@ -543,37 +400,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     public UploadResourceDTO getUploadResource(Long uploadId) {
-        ResourceExtDO resourceExtDO = resourceExtMapper.selectByUploadId(uploadId);
+        ResourceExtDO resourceExtDO = resourceRepository.getUploadResource(uploadId);
         return FileObjectMapper.INSTANCE.toUploadResourceDTO(resourceExtDO);
-    }
-
-    @Override
-    public R<Void> startInnerUploads(File innerDirToUpload) {
-        if (!FileUtil.exist(innerDirToUpload) || FileUtil.isDirEmpty(innerDirToUpload)) {
-            return R.failed("内部服务器目录不存在或没有文件");
-        }
-        File[] files = innerDirToUpload.listFiles();
-        for (File file : files) {
-            if (IGNORED_DIRS.contains(file.getName())) {
-                continue;
-            }
-            // 过滤文件名非法字符
-            String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
-            Long uploadId = addUploadVideoRecord(
-                    filename,
-                    CuttingSetting.builder()
-                            .trailerDuration(30)
-                            .trailerStartFromProportion(0)
-                            .autoCaptureCover(true)
-                            .build(),
-                    Optional.of(FileService.SERVER_INNER_APP_CODE));
-            File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
-            convertVideoQueue.put(ConvertVideoParameter.builder()
-                    .uploadId(uploadId)
-                    .originVideoPath(newOriginFile.getAbsolutePath())
-                    .build());
-        }
-        return R.ok();
     }
 
     @Override
@@ -586,8 +414,20 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
     }
 
+    @Override
+    public File getOriginFile(FileUploadDO fileUploadDO) {
+        if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
+            log.error("uploadId:{} not exists", fileUploadDO.getUploadId());
+            return null;
+        }
+        Long uploadId = fileUploadDO.getUploadId();
+        boolean mainProcessOver = fileUploadDO.getStatus() != null && UploadStatusEnum.COMPLETED.getValue().byteValue() == fileUploadDO.getStatus().byteValue();
+        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, mainProcessOver ? MgfsPath.MgfsPathType.VICE : MgfsPath.MgfsPathType.MAIN);
+        return new File(uploadIdDir, fileUploadDO.getFilename());
+    }
+
     private File getOriginFile(Long uploadId, MgfsPath.MgfsPathType pathType) {
-        FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
+        FileUploadDO fileUploadDO = getUploadRecord(uploadId);
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
             log.error("uploadId:{} not exists", uploadId);
             return null;
@@ -597,7 +437,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     private File getResourceFile(Long uploadId, ResourcePathType resourcePathType) {
-        FileUploadDO fileUploadDO = fileUploadRepository.getFileUploadByUploadId(uploadId);
+        FileUploadDO fileUploadDO = getUploadRecord(uploadId);
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
             log.error("uploadId:{} not exists", uploadId);
             return null;
@@ -763,14 +603,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
             accessClientRepository.saveAccessClient(accessClientDO);
         } catch (Exception ignored) {
         }
-    }
-
-    private File saveMultipartFileInDisk(MultipartFile multipartFile, String newFilename, Long uploadId) throws IOException {
-        File folder = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
-        FileUtil.mkdir(folder);
-        File localFile = new File(folder, newFilename);
-        FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));
-        return localFile;
     }
 
     private static class ResourceFileType {

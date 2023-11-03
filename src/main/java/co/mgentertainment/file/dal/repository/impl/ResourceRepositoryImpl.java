@@ -3,11 +3,9 @@ package co.mgentertainment.file.dal.repository.impl;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.file.dal.mapper.FileUploadMapper;
+import co.mgentertainment.file.dal.mapper.ResourceExtMapper;
 import co.mgentertainment.file.dal.mapper.ResourceMapper;
-import co.mgentertainment.file.dal.po.FileUploadDO;
-import co.mgentertainment.file.dal.po.FileUploadExample;
-import co.mgentertainment.file.dal.po.ResourceDO;
-import co.mgentertainment.file.dal.po.ResourceExample;
+import co.mgentertainment.file.dal.po.*;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +29,8 @@ public class ResourceRepositoryImpl implements ResourceRepository {
     private final ResourceMapper resourceMapper;
 
     private final FileUploadMapper fileUploadMapper;
+
+    private final ResourceExtMapper resourceExtMapper;
 
     @Override
     public Long addResource(ResourceDO resourceDO) {
@@ -115,5 +115,10 @@ public class ResourceRepositoryImpl implements ResourceRepository {
             criteria2.andRidIn(rids);
         }
         return resourceMapper.selectByExample(resourceExample);
+    }
+
+    @Override
+    public ResourceExtDO getUploadResource(Long uploadId) {
+        return resourceExtMapper.selectByUploadId(uploadId);
     }
 }

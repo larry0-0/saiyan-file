@@ -1,11 +1,11 @@
 package co.mgentertainment.file.service;
 
 import co.mgentertainment.common.model.PageResult;
-import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
+import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +28,6 @@ public interface FileService {
     UploadedFileDTO uploadFile(MultipartFile file);
 
     VideoUploadInfoDTO uploadVideo(MultipartFile file, CuttingSetting cuttingSetting);
-
-    void reuploadVideo(Long uploadId, CuttingSetting cuttingSetting);
 
     void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid, boolean canRetry);
 
@@ -59,13 +57,13 @@ public interface FileService {
 
     Long saveResource(ResourceDTO resourceDTO);
 
-    void afterMainProcessComplete(Long uploadId, File originVideo);
-
-    void afterViceProcessComplete(Long uploadId);
-
     File getMainOriginFile(Long uploadId);
 
     File getViceOriginFile(Long uploadId);
+
+    FileUploadDO getUploadRecord(Long uploadId);
+
+    File getOriginFile(FileUploadDO fileUploadDO);
 
     File getConvertedFilmDir(Long uploadId);
 
@@ -76,8 +74,6 @@ public interface FileService {
     File getShortVideoFile(Long uploadId);
 
     UploadResourceDTO getUploadResource(Long uploadId);
-
-    R<Void> startInnerUploads(File innerDirToUpload);
 
     boolean existsRid(Long rid);
 }

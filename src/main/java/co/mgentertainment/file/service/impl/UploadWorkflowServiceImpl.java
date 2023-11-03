@@ -1,33 +1,41 @@
 package co.mgentertainment.file.service.impl;
 
 import cn.hutool.core.io.FileUtil;
+import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
+import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.ResourceDTO;
 import co.mgentertainment.file.service.dto.UploadResourceDTO;
-import co.mgentertainment.file.service.event.CaptureAndUploadCoverEvent;
-import co.mgentertainment.file.service.event.CutVideoEvent;
-import co.mgentertainment.file.service.event.UploadFilmEvent;
-import co.mgentertainment.file.service.event.UploadSingleVideoEvent;
+import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
+import co.mgentertainment.file.service.event.*;
 import co.mgentertainment.file.service.exception.*;
 import co.mgentertainment.file.service.utils.MediaHelper;
 import co.mgentertainment.file.web.cache.ClientHolder;
 import com.google.common.eventbus.AsyncEventBus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,7 +46,10 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Order(10)
 public class UploadWorkflowServiceImpl implements UploadWorkflowService {
+    private final List<String> IGNORED_DIRS = Arrays.asList(".localized", ".DS_Store", "desktop.ini");
+
     private final AsyncEventBus eventBus;
 
     private final FileService fileService;
@@ -46,6 +57,149 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     private final FfmpegService ffmpegService;
 
     private final CachedUidGenerator cachedUidGenerator;
+
+    @Override
+    public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
+        VideoUploadInfoDTO videoUploadInfo = fileService.uploadVideo(multipartFile, cuttingSetting);
+        Long uploadId = videoUploadInfo.getUploadId();
+        String filename = videoUploadInfo.getFilename();
+        File file;
+        try {
+            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
+        } catch (IOException e) {
+            throw new RuntimeException("fail to persist file", e);
+        }
+        eventBus.post(ConvertVideoEvent.builder()
+                .uploadId(uploadId)
+                .originVideoPath(file.getAbsolutePath())
+                .build()
+        );
+        return videoUploadInfo;
+    }
+
+    @Override
+    public R<Void> startUploadingWithInnerDir(File innerDirToUpload) {
+        if (!FileUtil.exist(innerDirToUpload) || FileUtil.isDirEmpty(innerDirToUpload)) {
+            return R.failed("内部服务器目录不存在或没有文件");
+        }
+        File[] files = innerDirToUpload.listFiles();
+        for (File file : files) {
+            if (IGNORED_DIRS.contains(file.getName())) {
+                continue;
+            }
+            // 过滤文件名非法字符
+            String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
+            Long uploadId = fileService.addUploadVideoRecord(
+                    filename,
+                    CuttingSetting.builder()
+                            .trailerDuration(30)
+                            .trailerStartFromProportion(0)
+                            .autoCaptureCover(true)
+                            .build(),
+                    Optional.of(FileService.SERVER_INNER_APP_CODE));
+            File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
+            eventBus.post(ConvertVideoEvent.builder()
+                    .uploadId(uploadId)
+                    .originVideoPath(newOriginFile.getAbsolutePath())
+                    .build());
+        }
+        return R.ok();
+    }
+
+    @Override
+    public void recoverUploading(Long uploadId, CuttingSetting cuttingSetting) {
+        FileUploadDO uploadRecord = fileService.getUploadRecord(uploadId);
+        if (uploadRecord == null || uploadRecord.getUploadId() == null) {
+            log.error("未找到uploadId:{}对应的上传记录", uploadId);
+            return;
+        }
+        File originVideo = fileService.getOriginFile(uploadRecord);
+        if (FileUtil.exist(originVideo)) {
+            UploadStatusEnum oldStatus = UploadStatusEnum.getByValue(uploadRecord.getStatus().intValue());
+            Long rid = uploadRecord.getRid();
+            switch (oldStatus) {
+                case CONVERT_FAILURE:
+                    eventBus.post(ConvertVideoEvent.builder()
+                            .uploadId(uploadId)
+                            .originVideoPath(originVideo.getAbsolutePath())
+                            .build());
+                    break;
+                case UPLOAD_FAILURE:
+                    File filmVideo = MediaHelper.getProcessedFileByOriginFile(originVideo, VideoType.FEATURE_FILM.getValue(), ResourceSuffix.FEATURE_FILM);
+                    eventBus.post(UploadFilmEvent.builder()
+                            .uploadId(uploadId)
+                            .originVideoPath(originVideo.getAbsolutePath())
+                            .processedVideoPath(filmVideo.getAbsolutePath())
+                            .appCode(ClientHolder.getCurrentClient())
+                            .build());
+                    break;
+                case CAPTURE_FAILURE:
+                case UPLOAD_COVER_FAILURE:
+                    if (!fileService.existsRid(rid)) {
+                        break;
+                    }
+                    eventBus.post(CaptureAndUploadCoverEvent.builder()
+                            .uploadId(uploadId)
+                            .originVideoPath(originVideo.getAbsolutePath())
+                            .build());
+                    break;
+                default:
+                    break;
+            }
+        }
+        UploadSubStatusEnum oldSubStatus = UploadSubStatusEnum.getByValue(uploadRecord.getSubStatus().intValue());
+        switch (oldSubStatus) {
+            case PRINT_FAILURE:
+                eventBus.post(PrintWatermarkEvent.builder()
+                        .uploadId(uploadId)
+                        .originVideoPath(originVideo.getAbsolutePath())
+                        .build());
+                break;
+            case UPLOAD_ORIGIN_FAILURE:
+                eventBus.post(UploadSingleVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .videoPath(fileService.getWatermarkFile(uploadId).getAbsolutePath())
+                        .type(VideoType.ORIGIN_VIDEO)
+                        .build());
+                break;
+            case CUT_TRAILER_FAILURE:
+                eventBus.post(CutVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .watermarkVideoPath(fileService.getWatermarkFile(uploadId).getAbsolutePath())
+                        .type(VideoType.TRAILER)
+                        .cutDuration(Optional.ofNullable(cuttingSetting).orElse(CuttingSetting.builder().build()).getTrailerDuration())
+                        .cutStartPos(Optional.ofNullable(cuttingSetting).orElse(CuttingSetting.builder().build()).getTrailerStartFromProportion())
+                        .build());
+                break;
+            case UPLOAD_TRAILER_FAILURE:
+                File trailer = fileService.getTrailerFile(uploadId);
+                eventBus.post(UploadSingleVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .videoPath(trailer.getAbsolutePath())
+                        .type(VideoType.TRAILER)
+                        .build());
+                break;
+            case CUT_SHORT_FAILURE:
+                eventBus.post(CutVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .watermarkVideoPath(fileService.getWatermarkFile(uploadId).getAbsolutePath())
+                        .type(VideoType.SHORT_VIDEO)
+                        .cutDuration(Optional.ofNullable(cuttingSetting).orElse(CuttingSetting.builder().build()).getShortVideoDuration())
+                        .cutStartPos(Optional.ofNullable(cuttingSetting).orElse(CuttingSetting.builder().build()).getShortVideoStartFromProportion())
+                        .build());
+                break;
+            case UPLOAD_SHORT_FAILURE:
+                File shortVideo = fileService.getShortVideoFile(uploadId);
+                eventBus.post(UploadSingleVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .videoPath(shortVideo.getAbsolutePath())
+                        .type(VideoType.SHORT_VIDEO)
+                        .build());
+                break;
+            default:
+                break;
+        }
+    }
 
     @Override
     @Retryable(value = {PrintWatermarkException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
@@ -192,7 +346,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             boolean needTrailer = VideoType.ORIGIN_VIDEO == type && new Byte((byte) 1).equals(uploadResource.getHasTrailer());
             boolean needShort = Arrays.asList(VideoType.ORIGIN_VIDEO, VideoType.TRAILER).contains(type) && new Byte((byte) 1).equals(uploadResource.getHasShort());
             if (!needTrailer && !needShort) {
-                fileService.afterViceProcessComplete(uploadId);
+                afterViceProcessComplete(uploadId);
                 return;
             }
             // 更新下一步的状态
@@ -208,6 +362,34 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
         } catch (Throwable t) {
             throw new UploadSingleVideo2CloudException("上传" + (type == VideoType.TRAILER ? "预告片" : type == VideoType.ORIGIN_VIDEO ? "原片" : "短视频") + "失败", t);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void afterMainProcessComplete(Long uploadId, File originVideo) {
+        if (!FileUtil.exist(originVideo)) {
+            originVideo = fileService.getMainOriginFile(uploadId);
+        }
+        // 移动原视频
+        File newOriginFile = MediaHelper.moveFileToUploadDir(originVideo, uploadId, MgfsPath.MgfsPathType.VICE);
+        // 删除已处理目录
+        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.MAIN);
+        // 入水印处理队列
+        eventBus.post(PrintWatermarkEvent.builder()
+                .uploadId(uploadId)
+                .originVideoPath(newOriginFile.getAbsolutePath())
+                .build());
+        // 更新状态
+        fileService.updateStatus(uploadId, UploadStatusEnum.COMPLETED, UploadSubStatusEnum.PRINTING);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void afterViceProcessComplete(Long uploadId) {
+        // 删除已处理目录
+        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.VICE);
+        // 更新状态
+        fileService.updateSubStatus(uploadId, UploadSubStatusEnum.END);
     }
 
     @Override
@@ -229,7 +411,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             } else {
                 log.debug("无截取封面需求，直接跳过结束主流程");
             }
-            fileService.afterMainProcessComplete(uploadId, originVideo);
+            afterMainProcessComplete(uploadId, originVideo);
         } catch (Throwable t) {
             throw new CaptureAndUploadScreenshotException("剪切和上传封面失败", t);
         }
@@ -286,5 +468,13 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public void doCaptureAndUploadScreenshotRecover(CaptureAndUploadScreenshotException e, File originVideo, Long uploadId) {
         log.error("重试后截取和上传封面到云存储且更新数据表仍然失败, uploadId:{}, folderPath:{}", uploadId, originVideo.getAbsolutePath(), e);
         fileService.updateUploadStatus(uploadId, UploadStatusEnum.CAPTURE_FAILURE);
+    }
+
+    private File saveMultipartFileInDisk(MultipartFile multipartFile, String newFilename, Long uploadId) throws IOException {
+        File folder = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
+        FileUtil.mkdir(folder);
+        File localFile = new File(folder, newFilename);
+        FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));
+        return localFile;
     }
 }

@@ -16,7 +16,7 @@ public class PrintWatermarkParameter implements Serializable {
 
     private static final long serialVersionUID = 6071987361599766039L;
 
-    private String newOriginVideoPath;
+    private String originVideoPath;
 
     private Long uploadId;
 }

@@ -3,6 +3,7 @@ package co.mgentertainment.file.dal.repository;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.file.dal.po.ResourceDO;
 import co.mgentertainment.file.dal.po.ResourceExample;
+import co.mgentertainment.file.dal.po.ResourceExtDO;
 
 import java.util.List;
 
@@ -77,4 +78,10 @@ public interface ResourceRepository {
      */
     List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds);
 
+    /**
+     * get ResourceExt by uploadId
+     * @param uploadId
+     * @return
+     */
+    ResourceExtDO getUploadResource(Long uploadId);
 }

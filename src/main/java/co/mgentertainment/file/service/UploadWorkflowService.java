@@ -1,7 +1,10 @@
 package co.mgentertainment.file.service;
 
+import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 
@@ -11,6 +14,12 @@ import java.io.File;
  * @description UploadWorkflowService
  */
 public interface UploadWorkflowService {
+
+    VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting);
+
+    R<Void> startUploadingWithInnerDir(File innerDirToUpload);
+
+    void recoverUploading(Long uploadId, CuttingSetting cuttingSetting);
 
     void printWatermark(File originVideo, Long uploadId);
 
@@ -24,4 +33,7 @@ public interface UploadWorkflowService {
 
     void uploadVideo2CloudStorage(File video, VideoType type, Long uploadId);
 
+    void afterMainProcessComplete(Long uploadId, File originVideo);
+
+    void afterViceProcessComplete(Long uploadId);
 }
