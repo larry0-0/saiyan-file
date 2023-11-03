@@ -32,9 +32,9 @@ public class PatrolUploadStatusJob {
     private final UploadWorkflowService uploadWorkflowService;
 
     /**
-     * 每60分钟检查一次执行中的file upload，全节点执行
+     * 每30分钟检查一次执行中的file upload，全节点执行
      */
-    @Scheduled(fixedRate = 3600 * 1000, initialDelay = 30000)
+    @Scheduled(fixedRate = 1800 * 1000, initialDelay = 30000)
     public void checkUploadStatus() {
         // 获取执行超过60分钟的未完成记录
         List<FileUploadDO> uploads = fileUploadRepository.getUploadsByStatusInTime(
@@ -55,7 +55,7 @@ public class PatrolUploadStatusJob {
             return;
         }
 
-        uploads.stream().filter(fu -> StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
+        uploads.stream().filter(fu -> fu != null && StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
             boolean hasTrailer = fu.getHasTrailer().equals(1);
             boolean hasShort = fu.getHasShort().equals(1);
             boolean hasCover = fu.getHasCover().equals(1);
