@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author larry
@@ -402,8 +401,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 log.error("captureAndUploadScreenshot参数异常,未找到uploadId:{}", uploadId);
                 return;
             }
-            boolean hasCover = new AtomicReference(uploadResource.getHasCover()).get().equals((byte) 1);
-            if (!hasCover) {
+            boolean hasCover = new Byte((byte) 1).equals(uploadResource.getHasCover());
+            if (hasCover) {
                 File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
                 File imgFile = ffmpegService.captureScreenshot(originV);
                 Long rid = uploadResource.getRid();
