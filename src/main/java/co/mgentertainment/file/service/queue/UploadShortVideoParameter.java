@@ -19,9 +19,4 @@ public class UploadShortVideoParameter implements Serializable {
     private Long uploadId;
 
     private String shortVideoPath;
-
-    private Long rid;
-
-    private String cloudSubDirName;
-
 }

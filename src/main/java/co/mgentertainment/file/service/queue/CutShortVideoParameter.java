@@ -24,6 +24,4 @@ public class CutShortVideoParameter implements Serializable {
 
     private Integer shortVideoStartFromProportion;
 
-    private Long rid;
-
 }

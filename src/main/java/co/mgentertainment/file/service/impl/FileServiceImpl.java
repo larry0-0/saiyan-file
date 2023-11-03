@@ -200,7 +200,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
         convertVideoQueue.put(ConvertVideoParameter.builder()
                 .uploadId(uploadId)
                 .originVideoPath(file.getAbsolutePath())
-                .appCode(ClientHolder.getCurrentClient())
                 .build());
         return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
     }
@@ -222,7 +221,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 convertVideoQueue.put(ConvertVideoParameter.builder()
                         .uploadId(uploadId)
                         .originVideoPath(originVideo.getAbsolutePath())
-                        .appCode(ClientHolder.getCurrentClient())
                         .build());
                 break;
             case UPLOAD_FAILURE:
@@ -573,10 +571,19 @@ public class FileServiceImpl implements FileService, InitializingBean {
             convertVideoQueue.put(ConvertVideoParameter.builder()
                     .uploadId(uploadId)
                     .originVideoPath(newOriginFile.getAbsolutePath())
-                    .appCode(ClientHolder.getCurrentClient())
                     .build());
         }
         return R.ok();
+    }
+
+    @Override
+    public boolean existsRid(Long rid) {
+        try {
+            ResourceDO resourceDO = resourceRepository.getResourceByRid(rid);
+            return resourceDO.getRid() != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private File getOriginFile(Long uploadId, MgfsPath.MgfsPathType pathType) {

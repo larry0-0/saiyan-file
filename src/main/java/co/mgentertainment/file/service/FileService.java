@@ -78,4 +78,6 @@ public interface FileService {
     UploadResourceDTO getUploadResource(Long uploadId);
 
     R<Void> startInnerUploads(File innerDirToUpload);
+
+    boolean existsRid(Long rid);
 }

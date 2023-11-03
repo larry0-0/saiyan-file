@@ -20,5 +20,4 @@ public class ConvertVideoParameter implements Serializable {
 
     private String originVideoPath;
 
-    private String appCode;
 }

@@ -1,9 +1,7 @@
 package co.mgentertainment.file.service.queue;
 
 import cn.hutool.core.date.StopWatch;
-import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
-import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +23,6 @@ import java.io.File;
 public class ConvertVideoConsumer extends AbstractDisruptorWorkConsumer<ConvertVideoParameter> {
 
     private final UploadWorkflowService uploadWorkflowService;
-    private final FileService fileService;
-    private final UploadFilmQueue uploadFilmQueue;
 
     @Override
     public void consume(ConvertVideoParameter parameter) {
@@ -36,26 +32,11 @@ public class ConvertVideoConsumer extends AbstractDisruptorWorkConsumer<ConvertV
             return;
         }
         String originVideoPath = parameter.getOriginVideoPath();
-        try {
-            File originVideo = FileUtil.exist(originVideoPath) ? new File(originVideoPath) : fileService.getMainOriginFile(uploadId);
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start("转码");
-            log.debug("(2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideoPath);
-            File m3u8File = uploadWorkflowService.convertVideo(originVideo, uploadId);
-            stopWatch.stop();
-            if (!FileUtil.exist(m3u8File)) {
-                log.error("(2)转码失败");
-                return;
-            }
-            log.debug("(2)结束{}, 已转码位置:{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), m3u8File.getAbsolutePath(), stopWatch.getLastTaskTimeMillis());
-            uploadFilmQueue.put(UploadFilmParameter.builder()
-                    .uploadId(uploadId)
-                    .originVideoPath(originVideoPath)
-                    .processedVideoPath(m3u8File.getAbsolutePath())
-                    .appCode(parameter.getAppCode())
-                    .build());
-        } catch (Exception e) {
-            log.error("ConvertVideoConsumer异常", e);
-        }
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start("转码");
+        log.debug("(2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideoPath);
+        uploadWorkflowService.convertVideo(new File(originVideoPath), uploadId);
+        stopWatch.stop();
+        log.debug("(2)结束{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), stopWatch.getLastTaskTimeMillis());
     }
 }

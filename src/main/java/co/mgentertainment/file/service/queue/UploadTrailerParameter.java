@@ -19,6 +19,4 @@ public class UploadTrailerParameter implements Serializable {
     private Long uploadId;
 
     private String trailerVideoPath;
-
-    private String watermarkVideoPath;
 }
