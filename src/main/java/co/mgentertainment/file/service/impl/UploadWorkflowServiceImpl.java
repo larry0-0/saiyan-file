@@ -51,8 +51,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {PrintWatermarkException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public void printWatermark(File originVideo, Long uploadId) {
         try {
-            originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getViceOriginFile(uploadId);
-            File watermarkVideo = ffmpegService.printWatermark(originVideo);
+            File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getViceOriginFile(uploadId);
+            File watermarkVideo = ffmpegService.printWatermark(originV);
             if (!FileUtil.exist(watermarkVideo)) {
                 throw new PrintWatermarkException("视频打水印失败");
             }
@@ -60,7 +60,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             eventBus.post(UploadSingleVideoEvent.builder()
                     .type(VideoType.ORIGIN_VIDEO)
                     .uploadId(uploadId)
-                    .videoPath(Optional.ofNullable(watermarkVideo).orElse(originVideo).getAbsolutePath())
+                    .videoPath(Optional.ofNullable(watermarkVideo).orElse(originV).getAbsolutePath())
                     .build()
             );
         } catch (Throwable t) {
@@ -72,15 +72,15 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {MediaConvertException.class}, maxAttempts = 2, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
     public void convertVideo(File originVideo, Long uploadId) {
         try {
-            originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
-            File m3u8File = ffmpegService.mediaConvert(originVideo, true, true);
+            File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
+            File m3u8File = ffmpegService.mediaConvert(originV, true, true);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOADING_FILM);
             if (!FileUtil.exist(m3u8File)) {
                 throw new MediaConvertException("视频转码失败");
             }
             eventBus.post(UploadFilmEvent.builder()
                     .uploadId(uploadId)
-                    .originVideoPath(originVideo.getAbsolutePath())
+                    .originVideoPath(originV.getAbsolutePath())
                     .processedVideoPath(m3u8File.getAbsolutePath())
                     .appCode(ClientHolder.getCurrentClient())
                     .build()
@@ -100,18 +100,18 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
-            originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
+            File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
             String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
             Long rid = cachedUidGenerator.getUID();
             fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid, true);
             rid = fileService.saveResource(ResourceDTO.builder()
                     .rid(rid)
-                    .filename(originVideo.getName())
+                    .filename(originV.getName())
                     .type(Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue())
                     .folder(subDirName)
-                    .size(MediaHelper.getMediaSize(originVideo.length()))
+                    .size(MediaHelper.getMediaSize(originV.length()))
                     .appCode(appCode)
-                    .duration(ffmpegService.getMediaDuration(originVideo))
+                    .duration(ffmpegService.getMediaDuration(originV))
                     .build());
             if (!fileService.existsRid(rid)) {
                 throw new UploadFilm2CloudException("rid未找到");
@@ -120,7 +120,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             log.debug("正片上传成功后file_upload表填充rid, film folder:{}, rid:{}", filmFolder.getAbsolutePath(), rid);
             eventBus.post(CaptureAndUploadCoverEvent.builder()
                     .uploadId(uploadId)
-                    .originVideoPath(originVideo.getAbsolutePath())
+                    .originVideoPath(originV.getAbsolutePath())
                     .build()
             );
         } catch (Throwable t) {
@@ -149,9 +149,9 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 }
                 cuttingSetting = CuttingSetting.builder().shortVideoDuration(uploadResource.getShortDuration()).shortVideoStartFromProportion(uploadResource.getShortStartPos()).build();
             }
-            watermarkVideo = FileUtil.exist(watermarkVideo) ? watermarkVideo : fileService.getWatermarkFile(uploadId);
+            File watermarkV = FileUtil.exist(watermarkVideo) ? watermarkVideo : fileService.getWatermarkFile(uploadId);
 
-            File cutVideo = ffmpegService.mediaCut(watermarkVideo, type, cuttingSetting, true);
+            File cutVideo = ffmpegService.mediaCut(watermarkV, type, cuttingSetting, true);
             if (!FileUtil.exist(cutVideo)) {
                 throw new MediaCutException("剪切" + (type == VideoType.TRAILER ? "预告片失败" : "短视频失败"));
             }
@@ -221,8 +221,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             }
             boolean hasCover = new Byte((byte) 1).equals(uploadResource.getHasCover());
             if (!hasCover) {
-                originVideo = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
-                File imgFile = ffmpegService.captureScreenshot(originVideo);
+                File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
+                File imgFile = ffmpegService.captureScreenshot(originV);
                 Long rid = uploadResource.getRid();
                 String subDirName = uploadResource.getFolder();
                 fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
