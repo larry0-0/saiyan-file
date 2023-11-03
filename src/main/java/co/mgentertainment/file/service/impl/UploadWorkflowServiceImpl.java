@@ -58,6 +58,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             }
             fileService.updateSubStatus(uploadId, UploadSubStatusEnum.UPLOADING_ORIGIN);
             eventBus.post(UploadSingleVideoEvent.builder()
+                    .type(VideoType.ORIGIN_VIDEO)
                     .uploadId(uploadId)
                     .videoPath(Optional.ofNullable(watermarkVideo).orElse(originVideo).getAbsolutePath())
                     .build()
