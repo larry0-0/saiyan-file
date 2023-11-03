@@ -226,7 +226,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             criteria.andCreateTimeBetween(condition.getUploadStartDate(), condition.getUploadEndDate());
         }
 
-        example.setOrderByClause("updated_time desc");
+        example.setOrderByClause("updated_time asc");
         PageResult<FileUploadDO> pr = fileUploadRepository.queryFileUpload(example);
         List<VideoUploadInfoDTO> dtoList = toVideoUploadInfoDTOList(pr.getRecords());
         return PageResult.createPageResult(pr.getCurrent(), pr.getSize(), pr.getTotal(), dtoList);
