@@ -9,7 +9,7 @@ spring:
       password: @nacos.password@
       discovery:
         server-addr: @nacos.server@
-        namespace: mg_${spring.profiles.active}
+        namespace: file_${spring.profiles.active}
       config:
         server-addr: @nacos.server@
         namespace: file_${spring.profiles.active}
