@@ -159,6 +159,15 @@ public class FileController {
         return R.ok(fileService.saveResource(resourceDTO));
     }
 
+    @GetMapping("/getUpload/{uploadId}")
+    public R<UploadResourceDTO> getUpload(@PathVariable("uploadId") @NotNull Long uploadId) {
+        UploadResourceDTO uploadResource = fileService.getUploadResource(uploadId);
+        if (uploadResource == null || uploadResource.getUploadId() == null) {
+            return R.failed("参数异常,未找到uploadId");
+        }
+        return R.ok(uploadResource);
+    }
+
     @Data
     public static class AddUploadsRequest {
         private List<String> filenames;
