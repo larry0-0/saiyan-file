@@ -3,7 +3,6 @@ package co.mgentertainment.file.service.impl;
 import cn.hutool.core.io.FileUtil;
 import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.*;
-import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.service.FfmpegService;
@@ -55,8 +54,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     private final FileService fileService;
 
     private final FfmpegService ffmpegService;
-
-    private final CachedUidGenerator cachedUidGenerator;
 
     @Override
     public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
@@ -256,10 +253,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             }
             File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
             String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
-            Long rid = cachedUidGenerator.getUID();
-            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid, true);
-            rid = fileService.saveResource(ResourceDTO.builder()
-                    .rid(rid)
+            Long rid = fileService.saveResource(ResourceDTO.builder()
                     .filename(originV.getName())
                     .type(Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue())
                     .folder(subDirName)
@@ -267,6 +261,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     .appCode(appCode)
                     .duration(ffmpegService.getMediaDuration(originV))
                     .build());
+            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid, true);
             if (!fileService.existsRid(rid)) {
                 throw new UploadFilm2CloudException("rid未找到");
             }
