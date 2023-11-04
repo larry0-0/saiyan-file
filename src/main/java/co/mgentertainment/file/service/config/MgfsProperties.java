@@ -24,6 +24,16 @@ public class MgfsProperties {
     private Boolean gpuBased = false;
 
     /**
+     * 打水印线程池大小
+     */
+    private Integer printWatermarkThreadPoolSize;
+
+    /**
+     * 上传原片线程池大小
+     */
+    private Integer uploadOriginThreadPoolSize;
+
+    /**
      * 口令header name
      */
     private String apiToken = StringUtils.EMPTY;

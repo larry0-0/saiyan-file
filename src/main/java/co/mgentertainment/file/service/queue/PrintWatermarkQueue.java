@@ -1,15 +1,16 @@
 package co.mgentertainment.file.service.queue;
 
 import co.mgentertainment.common.utils.queue.DisruptorQueue;
+import co.mgentertainment.file.service.config.MgfsProperties;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,11 +24,12 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class PrintWatermarkQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
     private final ObjectProvider<PrintWatermarkConsumer> objectProvider;
+    private final MgfsProperties mgfsProperties;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() {
-        int workerSize = NumberUtils.INTEGER_ONE;
+        int workerSize = Optional.ofNullable(mgfsProperties.getPrintWatermarkThreadPoolSize()).orElse(Runtime.getRuntime().availableProcessors());
         PrintWatermarkConsumer[] consumers = new PrintWatermarkConsumer[workerSize];
         for (int i = 0; i < workerSize; i++) {
             consumers[i] = objectProvider.getIfAvailable();

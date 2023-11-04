@@ -1,6 +1,7 @@
 package co.mgentertainment.file.service.queue;
 
 import co.mgentertainment.common.utils.queue.DisruptorQueue;
+import co.mgentertainment.file.service.config.MgfsProperties;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.DisposableBean;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -23,11 +25,12 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class UploadOriginVideoQueue<T> implements Queueable<T>, InitializingBean, DisposableBean {
     private final ObjectProvider<UploadOriginVideoConsumer> objectProvider;
+    private final MgfsProperties mgfsProperties;
     private DisruptorQueue<T> queue;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        int workerSize = Runtime.getRuntime().availableProcessors();
+        int workerSize = Optional.ofNullable(mgfsProperties.getUploadOriginThreadPoolSize()).orElse(Runtime.getRuntime().availableProcessors());
         UploadOriginVideoConsumer[] consumers = new UploadOriginVideoConsumer[workerSize];
         for (int i = 0; i < consumers.length; i++) {
             consumers[i] = objectProvider.getIfAvailable();
