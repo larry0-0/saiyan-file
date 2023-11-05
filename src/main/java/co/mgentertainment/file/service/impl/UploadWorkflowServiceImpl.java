@@ -84,21 +84,25 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             if (IGNORED_DIRS.contains(file.getName())) {
                 continue;
             }
-            // 过滤文件名非法字符
-            String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
-            Long uploadId = fileService.addUploadVideoRecord(
-                    filename,
-                    CuttingSetting.builder()
-                            .trailerDuration(30)
-                            .trailerStartFromProportion(0)
-                            .autoCaptureCover(true)
-                            .build(),
-                    Optional.of(FileService.SERVER_INNER_APP_CODE));
-            File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
-            eventBus.post(ConvertVideoEvent.builder()
-                    .uploadId(uploadId)
-                    .originVideoPath(newOriginFile.getAbsolutePath())
-                    .build());
+            try {
+                // 过滤文件名非法字符
+                String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
+                Long uploadId = fileService.addUploadVideoRecord(
+                        filename,
+                        CuttingSetting.builder()
+                                .trailerDuration(30)
+                                .trailerStartFromProportion(0)
+                                .autoCaptureCover(true)
+                                .build(),
+                        Optional.of(FileService.SERVER_INNER_APP_CODE));
+                File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
+                eventBus.post(ConvertVideoEvent.builder()
+                        .uploadId(uploadId)
+                        .originVideoPath(newOriginFile.getAbsolutePath())
+                        .build());
+            } catch (Exception e) {
+                log.error("fail to upload file:{}", file.getName(), e);
+            }
         }
         return R.ok();
     }
