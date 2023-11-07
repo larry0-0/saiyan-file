@@ -57,7 +57,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Override
     public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
-        VideoUploadInfoDTO videoUploadInfo = fileService.uploadVideo(multipartFile, cuttingSetting);
+        VideoUploadInfoDTO videoUploadInfo = fileService.addVideoUploadRecord(multipartFile, cuttingSetting);
         Long uploadId = videoUploadInfo.getUploadId();
         String filename = videoUploadInfo.getFilename();
         File file;
@@ -85,17 +85,17 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 continue;
             }
             try {
-                // 过滤文件名非法字符
-                String filename = MediaHelper.filterInvalidFilenameChars(file.getName());
+                // 重命名非法文件
+                File validFile = MediaHelper.renameInvalidFile(file);
                 Long uploadId = fileService.addUploadVideoRecord(
-                        filename,
+                        validFile.getName(),
                         CuttingSetting.builder()
                                 .trailerDuration(30)
                                 .trailerStartFromProportion(0)
                                 .autoCaptureCover(true)
                                 .build(),
                         Optional.of(FileService.SERVER_INNER_APP_CODE));
-                File newOriginFile = MediaHelper.moveFileToUploadDir(file, uploadId, MgfsPath.MgfsPathType.MAIN);
+                File newOriginFile = MediaHelper.moveFileToUploadDir(validFile, uploadId, MgfsPath.MgfsPathType.MAIN);
                 eventBus.post(ConvertVideoEvent.builder()
                         .uploadId(uploadId)
                         .originVideoPath(newOriginFile.getAbsolutePath())

@@ -138,7 +138,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public VideoUploadInfoDTO uploadVideo(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
+    public VideoUploadInfoDTO addVideoUploadRecord(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
         long size = multipartFile.getSize();
         if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("file type is not video");

@@ -73,7 +73,16 @@ public class MediaHelper {
     }
 
     public static String filterInvalidFilenameChars(String originFilename) {
-        return originFilename.replaceAll("[\\\\/:*#?\"<>|]", StringUtils.EMPTY);
+        return originFilename.replaceAll("[\\\\/:*!#?【】？！〖〗\"<>|]", StringUtils.EMPTY);
+    }
+
+    public static File renameInvalidFile(File f) {
+        if (!FileUtil.exist(f)) {
+            return f;
+        }
+        String filename = f.getName().replaceAll("[\\\\/:*!#?【】？！〖〗\"<>|]", StringUtils.EMPTY);
+        FileUtil.rename(f, filename, false);
+        return new File(f.getParentFile(), filename);
     }
 
     public static File moveFileToUploadDir(File srcFile, Long uploadId, MgfsPath.MgfsPathType pathType) {

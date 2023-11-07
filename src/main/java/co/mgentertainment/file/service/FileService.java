@@ -27,7 +27,7 @@ public interface FileService {
 
     UploadedFileDTO uploadFile(MultipartFile file);
 
-    VideoUploadInfoDTO uploadVideo(MultipartFile file, CuttingSetting cuttingSetting);
+    VideoUploadInfoDTO addVideoUploadRecord(MultipartFile file, CuttingSetting cuttingSetting);
 
     void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid, boolean canRetry);
 
