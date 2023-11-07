@@ -19,6 +19,8 @@ import java.math.RoundingMode;
  */
 public class MediaHelper {
 
+    private static final String INVALID_REGEX = "[\\\\/:*!#?【】？！，。〖〗\"<>| ]";
+
     public static BigDecimal getMediaSize(long sizeInBytes) {
         return new BigDecimal(sizeInBytes).divide(new BigDecimal(1024)).setScale(2, RoundingMode.HALF_UP);
     }
@@ -73,14 +75,14 @@ public class MediaHelper {
     }
 
     public static String filterInvalidFilenameChars(String originFilename) {
-        return originFilename.replaceAll("[\\\\/:*!#?【】？！〖〗\"<>|]", StringUtils.EMPTY);
+        return originFilename.replaceAll(INVALID_REGEX, StringUtils.EMPTY);
     }
 
     public static File renameInvalidFile(File f) {
         if (!FileUtil.exist(f)) {
             return f;
         }
-        String filename = f.getName().replaceAll("[\\\\/:*!#?【】？！〖〗\"<>|]", StringUtils.EMPTY);
+        String filename = f.getName().replaceAll(INVALID_REGEX, StringUtils.EMPTY);
         FileUtil.rename(f, filename, false);
         return new File(f.getParentFile(), filename);
     }
