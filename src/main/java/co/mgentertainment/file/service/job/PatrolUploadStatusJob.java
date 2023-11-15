@@ -56,7 +56,7 @@ public class PatrolUploadStatusJob {
             return;
         }
 
-        uploads.stream().filter(fu -> fu != null && StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
+        uploads.stream().filter(fu -> fu != null && fu.getUploadId() != null && StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
             boolean hasTrailer = Optional.ofNullable(fu.getHasTrailer()).orElse((byte) 0).intValue() == 1;
             boolean hasShort = Optional.ofNullable(fu.getHasShort()).orElse((byte) 0).intValue() == 1;
             boolean hasCover = Optional.ofNullable(fu.getHasCover()).orElse((byte) 0).intValue() == 1;
