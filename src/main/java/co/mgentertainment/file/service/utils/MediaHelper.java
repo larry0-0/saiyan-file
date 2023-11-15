@@ -1,7 +1,6 @@
 package co.mgentertainment.file.service.utils;
 
 import cn.hutool.core.io.FileUtil;
-import co.mgentertainment.common.model.media.MgfsPath;
 import co.mgentertainment.common.model.media.ResourcePathType;
 import co.mgentertainment.common.model.media.ResourceSuffix;
 import co.mgentertainment.common.model.media.VideoType;
@@ -42,8 +41,8 @@ public class MediaHelper {
         return new File(newDir, ResourceSuffix.SCREENSHOT);
     }
 
-    public static File getUploadIdDir(Long uploadId, MgfsPath.MgfsPathType pathType) {
-        return new File(pathType.getValue(), String.valueOf(uploadId));
+    public static File getUploadIdDir(Long uploadId, String path) {
+        return new File(path, String.valueOf(uploadId));
     }
 
     public static File getProcessedFileByOriginFile(File inputFile, String folderName, String fileSuffix) {
@@ -54,8 +53,8 @@ public class MediaHelper {
         return new File(newDir, newFilename);
     }
 
-    public static void deleteCompletedVideoFolder(Long uploadId, MgfsPath.MgfsPathType pathType) {
-        File folderToDelete = getUploadIdDir(uploadId, pathType);
+    public static void deleteCompletedVideoFolder(Long uploadId, String path) {
+        File folderToDelete = getUploadIdDir(uploadId, path);
         if (folderToDelete != null && folderToDelete.exists()) {
             FileUtil.del(folderToDelete.getAbsolutePath());
         }
@@ -87,8 +86,17 @@ public class MediaHelper {
         return new File(f.getParentFile(), filename);
     }
 
-    public static File moveFileToUploadDir(File srcFile, Long uploadId, MgfsPath.MgfsPathType pathType) {
-        File targetDir = MediaHelper.getUploadIdDir(uploadId, pathType);
+    public static File renameUploadIdFile(File f, Long uploadId) {
+        if (!FileUtil.exist(f)) {
+            return f;
+        }
+        String filename = uploadId + "." + StringUtils.substringAfterLast(f.getName(), '.');
+        FileUtil.rename(f, filename, false);
+        return new File(f.getParentFile(), filename);
+    }
+
+    public static File moveFileToUploadDir(File srcFile, Long uploadId, String path) {
+        File targetDir = MediaHelper.getUploadIdDir(uploadId, path);
         FileUtil.mkdir(targetDir);
         File targetFile = new File(targetDir, srcFile.getName());
         FileUtil.move(srcFile, targetFile, true);

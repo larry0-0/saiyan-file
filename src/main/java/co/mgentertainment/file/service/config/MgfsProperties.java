@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.config;
 
+import co.mgentertainment.common.model.media.MgfsPath;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +18,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "mgfs")
 @Data
 public class MgfsProperties {
+
+    /**
+     * 服务器文件路径
+     */
+    private ServerFilePath serverFilePath;
 
     /**
      * 是否开启gpu加速
@@ -77,6 +83,14 @@ public class MgfsProperties {
      * 支付的视频格式
      */
     private List<String> supportVideoFormat = Lists.newArrayList();
+
+    @Data
+    public static class ServerFilePath {
+        private String root = MgfsPath.ROOT_PATH;
+        private String main = MgfsPath.ROOT_PATH + "/main";
+        private String vice = MgfsPath.ROOT_PATH + "/vice";
+        private String mzk = MgfsPath.MZK_PATH;
+    }
 
     @Data
     public static class AccessApply {

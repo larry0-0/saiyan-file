@@ -17,6 +17,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author larry
@@ -56,9 +57,9 @@ public class PatrolUploadStatusJob {
         }
 
         uploads.stream().filter(fu -> fu != null && StringUtils.isNotEmpty(fu.getFilename())).forEach(fu -> {
-            boolean hasTrailer = fu.getHasTrailer().equals(1);
-            boolean hasShort = fu.getHasShort().equals(1);
-            boolean hasCover = fu.getHasCover().equals(1);
+            boolean hasTrailer = Optional.ofNullable(fu.getHasTrailer()).orElse((byte) 0).intValue() == 1;
+            boolean hasShort = Optional.ofNullable(fu.getHasShort()).orElse((byte) 0).intValue() == 1;
+            boolean hasCover = Optional.ofNullable(fu.getHasCover()).orElse((byte) 0).intValue() == 1;
             uploadWorkflowService.recoverUploading(fu.getUploadId(),
                     CuttingSetting.builder()
                             .trailerDuration(hasTrailer ? fu.getTrailerDuration() : null)

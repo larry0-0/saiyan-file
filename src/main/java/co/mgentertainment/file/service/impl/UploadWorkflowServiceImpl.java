@@ -9,6 +9,7 @@ import co.mgentertainment.file.service.FfmpegService;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.dto.ResourceDTO;
 import co.mgentertainment.file.service.dto.UploadResourceDTO;
 import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
@@ -19,6 +20,7 @@ import co.mgentertainment.file.web.cache.ClientHolder;
 import com.google.common.eventbus.AsyncEventBus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -55,6 +57,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     private final FfmpegService ffmpegService;
 
+    private final MgfsProperties mgfsProperties;
+
     @Override
     public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
         VideoUploadInfoDTO videoUploadInfo = fileService.addVideoUploadRecord(multipartFile, cuttingSetting);
@@ -62,7 +66,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
         String filename = videoUploadInfo.getFilename();
         File file;
         try {
-            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
+            // 使用uploadId作为文件名
+            String newFilename = uploadId + "." + StringUtils.substringAfterLast(filename, '.');
+            file = saveMultipartFileInDisk(multipartFile, newFilename, uploadId);
+//            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
         } catch (IOException e) {
             throw new RuntimeException("fail to persist file", e);
         }
@@ -85,17 +92,18 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 continue;
             }
             try {
-                // 重命名非法文件
-                File validFile = MediaHelper.renameInvalidFile(file);
+//                // 重命名非法文件
+//                File validFile = MediaHelper.renameInvalidFile(file);
                 Long uploadId = fileService.addUploadVideoRecord(
-                        validFile.getName(),
+                        file.getName(),
                         CuttingSetting.builder()
                                 .trailerDuration(30)
                                 .trailerStartFromProportion(0)
                                 .autoCaptureCover(true)
                                 .build(),
                         Optional.of(FileService.SERVER_INNER_APP_CODE));
-                File newOriginFile = MediaHelper.moveFileToUploadDir(validFile, uploadId, MgfsPath.MgfsPathType.MAIN);
+                File validFile = MediaHelper.renameUploadIdFile(file, uploadId);
+                File newOriginFile = MediaHelper.moveFileToUploadDir(validFile, uploadId, mgfsProperties.getServerFilePath().getMain());
                 eventBus.post(ConvertVideoEvent.builder()
                         .uploadId(uploadId)
                         .originVideoPath(newOriginFile.getAbsolutePath())
@@ -370,9 +378,9 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
             originVideo = fileService.getMainOriginFile(uploadId);
         }
         // 移动原视频
-        File newOriginFile = MediaHelper.moveFileToUploadDir(originVideo, uploadId, MgfsPath.MgfsPathType.VICE);
+        File newOriginFile = MediaHelper.moveFileToUploadDir(originVideo, uploadId, mgfsProperties.getServerFilePath().getVice());
         // 删除已处理目录
-        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.MAIN);
+        MediaHelper.deleteCompletedVideoFolder(uploadId, mgfsProperties.getServerFilePath().getMain());
         // 入水印处理队列
         eventBus.post(PrintWatermarkEvent.builder()
                 .uploadId(uploadId)
@@ -386,7 +394,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void afterViceProcessComplete(Long uploadId) {
         // 删除已处理目录
-        MediaHelper.deleteCompletedVideoFolder(uploadId, MgfsPath.MgfsPathType.VICE);
+        MediaHelper.deleteCompletedVideoFolder(uploadId, mgfsProperties.getServerFilePath().getVice());
         // 更新状态
         fileService.updateSubStatus(uploadId, UploadSubStatusEnum.END);
     }
@@ -470,7 +478,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     private File saveMultipartFileInDisk(MultipartFile multipartFile, String newFilename, Long uploadId) throws IOException {
-        File folder = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.MAIN);
+        File folder = MediaHelper.getUploadIdDir(uploadId, mgfsProperties.getServerFilePath().getMain());
         FileUtil.mkdir(folder);
         File localFile = new File(folder, newFilename);
         FileCopyUtils.copy(multipartFile.getInputStream(), Files.newOutputStream(localFile.toPath()));

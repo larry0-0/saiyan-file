@@ -37,6 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
@@ -267,7 +268,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (cuttingSetting.getShortVideoStartFromProportion() != null) {
             fu.setShortStartPos(cuttingSetting.getShortVideoStartFromProportion());
         }
-        if (cuttingSetting.getAutoCaptureCover()) {
+        if (BooleanUtils.isTrue(cuttingSetting.getAutoCaptureCover())) {
             fu.setHasCover((byte) 1);
         }
         return fileUploadRepository.addFileUpload(fu);
@@ -304,6 +305,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         fileUploadDO.setUploadId(uploadId);
         fileUploadDO.setSubStatus(subStatus.getValue().shortValue());
         fileUploadRepository.updateFileUploadByPrimaryKey(fileUploadDO);
+        log.debug("更新{}上传状态为:{}", uploadId, subStatus.getDesc());
     }
 
     @Override
@@ -357,12 +359,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     public File getMainOriginFile(Long uploadId) {
-        return getOriginFile(uploadId, MgfsPath.MgfsPathType.MAIN);
+        return getOriginFile(uploadId, mgfsProperties.getServerFilePath().getMain());
     }
 
     @Override
     public File getViceOriginFile(Long uploadId) {
-        return getOriginFile(uploadId, MgfsPath.MgfsPathType.VICE);
+        return getOriginFile(uploadId, mgfsProperties.getServerFilePath().getMain());
     }
 
     @Override
@@ -377,14 +379,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
             log.error("uploadId:{} not exists", uploadId);
             return null;
         }
-        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.VICE);
+        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, mgfsProperties.getServerFilePath().getVice());
         File watermarkDir = new File(uploadIdDir, ResourcePathType.ORIGIN.getValue());
         return new File(watermarkDir, StringUtils.substringBeforeLast(fileUploadDO.getFilename(), ".") + ResourceSuffix.ORIGIN_FILM);
     }
 
     @Override
     public File getConvertedFilmDir(Long uploadId) {
-        File uploadIdDir = getOriginFile(uploadId, MgfsPath.MgfsPathType.MAIN);
+        File uploadIdDir = getOriginFile(uploadId, mgfsProperties.getServerFilePath().getMain());
         return new File(uploadIdDir, ResourcePathType.FEATURE_FILM.getValue());
     }
 
@@ -422,17 +424,17 @@ public class FileServiceImpl implements FileService, InitializingBean {
         }
         Long uploadId = fileUploadDO.getUploadId();
         boolean mainProcessOver = fileUploadDO.getStatus() != null && UploadStatusEnum.COMPLETED.getValue().byteValue() == fileUploadDO.getStatus().byteValue();
-        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, mainProcessOver ? MgfsPath.MgfsPathType.VICE : MgfsPath.MgfsPathType.MAIN);
+        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, mainProcessOver ? mgfsProperties.getServerFilePath().getVice() : mgfsProperties.getServerFilePath().getMain());
         return new File(uploadIdDir, fileUploadDO.getFilename());
     }
 
-    private File getOriginFile(Long uploadId, MgfsPath.MgfsPathType pathType) {
+    private File getOriginFile(Long uploadId, String path) {
         FileUploadDO fileUploadDO = getUploadRecord(uploadId);
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
             log.error("uploadId:{} not exists", uploadId);
             return null;
         }
-        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, pathType);
+        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, path);
         return new File(uploadIdDir, fileUploadDO.getFilename());
     }
 
@@ -442,7 +444,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             log.error("uploadId:{} not exists", uploadId);
             return null;
         }
-        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, MgfsPath.MgfsPathType.VICE);
+        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, mgfsProperties.getServerFilePath().getMain());
         File watermarkDir = new File(uploadIdDir, ResourcePathType.ORIGIN.getValue());
         File targetDir = new File(watermarkDir, resourcePathType.getValue());
         String suffix = resourcePathType == ResourcePathType.FEATURE_FILM ? ResourceSuffix.FEATURE_FILM :
