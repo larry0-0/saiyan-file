@@ -33,9 +33,9 @@ public class PatrolUploadStatusJob {
     private final UploadWorkflowService uploadWorkflowService;
 
     /**
-     * 每10分钟检查一次执行中的file upload，全节点执行
+     * 每30分钟检查一次执行中的file upload，全节点执行
      */
-    @Scheduled(fixedRate = 600 * 1000, initialDelay = 30000)
+    @Scheduled(fixedRate = 1800 * 1000, initialDelay = 60000)
     public void checkUploadStatus() {
         // 获取执行超过60分钟的未完成记录
         List<FileUploadDO> uploads = fileUploadRepository.getUploadsByStatusInTime(
