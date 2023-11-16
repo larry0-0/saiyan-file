@@ -457,6 +457,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return new File(targetDir, StringUtils.substringBeforeLast(fileUploadDO.getFilename(), ".") + suffix);
     }
 
+    // 上传非视频文件到云存储
     private Map<Integer, String> file2CloudStorage(MultipartFile multipartFile, ResourceTypeEnum resourceType) {
         String filename = multipartFile.getOriginalFilename();
         String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
