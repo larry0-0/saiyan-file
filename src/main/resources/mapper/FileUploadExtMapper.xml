@@ -46,7 +46,7 @@
     create_time, updated_time, deleted
   </sql>
 
-  <select id="selectByStatusAndInTime" resultType="co.mgentertainment.file.dal.po.FileUploadDO">
+  <select id="selectByStatusAndInTime" parameterType="map" resultMap="BaseResultMap">
       select
       <include refid="Base_Column_List"/>
       from file_upload

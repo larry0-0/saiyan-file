@@ -2,19 +2,17 @@ package co.mgentertainment.file.dal.repository.impl;
 
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.uidgen.impl.CachedUidGenerator;
-import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.mapper.ResourceExtMapper;
 import co.mgentertainment.file.dal.mapper.ResourceMapper;
-import co.mgentertainment.file.dal.po.*;
+import co.mgentertainment.file.dal.po.ResourceDO;
+import co.mgentertainment.file.dal.po.ResourceExample;
+import co.mgentertainment.file.dal.po.ResourceExtDO;
 import co.mgentertainment.file.dal.repository.ResourceRepository;
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author auto
@@ -27,8 +25,6 @@ public class ResourceRepositoryImpl implements ResourceRepository {
     private final CachedUidGenerator cachedUidGenerator;
 
     private final ResourceMapper resourceMapper;
-
-    private final FileUploadMapper fileUploadMapper;
 
     private final ResourceExtMapper resourceExtMapper;
 
@@ -98,23 +94,23 @@ public class ResourceRepositoryImpl implements ResourceRepository {
 
     @Override
     public List<ResourceDO> getResourceByUploadIds(List<Long> uploadIds) {
-        FileUploadExample example = new FileUploadExample();
-        FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(uploadIds)) {
-            criteria.andUploadIdIn(uploadIds);
-        }
-        List<FileUploadDO> fileUploadDOS = fileUploadMapper.selectByExample(example);
-        if (CollectionUtils.isEmpty(fileUploadDOS)) {
-            return Lists.newArrayList();
-        }
-        ResourceExample resourceExample = new ResourceExample();
-        ResourceExample.Criteria criteria2 = resourceExample.createCriteria().andDeletedEqualTo((byte) 0);
-        List<Long> rids = fileUploadDOS.stream().filter(dO -> dO.getRid() != null).map(dO -> dO.getRid())
-                .collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(rids)) {
-            criteria2.andRidIn(rids);
-        }
-        return resourceMapper.selectByExample(resourceExample);
+//        FileUploadExample example = new FileUploadExample();
+//        FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
+//        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(uploadIds)) {
+//            criteria.andUploadIdIn(uploadIds);
+//        }
+//        List<FileUploadDO> fileUploadDOS = fileUploadMapper.selectByExample(example);
+//        if (CollectionUtils.isEmpty(fileUploadDOS)) {
+//            return Lists.newArrayList();
+//        }
+//        ResourceExample resourceExample = new ResourceExample();
+//        ResourceExample.Criteria criteria2 = resourceExample.createCriteria().andDeletedEqualTo((byte) 0);
+//        List<Long> rids = fileUploadDOS.stream().filter(dO -> dO.getRid() != null).map(dO -> dO.getRid())
+//                .collect(Collectors.toList());
+//        if (!CollectionUtils.isEmpty(rids)) {
+//            criteria2.andRidIn(rids);
+//        }
+        return resourceExtMapper.selectByUploadIds(uploadIds);
     }
 
     @Override
