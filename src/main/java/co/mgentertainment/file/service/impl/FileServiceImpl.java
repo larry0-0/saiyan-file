@@ -144,12 +144,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
         if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
             throw new IllegalArgumentException("file type is not video");
         }
-        // 过滤文件名非法字符
-        String filename = MediaHelper.filterInvalidFilenameChars(multipartFile.getOriginalFilename());
-        log.debug("(1)添加上传记录:{}", filename);
-        Long uploadId = this.addUploadVideoRecord(filename, cuttingSetting, Optional.empty());
-        log.debug("(1)已上传记录:{} uploadId:{}", filename, uploadId);
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).filename(filename).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
+        String title = multipartFile.getOriginalFilename();
+        log.debug("(1)添加上传记录，标题:{}", title);
+        Long uploadId = this.addUploadVideoRecord(title, cuttingSetting, Optional.empty());
+        log.debug("(1)已上传记录:{} uploadId:{}", title, uploadId);
+        return VideoUploadInfoDTO.builder().uploadId(uploadId).title(title).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
     }
 
     @Override
@@ -211,8 +210,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
         } else {
             criteria.andAppCodeEqualTo(SERVER_INNER_APP_CODE);
         }
-        if (StringUtils.isNotBlank(condition.getFilename())) {
-            criteria.andFilenameLike(String.format("%%%s%%", condition.getFilename()));
+        if (StringUtils.isNotBlank(condition.getTitle())) {
+            criteria.andTitleLike(String.format("%%%s%%", condition.getTitle()));
         }
         if (null != condition.getResourceType()) {
             criteria.andTypeEqualTo(condition.getResourceType().shortValue());
@@ -248,9 +247,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting, Optional<String> appCode) {
+    public Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode) {
+        long uploadId = cachedUidGenerator.getUID();
         FileUploadDO fu = new FileUploadDO();
-        fu.setFilename(filename);
+        fu.setUploadId(uploadId);
+        fu.setFilename(MediaHelper.getUploadIdFilename(title, uploadId));
+        fu.setTitle(title);
         fu.setAppCode(appCode.isPresent() ? appCode.get() : ClientHolder.getCurrentClient());
         boolean hasTrailer = cuttingSetting != null && cuttingSetting.getTrailerDuration() != null && cuttingSetting.getTrailerStartFromProportion() != null;
         boolean hasShort = cuttingSetting != null && cuttingSetting.getShortVideoDuration() != null && cuttingSetting.getShortVideoStartFromProportion() != null;
@@ -530,6 +532,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         Map<Long, ResourceDO> ridMap = resourceRepository.getResourceByUploadIds(uploadIds).stream().collect(Collectors.toMap(ResourceDO::getRid, r -> r));
         return fileUploadDOS.stream().map(fileUploadDO -> VideoUploadInfoDTO.builder()
                 .filename(fileUploadDO.getFilename())
+                .title(fileUploadDO.getTitle())
                 .size(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.getMediaSize(ridMap.get(fileUploadDO.getRid()).getSize().longValue()) + "kb" : null)
                 .duration(ridMap.containsKey(fileUploadDO.getRid()) ? ridMap.get(fileUploadDO.getRid()).getDuration() : null)
                 .durationStr(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.formatMediaDuration(ridMap.get(fileUploadDO.getRid()).getDuration()) : null)

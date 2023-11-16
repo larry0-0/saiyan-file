@@ -20,7 +20,6 @@ import co.mgentertainment.file.web.cache.ClientHolder;
 import com.google.common.eventbus.AsyncEventBus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -63,11 +62,11 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
         VideoUploadInfoDTO videoUploadInfo = fileService.addVideoUploadRecord(multipartFile, cuttingSetting);
         Long uploadId = videoUploadInfo.getUploadId();
-        String filename = videoUploadInfo.getFilename();
+        String title = videoUploadInfo.getTitle();
         File file;
         try {
             // 使用uploadId作为文件名
-            String newFilename = uploadId + "." + StringUtils.substringAfterLast(filename, '.');
+            String newFilename = MediaHelper.getUploadIdFilename(title, uploadId);
             file = saveMultipartFileInDisk(multipartFile, newFilename, uploadId);
 //            file = saveMultipartFileInDisk(multipartFile, filename, uploadId);
         } catch (IOException e) {
@@ -92,8 +91,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 continue;
             }
             try {
-//                // 重命名非法文件
-//                File validFile = MediaHelper.renameInvalidFile(file);
                 Long uploadId = fileService.addUploadVideoRecord(
                         file.getName(),
                         CuttingSetting.builder()
@@ -102,8 +99,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                                 .autoCaptureCover(true)
                                 .build(),
                         Optional.of(FileService.SERVER_INNER_APP_CODE));
-                File validFile = MediaHelper.renameUploadIdFile(file, uploadId);
-                File newOriginFile = MediaHelper.moveFileToUploadDir(validFile, uploadId, mgfsProperties.getServerFilePath().getMain());
+                File renamedFile = MediaHelper.renameUploadIdFile(file, uploadId);
+                File newOriginFile = MediaHelper.moveFileToUploadDir(renamedFile, uploadId, mgfsProperties.getServerFilePath().getMain());
                 eventBus.post(ConvertVideoEvent.builder()
                         .uploadId(uploadId)
                         .originVideoPath(newOriginFile.getAbsolutePath())

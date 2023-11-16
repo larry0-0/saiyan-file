@@ -10,6 +10,7 @@ import co.mgentertainment.file.dal.mapper.FileUploadMapper;
 import co.mgentertainment.file.dal.po.FileUploadDO;
 import co.mgentertainment.file.dal.po.FileUploadExample;
 import co.mgentertainment.file.dal.repository.FileUploadRepository;
+import co.mgentertainment.file.service.utils.MediaHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.RequiredArgsConstructor;
@@ -52,9 +53,11 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             return Maps.newHashMap();
         }
         List<FileUploadDO> list = filenames.stream().map(fn -> {
+            long uploadId = cachedUidGenerator.getUID();
             FileUploadDO fileUploadDO = new FileUploadDO();
-            fileUploadDO.setUploadId(cachedUidGenerator.getUID());
-            fileUploadDO.setFilename(fn);
+            fileUploadDO.setUploadId(uploadId);
+            fileUploadDO.setTitle(fn);
+            fileUploadDO.setFilename(MediaHelper.getUploadIdFilename(fn, uploadId));
             fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
             fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
             fileUploadDO.setAppCode(Optional.ofNullable(appCode).orElse(StringUtils.EMPTY));

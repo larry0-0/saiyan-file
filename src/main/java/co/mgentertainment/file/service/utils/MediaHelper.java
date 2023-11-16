@@ -86,11 +86,15 @@ public class MediaHelper {
         return new File(f.getParentFile(), filename);
     }
 
+    public static String getUploadIdFilename(String originFilename, Long uploadId) {
+        return uploadId + "." + StringUtils.substringAfterLast(originFilename, '.');
+    }
+
     public static File renameUploadIdFile(File f, Long uploadId) {
         if (!FileUtil.exist(f)) {
             return f;
         }
-        String filename = uploadId + "." + StringUtils.substringAfterLast(f.getName(), '.');
+        String filename = getUploadIdFilename(f.getName(), uploadId);
         FileUtil.rename(f, filename, false);
         return new File(f.getParentFile(), filename);
     }

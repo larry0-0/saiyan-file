@@ -21,8 +21,8 @@ public class QueryUploadConditionDTO {
     private Integer pageSize;
     @Schema(description = "应用编码")
     private String appCode;
-    @Schema(description = "文件名")
-    private String filename;
+    @Schema(description = "文件标题")
+    private String title;
     @Schema(description = "文件类型")
     private Integer resourceType;
     @Schema(description = "主上传状态")

@@ -39,7 +39,7 @@ public interface FileService {
 
     Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting);
 
-    Long addUploadVideoRecord(String filename, CuttingSetting cuttingSetting, Optional<String> appCode);
+    Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode);
 
     void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status);
 

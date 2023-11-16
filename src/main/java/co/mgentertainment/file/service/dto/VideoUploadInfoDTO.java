@@ -17,8 +17,10 @@ import java.util.Date;
 public class VideoUploadInfoDTO {
     @Schema(description = "上传id")
     private Long uploadId;
-    @Schema(description = "原始文件名")
+    @Schema(description = "文件名")
     private String filename;
+    @Schema(description = "文件标题")
+    private String title;
     @Schema(description = "视频大小")
     private String size;
     @Schema(description = "视频时长")

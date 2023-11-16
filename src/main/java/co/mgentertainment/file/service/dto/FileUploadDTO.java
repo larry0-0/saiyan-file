@@ -15,6 +15,8 @@ public class FileUploadDTO {
     @NotEmpty(message = "上传id不能为空")
     private Long uploadId;
 
+    private String title;
+
     private String filename;
     @NotEmpty(message = "上传状态不能为空")
     private Short status;
