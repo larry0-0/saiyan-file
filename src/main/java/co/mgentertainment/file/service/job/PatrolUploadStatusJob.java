@@ -53,6 +53,7 @@ public class PatrolUploadStatusJob {
                         UploadSubStatusEnum.UPLOAD_SHORT_FAILURE),
                 DateUtils.addMinutes(new Date(), -60));
         if (CollectionUtils.isEmpty(uploads)) {
+            log.info("没有需要续传的记录");
             return;
         }
 
