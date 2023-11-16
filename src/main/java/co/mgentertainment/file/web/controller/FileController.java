@@ -4,13 +4,13 @@ import cn.hutool.core.lang.mutable.MutablePair;
 import co.mgentertainment.common.devent.DistributedEventProvider;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
-import co.mgentertainment.common.model.media.MgfsPath;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
 import co.mgentertainment.file.service.FileService;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import co.mgentertainment.file.service.config.CuttingSetting;
+import co.mgentertainment.file.service.config.MgfsProperties;
 import co.mgentertainment.file.service.dto.*;
 import co.mgentertainment.file.service.event.listener.DistributedEventKey;
 import co.mgentertainment.file.service.impl.ResourceLineService;
@@ -46,6 +46,7 @@ public class FileController {
     private final UploadWorkflowService uploadWorkflowService;
     private final ResourceLineService resourceLineService;
     private final DistributedEventProvider distributedEventProvider;
+    private final MgfsProperties mgfsProperties;
 
     @PostMapping("/upload/image")
     @Operation(summary = "图片上传")
@@ -93,7 +94,7 @@ public class FileController {
     @SysLog(value = "开始服务器内部上传", ignoredArgs = true)
     public R<Void> startInnerUploads() {
         try {
-            distributedEventProvider.fire(DistributedEventKey.UPLOADS, MgfsPath.MZK_PATH);
+            distributedEventProvider.fire(DistributedEventKey.UPLOADS, mgfsProperties.getServerFilePath().getMzk());
         } catch (NacosException e) {
             log.error("添加定时任务事件失败", e);
         }
