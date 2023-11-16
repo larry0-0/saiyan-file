@@ -212,6 +212,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public void printWatermark(File originVideo, Long uploadId) {
         try {
             File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getViceOriginFile(uploadId);
+            if (!FileUtil.exist(originV)) {
+                log.debug("视频文件不存在 跳过");
+                return;
+            }
             File watermarkVideo = ffmpegService.printWatermark(originV);
             if (!FileUtil.exist(watermarkVideo)) {
                 throw new PrintWatermarkException("视频打水印失败");
@@ -308,7 +312,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 cuttingSetting = CuttingSetting.builder().shortVideoDuration(uploadResource.getShortDuration()).shortVideoStartFromProportion(uploadResource.getShortStartPos()).build();
             }
             File watermarkV = FileUtil.exist(watermarkVideo) ? watermarkVideo : fileService.getWatermarkFile(uploadId);
-
+            if (!FileUtil.exist(watermarkV)) {
+                log.debug("水印原片不存在 跳过");
+                return;
+            }
             File cutVideo = ffmpegService.mediaCut(watermarkV, type, cuttingSetting, true);
             if (!FileUtil.exist(cutVideo)) {
                 throw new MediaCutException("剪切" + (type == VideoType.TRAILER ? "预告片失败" : "短视频失败"));
@@ -340,6 +347,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                             type == VideoType.TRAILER ? fileService.getTrailerFile(uploadId) :
                                     type == VideoType.SHORT_VIDEO ? fileService.getShortVideoFile(uploadId) :
                                             type == VideoType.FEATURE_FILM ? fileService.getViceOriginFile(uploadId) : null;
+            if (!FileUtil.exist(uploadedVideo)) {
+                log.debug("视频文件不存在 跳过");
+                return;
+            }
             ResourcePathType pathType = type == VideoType.ORIGIN_VIDEO ? ResourcePathType.ORIGIN :
                     type == VideoType.TRAILER ? ResourcePathType.TRAILER :
                             type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT : null;
