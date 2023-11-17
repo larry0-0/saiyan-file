@@ -148,7 +148,15 @@ public class FileServiceImpl implements FileService, InitializingBean {
         log.debug("(1)添加上传记录，标题:{}", title);
         Long uploadId = this.addUploadVideoRecord(title, cuttingSetting, Optional.empty(), isShortVideo);
         log.debug("(1)已上传记录:{} uploadId:{}", title, uploadId);
-        return VideoUploadInfoDTO.builder().uploadId(uploadId).title(title).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
+        return VideoUploadInfoDTO.builder()
+                .uploadId(uploadId)
+                .title(title)
+                .type(isShortVideo ? ResourceTypeEnum.SHORT : ResourceTypeEnum.VIDEO)
+                .size(MediaHelper.getMediaSize(size) + "kb")
+                .status(UploadStatusEnum.CONVERTING.getDesc())
+                .statusCode(UploadStatusEnum.CONVERTING.getValue())
+                .uploadStartTime(new Date())
+                .build();
     }
 
     @Override
@@ -550,6 +558,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return fileUploadDOS.stream().map(fileUploadDO -> VideoUploadInfoDTO.builder()
                 .filename(fileUploadDO.getFilename())
                 .title(fileUploadDO.getTitle())
+                .type(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()))
                 .size(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.getMediaSize(ridMap.get(fileUploadDO.getRid()).getSize().longValue()) + "kb" : null)
                 .duration(ridMap.containsKey(fileUploadDO.getRid()) ? ridMap.get(fileUploadDO.getRid()).getDuration() : null)
                 .durationStr(ridMap.containsKey(fileUploadDO.getRid()) ? MediaHelper.formatMediaDuration(ridMap.get(fileUploadDO.getRid()).getDuration()) : null)

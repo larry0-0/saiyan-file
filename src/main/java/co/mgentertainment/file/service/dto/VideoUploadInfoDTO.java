@@ -1,5 +1,6 @@
 package co.mgentertainment.file.service.dto;
 
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,8 @@ public class VideoUploadInfoDTO {
     private String filename;
     @Schema(description = "文件标题")
     private String title;
+    @Schema(description = "资源类型")
+    private ResourceTypeEnum type;
     @Schema(description = "视频大小")
     private String size;
     @Schema(description = "视频时长")
