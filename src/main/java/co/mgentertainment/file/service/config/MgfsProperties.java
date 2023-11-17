@@ -90,7 +90,7 @@ public class MgfsProperties {
         private String main = MgfsPath.ROOT_PATH + "/main";
         private String vice = MgfsPath.ROOT_PATH + "/vice";
         private String mzk = MgfsPath.MZK_PATH;
-        private String sv = MgfsPath.MZK_PATH;
+        private String sv = MgfsPath.MZK_SV_PATH;
     }
 
     @Data

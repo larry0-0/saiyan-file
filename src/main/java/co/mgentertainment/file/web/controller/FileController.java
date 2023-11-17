@@ -4,6 +4,7 @@ import cn.hutool.core.lang.mutable.MutablePair;
 import co.mgentertainment.common.devent.DistributedEventProvider;
 import co.mgentertainment.common.model.PageResult;
 import co.mgentertainment.common.model.R;
+import co.mgentertainment.common.model.media.ResourceTypeEnum;
 import co.mgentertainment.common.model.media.UploadStatusEnum;
 import co.mgentertainment.common.model.media.UploadSubStatusEnum;
 import co.mgentertainment.common.syslog.annotation.SysLog;
@@ -89,12 +90,14 @@ public class FileController {
         return R.ok(list);
     }
 
-    @PostMapping("/upload/start")
+    @PostMapping("/upload/start/{type}")
     @Operation(summary = "开始服务器内部上传")
     @SysLog(value = "开始服务器内部上传", ignoredArgs = true)
-    public R<Void> startInnerUploads() {
+    public R<Void> startInnerUploads(@PathVariable("type") Integer type) {
         try {
-            distributedEventProvider.fire(DistributedEventKey.UPLOADS, mgfsProperties.getServerFilePath().getMzk());
+            distributedEventProvider.fire(DistributedEventKey.UPLOADS,
+                    ResourceTypeEnum.getByValue(type) == ResourceTypeEnum.SHORT ?
+                            mgfsProperties.getServerFilePath().getSv() : mgfsProperties.getServerFilePath().getMzk());
         } catch (NacosException e) {
             log.error("添加定时任务事件失败", e);
         }
