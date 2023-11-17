@@ -65,8 +65,8 @@ public class FileController {
     @PostMapping("/upload/video")
     @Operation(summary = "视频上传")
     @SysLog("上传视频")
-    public R<VideoUploadInfoDTO> uploadVideo(@RequestParam(value = "file") MultipartFile file, CuttingSetting cuttingSetting) {
-        return R.ok(uploadWorkflowService.startUploadingWithMultipartFile(file, cuttingSetting));
+    public R<VideoUploadInfoDTO> uploadVideo(@RequestParam(value = "file") MultipartFile file, CuttingSetting cuttingSetting, Boolean isShortVideo) {
+        return R.ok(uploadWorkflowService.startUploadingWithMultipartFile(file, cuttingSetting, isShortVideo));
     }
 
     @PostMapping("/upload/retry")
@@ -80,10 +80,10 @@ public class FileController {
     @PostMapping("/upload/videos")
     @Operation(summary = "批量视频上传")
     @SysLog(value = "批量上传视频", ignoredArgs = true)
-    public R<List<VideoUploadInfoDTO>> batchUploadVideo(@NotNull @RequestParam("files") MultipartFile[] files, CuttingSetting cuttingSetting) {
+    public R<List<VideoUploadInfoDTO>> batchUploadVideo(@NotNull @RequestParam("files") MultipartFile[] files, CuttingSetting cuttingSetting, Boolean isShortVideo) {
         List<VideoUploadInfoDTO> list = new ArrayList<>();
         for (MultipartFile file : files) {
-            R<VideoUploadInfoDTO> res = uploadVideo(file, cuttingSetting);
+            R<VideoUploadInfoDTO> res = uploadVideo(file, cuttingSetting, isShortVideo);
             list.add(res.getData());
         }
         return R.ok(list);
@@ -137,7 +137,7 @@ public class FileController {
                 .trailerDuration(Optional.ofNullable(request.getTrailerDuration()).orElse(30))
                 .trailerStartFromProportion(Optional.ofNullable(request.getTrailerStartFromProportion()).orElse(0))
                 .build();
-        return R.ok(fileService.batchAddUploadVideoRecord(request.filenames, cuttingSetting));
+        return R.ok(fileService.batchAddUploadVideoRecord(request.filenames, cuttingSetting, request.isShortVideo));
     }
 
     @PostMapping("/batchUpdateUploadStatus")
@@ -174,6 +174,7 @@ public class FileController {
         private List<String> filenames;
         private Integer trailerDuration;
         private Integer trailerStartFromProportion;
+        private Boolean isShortVideo;
     }
 
     @Data

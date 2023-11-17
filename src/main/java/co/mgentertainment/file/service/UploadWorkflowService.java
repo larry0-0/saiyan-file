@@ -1,6 +1,5 @@
 package co.mgentertainment.file.service;
 
-import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.VideoType;
 import co.mgentertainment.file.service.config.CuttingSetting;
 import co.mgentertainment.file.service.dto.VideoUploadInfoDTO;
@@ -15,9 +14,9 @@ import java.io.File;
  */
 public interface UploadWorkflowService {
 
-    VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting);
+    VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting, Boolean isShortVideo);
 
-    R<Void> startUploadingWithInnerDir(File innerDirToUpload);
+    void startUploadingWithInnerDir(File innerDirToUpload);
 
     void recoverUploading(Long uploadId, CuttingSetting cuttingSetting);
 

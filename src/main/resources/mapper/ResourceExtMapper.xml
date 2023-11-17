@@ -15,6 +15,7 @@
         <result column="app_code" jdbcType="VARCHAR" property="appCode"/>
         <result column="upload_id" jdbcType="BIGINT" property="uploadId"/>
         <result column="title" jdbcType="VARCHAR" property="title"/>
+        <result column="type" jdbcType="SMALLINT" property="type"/>
         <result column="status" jdbcType="SMALLINT" property="status"/>
         <result column="sub_status" jdbcType="SMALLINT" property="subStatus"/>
         <result column="has_trailer" jdbcType="TINYINT" property="hasTrailer"/>
@@ -35,6 +36,7 @@
                r.app_code,
                fr.upload_id,
                fr.title,
+               fr.type,
                fr.status,
                fr.sub_status,
                fr.has_trailer,

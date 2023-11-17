@@ -120,7 +120,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
     @Transactional(rollbackFor = Exception.class)
     public UploadedImageDTO uploadImage(MultipartFile multipartFile) {
         if (getResourceType(multipartFile) != ResourceTypeEnum.IMAGE) {
-            throw new IllegalArgumentException("file type is not image");
+            throw new IllegalArgumentException("非图片文件类型");
         }
         Map<Integer, String> map = file2CloudStorage(multipartFile, ResourceTypeEnum.IMAGE);
         return UploadedImageDTO.builder().filename(multipartFile.getOriginalFilename()).imagePath(map.get(ResourceFileType.IMAGE)).thumbnailPath(map.get(ResourceFileType.THUMBNAIL)).build();
@@ -131,22 +131,22 @@ public class FileServiceImpl implements FileService, InitializingBean {
     public UploadedFileDTO uploadFile(MultipartFile multipartFile) {
         ResourceTypeEnum resourceType = getResourceType(multipartFile);
         if (resourceType == ResourceTypeEnum.IMAGE || resourceType == ResourceTypeEnum.VIDEO) {
-            throw new IllegalArgumentException("wrong file type");
+            throw new IllegalArgumentException("不该是图片或视频文件类型");
         }
         Map<Integer, String> map = file2CloudStorage(multipartFile, resourceType);
         return UploadedFileDTO.builder().filename(multipartFile.getOriginalFilename()).remotePath(map.get(ResourceFileType.DEFAULT)).build();
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public VideoUploadInfoDTO addVideoUploadRecord(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
+    public VideoUploadInfoDTO addVideoUploadRecord(MultipartFile multipartFile, CuttingSetting cuttingSetting, Boolean isShortVideo) {
         long size = multipartFile.getSize();
-        if (getResourceType(multipartFile) != ResourceTypeEnum.VIDEO) {
-            throw new IllegalArgumentException("file type is not video");
+        ResourceTypeEnum resourceType = getResourceType(multipartFile);
+        if (resourceType != ResourceTypeEnum.VIDEO) {
+            throw new IllegalArgumentException("非视频文件类型");
         }
         String title = multipartFile.getOriginalFilename();
         log.debug("(1)添加上传记录，标题:{}", title);
-        Long uploadId = this.addUploadVideoRecord(title, cuttingSetting, Optional.empty());
+        Long uploadId = this.addUploadVideoRecord(title, cuttingSetting, Optional.empty(), isShortVideo);
         log.debug("(1)已上传记录:{} uploadId:{}", title, uploadId);
         return VideoUploadInfoDTO.builder().uploadId(uploadId).title(title).size(MediaHelper.getMediaSize(size) + "kb").status(UploadStatusEnum.CONVERTING.getDesc()).statusCode(UploadStatusEnum.CONVERTING.getValue()).uploadStartTime(new Date()).build();
     }
@@ -158,7 +158,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
             return;
         }
         String cloudPath = getCloudPath(resourceType, subDirName, rid,
-                resourceType == ResourceTypeEnum.VIDEO ? ResourcePathType.FEATURE_FILM.getValue() : null);
+                resourceType == ResourceTypeEnum.VIDEO || resourceType == ResourceTypeEnum.SHORT ? ResourcePathType.FEATURE_FILM.getValue() : null);
         List<CompletableFuture<Object>> cfs = Arrays.stream(files).parallel().map(file ->
                 CompletableFuture.supplyAsync(() -> {
                     prepareUploadPretreatment(file, cloudPath, false).upload();
@@ -242,17 +242,18 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
-    public Map<String, Long> batchAddUploadVideoRecord(List<String> filenames, CuttingSetting cuttingSetting) {
-        return fileUploadRepository.batchAddFileUpload(filenames, ResourceTypeEnum.VIDEO, ClientHolder.getCurrentClient(), cuttingSetting.getTrailerDuration(), cuttingSetting.getTrailerStartFromProportion());
+    public Map<String, Long> batchAddUploadVideoRecord(List<String> filenames, CuttingSetting cuttingSetting, Boolean isShortVideo) {
+        return fileUploadRepository.batchAddFileUpload(filenames, BooleanUtils.isTrue(isShortVideo) ? ResourceTypeEnum.SHORT : ResourceTypeEnum.VIDEO, ClientHolder.getCurrentClient(), cuttingSetting.getTrailerDuration(), cuttingSetting.getTrailerStartFromProportion());
     }
 
     @Override
-    public Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode) {
+    public Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode, Boolean isShortVideo) {
         long uploadId = cachedUidGenerator.getUID();
         FileUploadDO fu = new FileUploadDO();
         fu.setUploadId(uploadId);
         fu.setFilename(MediaHelper.getUploadIdFilename(title, uploadId));
         fu.setTitle(title);
+        fu.setType(BooleanUtils.isTrue(isShortVideo) ? Integer.valueOf(ResourceTypeEnum.SHORT.getValue()).shortValue() : Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue());
         fu.setAppCode(appCode.isPresent() ? appCode.get() : ClientHolder.getCurrentClient());
         boolean hasTrailer = cuttingSetting != null && cuttingSetting.getTrailerDuration() != null && cuttingSetting.getTrailerStartFromProportion() != null;
         boolean hasShort = cuttingSetting != null && cuttingSetting.getShortVideoDuration() != null && cuttingSetting.getShortVideoStartFromProportion() != null;
@@ -365,6 +366,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
+    public File getMainOriginFile(FileUploadDO fileUploadDO) {
+        return getOriginFile(fileUploadDO, mgfsProperties.getServerFilePath().getMain());
+    }
+
+    @Override
     public File getViceOriginFile(Long uploadId) {
         return getOriginFile(uploadId, mgfsProperties.getServerFilePath().getMain());
     }
@@ -388,7 +394,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     @Override
     public File getConvertedFilmDir(Long uploadId) {
-        File uploadIdDir = getOriginFile(uploadId, mgfsProperties.getServerFilePath().getMain());
+        FileUploadDO fileUploadDO = getUploadRecord(uploadId);
+        return getConvertedFilmDir(fileUploadDO);
+    }
+
+    @Override
+    public File getConvertedFilmDir(FileUploadDO fileUploadDO) {
+        File uploadIdDir = getOriginFile(fileUploadDO, mgfsProperties.getServerFilePath().getMain());
         return new File(uploadIdDir, ResourcePathType.FEATURE_FILM.getValue());
     }
 
@@ -432,11 +444,15 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
     private File getOriginFile(Long uploadId, String path) {
         FileUploadDO fileUploadDO = getUploadRecord(uploadId);
+        return getOriginFile(fileUploadDO, path);
+    }
+
+    private File getOriginFile(FileUploadDO fileUploadDO, String path) {
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
-            log.error("uploadId:{} not exists", uploadId);
+            log.error("upload id not exists");
             return null;
         }
-        File uploadIdDir = MediaHelper.getUploadIdDir(uploadId, path);
+        File uploadIdDir = MediaHelper.getUploadIdDir(fileUploadDO.getUploadId(), path);
         return new File(uploadIdDir, fileUploadDO.getFilename());
     }
 
@@ -543,17 +559,17 @@ public class FileServiceImpl implements FileService, InitializingBean {
                 .subStatus(UploadSubStatusEnum.getByValue(fileUploadDO.getSubStatus().intValue()).getDesc())
                 .subStatusCode(UploadSubStatusEnum.getByValue(fileUploadDO.getSubStatus().intValue()).getValue())
                 .originPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.ORIGIN.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.ORIGIN_FILM) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.ORIGIN.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.ORIGIN_FILM) : null)
                 .filmPath(ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.FEATURE_FILM.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.FEATURE_FILM) : null)
                 .trailerPath(fileUploadDO.getHasTrailer() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.TRAILER.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.TRAILER) : null)
                 .shortPath(fileUploadDO.getHasShort() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.SHORT.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.SHORT) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.SHORT.getValue()), ridMap.get(fileUploadDO.getRid()).getFilename(), ResourceSuffix.SHORT) : null)
                 .screenshotPath(fileUploadDO.getHasCover() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT) : null)
                 .screenshotThumbnailPath(fileUploadDO.getHasCover() == (byte) 0 ? null : ridMap.containsKey(fileUploadDO.getRid()) ?
-                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.VIDEO, ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT_THUMBNAIL) : null)
+                        retrieveResourcePath(getCloudPath(ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), ridMap.get(fileUploadDO.getRid()).getFolder(), fileUploadDO.getRid(), ResourcePathType.COVER.getValue()), StringUtils.EMPTY, ResourceSuffix.SCREENSHOT_THUMBNAIL) : null)
                 .uploadStartTime(fileUploadDO.getCreateTime())
                 .statusUpdateTime(fileUploadDO.getUpdatedTime())
                 .build()).collect(Lists::newArrayList, List::add, List::addAll);

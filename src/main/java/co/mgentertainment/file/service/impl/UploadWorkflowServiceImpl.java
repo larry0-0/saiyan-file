@@ -1,7 +1,6 @@
 package co.mgentertainment.file.service.impl;
 
 import cn.hutool.core.io.FileUtil;
-import co.mgentertainment.common.model.R;
 import co.mgentertainment.common.model.media.*;
 import co.mgentertainment.common.utils.DateUtils;
 import co.mgentertainment.file.dal.po.FileUploadDO;
@@ -59,8 +58,8 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     private final MgfsProperties mgfsProperties;
 
     @Override
-    public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting) {
-        VideoUploadInfoDTO videoUploadInfo = fileService.addVideoUploadRecord(multipartFile, cuttingSetting);
+    public VideoUploadInfoDTO startUploadingWithMultipartFile(MultipartFile multipartFile, CuttingSetting cuttingSetting, Boolean isShortVideo) {
+        VideoUploadInfoDTO videoUploadInfo = fileService.addVideoUploadRecord(multipartFile, cuttingSetting, isShortVideo);
         Long uploadId = videoUploadInfo.getUploadId();
         String title = videoUploadInfo.getTitle();
         File file;
@@ -81,10 +80,12 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Override
-    public R<Void> startUploadingWithInnerDir(File innerDirToUpload) {
+    public void startUploadingWithInnerDir(File innerDirToUpload) {
         if (!FileUtil.exist(innerDirToUpload) || FileUtil.isDirEmpty(innerDirToUpload)) {
-            return R.failed("内部服务器目录不存在或没有文件");
+            log.error("内部服务器目录不存在或没有文件");
+            return;
         }
+        boolean isShortVideoUpload = mgfsProperties.getServerFilePath().getSv().equals(innerDirToUpload.getAbsolutePath());
         File[] files = innerDirToUpload.listFiles();
         for (File file : files) {
             if (IGNORED_DIRS.contains(file.getName())) {
@@ -94,11 +95,12 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 Long uploadId = fileService.addUploadVideoRecord(
                         file.getName(),
                         CuttingSetting.builder()
-                                .trailerDuration(30)
+                                // 短视频无需预告片
+                                .trailerDuration(isShortVideoUpload ? null : 30)
                                 .trailerStartFromProportion(0)
                                 .autoCaptureCover(true)
                                 .build(),
-                        Optional.of(FileService.SERVER_INNER_APP_CODE));
+                        Optional.of(FileService.SERVER_INNER_APP_CODE), isShortVideoUpload);
                 File renamedFile = MediaHelper.renameUploadIdFile(file, uploadId);
                 File newOriginFile = MediaHelper.moveFileToUploadDir(renamedFile, uploadId, mgfsProperties.getServerFilePath().getMain());
                 eventBus.post(ConvertVideoEvent.builder()
@@ -109,7 +111,6 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 log.error("fail to upload file:{}", file.getName(), e);
             }
         }
-        return R.ok();
     }
 
     @Override
@@ -258,23 +259,28 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     @Retryable(value = {UploadFilm2CloudException.class}, maxAttempts = 2, backoff = @Backoff(delay = 2000L, multiplier = 1.5))
     public void uploadFilmFolder2CloudStorage(File filmFolder, File originVideo, String appCode, Long uploadId) {
         try {
-            File folderToUpload = FileUtil.exist(filmFolder) ? filmFolder : fileService.getConvertedFilmDir(uploadId);
+            FileUploadDO fileUploadDO = fileService.getUploadRecord(uploadId);
+            if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
+                log.error("uploadFilmFolder2CloudStorage参数异常,未找到uploadId:{}", uploadId);
+                return;
+            }
+            File folderToUpload = FileUtil.exist(filmFolder) ? filmFolder : fileService.getConvertedFilmDir(fileUploadDO);
             if (!FileUtil.exist(folderToUpload) || folderToUpload.isFile()) {
                 log.error("待上传的视频文件夹{}不存在", folderToUpload.getAbsolutePath());
                 fileService.updateUploadStatus(uploadId, UploadStatusEnum.VIDEO_DAMAGED_OR_LOST);
                 return;
             }
-            File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
+            File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(fileUploadDO);
             String subDirName = DateUtils.format(new Date(), DateUtils.FORMAT_YYYYMMDD);
             Long rid = fileService.saveResource(ResourceDTO.builder()
                     .filename(originV.getName())
-                    .type(Integer.valueOf(ResourceTypeEnum.VIDEO.getValue()).shortValue())
+                    .type(fileUploadDO.getType())
                     .folder(subDirName)
                     .size(MediaHelper.getMediaSize(originV.length()))
                     .appCode(appCode)
                     .duration(ffmpegService.getMediaDuration(originV))
                     .build());
-            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.VIDEO, subDirName, rid, true);
+            fileService.files2CloudStorage(filmFolder.listFiles(), ResourceTypeEnum.getByValue(fileUploadDO.getType().intValue()), subDirName, rid, true);
             if (!fileService.existsRid(rid)) {
                 throw new UploadFilm2CloudException("rid未找到");
             }
@@ -346,15 +352,15 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     type == VideoType.ORIGIN_VIDEO ? fileService.getWatermarkFile(uploadId) :
                             type == VideoType.TRAILER ? fileService.getTrailerFile(uploadId) :
                                     type == VideoType.SHORT_VIDEO ? fileService.getShortVideoFile(uploadId) :
-                                            type == VideoType.FEATURE_FILM ? fileService.getViceOriginFile(uploadId) : null;
+                                            type == VideoType.FEATURE_FILM ? fileService.getMainOriginFile(uploadId) : null;
             if (!FileUtil.exist(uploadedVideo)) {
                 log.debug("视频文件不存在 跳过");
                 return;
             }
             ResourcePathType pathType = type == VideoType.ORIGIN_VIDEO ? ResourcePathType.ORIGIN :
                     type == VideoType.TRAILER ? ResourcePathType.TRAILER :
-                            type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT : null;
-            fileService.uploadLocalFile2Cloud(uploadedVideo, ResourceTypeEnum.VIDEO, uploadResource.getFolder(), rid, pathType);
+                            type == VideoType.SHORT_VIDEO ? ResourcePathType.SHORT : ResourcePathType.FEATURE_FILM;
+            fileService.uploadLocalFile2Cloud(uploadedVideo, ResourceTypeEnum.getByValue(uploadResource.getType().intValue()), uploadResource.getFolder(), rid, pathType);
             if (VideoType.FEATURE_FILM == type) {
                 return;
             }
@@ -422,7 +428,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 File imgFile = ffmpegService.captureScreenshot(originV);
                 Long rid = uploadResource.getRid();
                 String subDirName = uploadResource.getFolder();
-                fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.VIDEO, subDirName, rid, ResourcePathType.COVER);
+                fileService.uploadLocalFile2Cloud(imgFile, ResourceTypeEnum.getByValue(uploadResource.getType().intValue()), subDirName, rid, ResourcePathType.COVER);
             } else {
                 log.debug("无截取封面需求，直接跳过结束主流程");
             }

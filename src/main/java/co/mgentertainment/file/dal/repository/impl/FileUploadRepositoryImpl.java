@@ -59,7 +59,7 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
             fileUploadDO.setTitle(fn);
             fileUploadDO.setFilename(MediaHelper.getUploadIdFilename(fn, uploadId));
             fileUploadDO.setType(Integer.valueOf(resourceTypeEnum.getValue()).shortValue());
-            fileUploadDO.setStatus(Integer.valueOf(UploadStatusEnum.CONVERTING.getValue()).shortValue());
+            fileUploadDO.setStatus(UploadStatusEnum.CONVERTING.getValue().shortValue());
             fileUploadDO.setAppCode(Optional.ofNullable(appCode).orElse(StringUtils.EMPTY));
             fileUploadDO.setHasTrailer(Objects.nonNull(trailerDuration) ? (byte) 1 : (byte) 0);
             fileUploadDO.setTrailerDuration(Optional.ofNullable(trailerDuration).orElse(0));

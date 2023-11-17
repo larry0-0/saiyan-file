@@ -27,7 +27,7 @@ public interface FileService {
 
     UploadedFileDTO uploadFile(MultipartFile file);
 
-    VideoUploadInfoDTO addVideoUploadRecord(MultipartFile file, CuttingSetting cuttingSetting);
+    VideoUploadInfoDTO addVideoUploadRecord(MultipartFile file, CuttingSetting cuttingSetting, Boolean isShortVideo);
 
     void files2CloudStorage(File[] files, ResourceTypeEnum resourceType, String subDirName, Long rid, boolean canRetry);
 
@@ -37,9 +37,9 @@ public interface FileService {
 
     void uploadLocalFile2Cloud(File file, ResourceTypeEnum resourceType, String subDirName, Long rid, ResourcePathType pathType);
 
-    Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting);
+    Map<String, Long> batchAddUploadVideoRecord(List<String> filename, CuttingSetting cuttingSetting, Boolean isShortVideo);
 
-    Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode);
+    Long addUploadVideoRecord(String title, CuttingSetting cuttingSetting, Optional<String> appCode, Boolean isShortVideo);
 
     void batchUpdateUploadStatus(List<Long> uploadIds, UploadStatusEnum status);
 
@@ -59,6 +59,8 @@ public interface FileService {
 
     File getMainOriginFile(Long uploadId);
 
+    File getMainOriginFile(FileUploadDO fileUploadDO);
+
     File getViceOriginFile(Long uploadId);
 
     FileUploadDO getUploadRecord(Long uploadId);
@@ -66,6 +68,8 @@ public interface FileService {
     File getOriginFile(FileUploadDO fileUploadDO);
 
     File getConvertedFilmDir(Long uploadId);
+
+    File getConvertedFilmDir(FileUploadDO fileUploadDO);
 
     File getWatermarkFile(Long uploadId);
 

@@ -79,10 +79,12 @@ public class FfmpegServiceImpl implements FfmpegService {
                     Lists.newArrayList("-c:v", COPY_STREAM_CODEC, "-c:a", COPY_STREAM_CODEC) :
                     Lists.newArrayList("-c:v", DEFAULT_CODEC);
         }
+        Integer duration = getMediaDuration(inputFile);
+        int segmentTimeLength = duration != null && duration.intValue() < mgfsProperties.getSegmentTimeLength() ? mgfsProperties.getSegmentTimeLength() / 3 : mgfsProperties.getSegmentTimeLength();
         extraArgs.addAll(Lists.newArrayList(
                 "-threads", Runtime.getRuntime().availableProcessors() + "",
                 "-force_key_frames", "expr:gte(t,n_forced*2)",
-                "-hls_time", mgfsProperties.getSegmentTimeLength() + "",
+                "-hls_time", segmentTimeLength + "",
                 "-hls_list_size", "0",
                 "-hls_flags", "0"));
         boolean supportWatermark = mgfsProperties.getWatermark().isEnabled();
