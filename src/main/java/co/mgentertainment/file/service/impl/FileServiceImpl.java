@@ -215,8 +215,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
         FileUploadExample.Criteria criteria = example.createCriteria().andDeletedEqualTo((byte) 0);
         if (StringUtils.isNotBlank(condition.getAppCode())) {
             criteria.andAppCodeEqualTo(condition.getAppCode());
-        } else {
-            criteria.andAppCodeEqualTo(SERVER_INNER_APP_CODE);
         }
         if (StringUtils.isNotBlank(condition.getTitle())) {
             criteria.andTitleLike(String.format("%%%s%%", condition.getTitle()));
