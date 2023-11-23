@@ -151,7 +151,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
         return VideoUploadInfoDTO.builder()
                 .uploadId(uploadId)
                 .title(title)
-                .type(isShortVideo ? ResourceTypeEnum.SHORT : ResourceTypeEnum.VIDEO)
+                .type(BooleanUtils.isTrue(isShortVideo) ? ResourceTypeEnum.SHORT : ResourceTypeEnum.VIDEO)
                 .size(MediaHelper.getMediaSize(size) + "kb")
                 .status(UploadStatusEnum.CONVERTING.getDesc())
                 .statusCode(UploadStatusEnum.CONVERTING.getValue())
