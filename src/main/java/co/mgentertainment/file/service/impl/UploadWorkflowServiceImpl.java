@@ -92,11 +92,12 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 continue;
             }
             try {
+                int defaultTrailerTimeLength = mgfsProperties.getUserTrailerTimeLength();
                 Long uploadId = fileService.addUploadVideoRecord(
                         file.getName(),
                         CuttingSetting.builder()
                                 // 短视频无需预告片
-                                .trailerDuration(isShortVideoUpload ? null : 30)
+                                .trailerDuration(isShortVideoUpload ? null : defaultTrailerTimeLength)
                                 .trailerStartFromProportion(0)
                                 .autoCaptureCover(true)
                                 .build(),

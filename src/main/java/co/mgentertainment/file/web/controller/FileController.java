@@ -136,8 +136,9 @@ public class FileController {
     @PostMapping("/batchAddUploadRecord")
     @Operation(summary = "供上传器批量添加上传记录")
     public R<Map<String, Long>> batchAddUploadRecord(@RequestBody AddUploadsRequest request) {
+        int defaultTrailerTimeLength = mgfsProperties.getUserTrailerTimeLength();
         CuttingSetting cuttingSetting = CuttingSetting.builder()
-                .trailerDuration(Optional.ofNullable(request.getTrailerDuration()).orElse(30))
+                .trailerDuration(Optional.ofNullable(request.getTrailerDuration()).orElse(defaultTrailerTimeLength))
                 .trailerStartFromProportion(Optional.ofNullable(request.getTrailerStartFromProportion()).orElse(0))
                 .build();
         return R.ok(fileService.batchAddUploadVideoRecord(request.filenames, cuttingSetting, request.isShortVideo));

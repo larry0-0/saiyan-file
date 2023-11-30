@@ -159,7 +159,7 @@ public class FfmpegServiceImpl implements FfmpegService {
                 .setStartOffset(startOffset, TimeUnit.SECONDS)
                 .overrideOutputFiles(true)
                 .addOutput(outFile.getAbsolutePath())
-                .setDuration(Optional.ofNullable(cutDuration).orElse(10), TimeUnit.SECONDS)
+                .setDuration(Optional.ofNullable(cutDuration).orElse(mgfsProperties.getUserTrailerTimeLength()), TimeUnit.SECONDS)
                 .addExtraArgs(extraArgs.toArray(new String[0]))
 //                .setAudioBitRate(audioStream.map(fFmpegStream -> fFmpegStream.bit_rate).orElse(0L))
 //                .setVideoCodec("h264")
