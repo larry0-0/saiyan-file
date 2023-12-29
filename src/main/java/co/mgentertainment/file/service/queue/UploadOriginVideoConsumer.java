@@ -34,7 +34,7 @@ public class UploadOriginVideoConsumer extends AbstractDisruptorWorkConsumer<Upl
         }
         String watermarkVideoPath = parameter.getWatermarkVideoPath();
         StopWatch stopWatch = new StopWatch();
-        stopWatch.start("上传带水印原片");
+        stopWatch.start("上传原片");
         log.debug("(6)开始{}, uploadId:{}, origin video:{}", stopWatch.currentTaskName(), uploadId, watermarkVideoPath);
         uploadWorkflowService.uploadVideo2CloudStorage(new File(watermarkVideoPath), VideoType.ORIGIN_VIDEO, uploadId);
         stopWatch.stop();

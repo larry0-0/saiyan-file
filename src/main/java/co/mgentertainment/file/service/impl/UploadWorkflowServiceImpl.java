@@ -443,6 +443,14 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     public void doPrintWatermarkRecover(PrintWatermarkException e, File originVideo, Long uploadId) {
         log.error("重试后打水印仍然失败, filePath:{}", originVideo.getAbsolutePath(), e);
         fileService.updateSubStatus(uploadId, UploadSubStatusEnum.PRINT_FAILURE);
+        // 若依旧失败则上传原片
+        fileService.updateSubStatus(uploadId, UploadSubStatusEnum.UPLOADING_ORIGIN);
+        File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getViceOriginFile(uploadId);
+        eventBus.post(UploadSingleVideoEvent.builder()
+                .type(VideoType.ORIGIN_VIDEO)
+                .uploadId(uploadId)
+                .videoPath(originV.getAbsolutePath())
+                .build());
     }
 
     @Recover
