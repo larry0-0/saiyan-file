@@ -5,6 +5,7 @@ import co.mgentertainment.common.utils.queue.AbstractDisruptorWorkConsumer;
 import co.mgentertainment.file.service.UploadWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class ConvertVideoConsumer extends AbstractDisruptorWorkConsumer<ConvertV
         StopWatch stopWatch = new StopWatch();
         stopWatch.start("转码");
         log.debug("(2)开始{}, uploadId:{}, 视频位置:{}", stopWatch.currentTaskName(), uploadId, originVideoPath);
-        uploadWorkflowService.convertVideo(new File(originVideoPath), uploadId);
+        uploadWorkflowService.convertVideo(new File(originVideoPath), uploadId, BooleanUtils.isTrue(parameter.getIsShortVideo()));
         stopWatch.stop();
         log.debug("(2)结束{}, 耗时:{}毫秒", stopWatch.getLastTaskName(), stopWatch.getLastTaskTimeMillis());
     }

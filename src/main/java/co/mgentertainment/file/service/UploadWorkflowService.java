@@ -22,7 +22,7 @@ public interface UploadWorkflowService {
 
     void printWatermark(File originVideo, Long uploadId);
 
-    void convertVideo(File originVideo, Long uploadId);
+    void convertVideo(File originVideo, Long uploadId, boolean isShortVideo);
 
     void captureAndUploadScreenshot(File originVideo, Long uploadId);
 

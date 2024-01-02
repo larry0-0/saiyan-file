@@ -67,7 +67,7 @@ public class FfmpegServiceImpl implements FfmpegService {
     }
 
     @Override
-    public File mediaConvert(@NotNull File inputFile, boolean disabledWatermark, boolean fastMode) {
+    public File mediaConvert(@NotNull File inputFile, boolean disabledWatermark, boolean fastMode, boolean isShortVideo) {
 //        FFmpegProbeResult mediaMetadata = getMediaMetadata(inputFile);
 //        final List<FFmpegStream> streams = mediaMetadata.getStreams().stream().filter(fFmpegStream -> fFmpegStream.codec_type != null).collect(Collectors.toList());
 //        final Optional<FFmpegStream> audioStream = streams.stream().filter(fFmpegStream -> FFmpegStream.CodecType.AUDIO.equals(fFmpegStream.codec_type)).findFirst();
@@ -80,7 +80,7 @@ public class FfmpegServiceImpl implements FfmpegService {
                     Lists.newArrayList("-c:v", DEFAULT_CODEC);
         }
         Integer duration = getMediaDuration(inputFile);
-        int segmentTimeLength = duration != null && duration.intValue() < mgfsProperties.getSegmentTimeLength() ? mgfsProperties.getSegmentTimeLength() / 3 : mgfsProperties.getSegmentTimeLength();
+        int segmentTimeLength = isShortVideo ? 5 : duration != null && duration.intValue() < mgfsProperties.getSegmentTimeLength() ? mgfsProperties.getSegmentTimeLength() / 3 : mgfsProperties.getSegmentTimeLength();
         extraArgs.addAll(Lists.newArrayList(
                 "-threads", Runtime.getRuntime().availableProcessors() + "",
                 "-force_key_frames", "expr:gte(t,n_forced*2)",

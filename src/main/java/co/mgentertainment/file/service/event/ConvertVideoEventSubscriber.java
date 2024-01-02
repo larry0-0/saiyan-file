@@ -29,6 +29,7 @@ public class ConvertVideoEventSubscriber extends AbstractEventSubscriber<Convert
             convertVideoQueue.put(ConvertVideoParameter.builder()
                     .uploadId(event.getUploadId())
                     .originVideoPath(event.getOriginVideoPath())
+                    .isShortVideo(event.getIsShortVideo())
                     .build());
         } catch (Exception e) {
             log.error("视频转码事件异常", e);

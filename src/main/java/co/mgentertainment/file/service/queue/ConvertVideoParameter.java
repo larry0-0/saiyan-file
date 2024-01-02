@@ -14,10 +14,12 @@ import java.io.Serializable;
 @Builder
 public class ConvertVideoParameter implements Serializable {
 
-    private static final long serialVersionUID = -1988156382901064830L;
+    private static final long serialVersionUID = 7997155608098610796L;
 
     private Long uploadId;
 
     private String originVideoPath;
+
+    private Boolean isShortVideo;
 
 }

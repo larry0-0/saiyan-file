@@ -74,6 +74,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
         eventBus.post(ConvertVideoEvent.builder()
                 .uploadId(uploadId)
                 .originVideoPath(file.getAbsolutePath())
+                .isShortVideo(isShortVideo)
                 .build()
         );
         return videoUploadInfo;
@@ -107,6 +108,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                 eventBus.post(ConvertVideoEvent.builder()
                         .uploadId(uploadId)
                         .originVideoPath(newOriginFile.getAbsolutePath())
+                        .isShortVideo(isShortVideoUpload)
                         .build());
             } catch (Exception e) {
                 log.error("fail to upload file:{}", file.getName(), e);
@@ -130,6 +132,7 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
                     eventBus.post(ConvertVideoEvent.builder()
                             .uploadId(uploadId)
                             .originVideoPath(originVideo.getAbsolutePath())
+                            .isShortVideo(uploadRecord.getType().equals((byte) 1))
                             .build());
                     break;
                 case UPLOAD_FAILURE:
@@ -236,10 +239,10 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
 
     @Override
     @Retryable(value = {MediaConvertException.class}, maxAttempts = 2, backoff = @Backoff(delay = 1500L, multiplier = 1.5))
-    public void convertVideo(File originVideo, Long uploadId) {
+    public void convertVideo(File originVideo, Long uploadId, boolean isShortVideo) {
         try {
             File originV = FileUtil.exist(originVideo) ? originVideo : fileService.getMainOriginFile(uploadId);
-            File m3u8File = ffmpegService.mediaConvert(originV, true, true);
+            File m3u8File = ffmpegService.mediaConvert(originV, true, true, isShortVideo);
             fileService.updateUploadStatus(uploadId, UploadStatusEnum.UPLOADING_FILM);
             if (!FileUtil.exist(m3u8File)) {
                 throw new MediaConvertException("视频转码失败");
@@ -454,9 +457,9 @@ public class UploadWorkflowServiceImpl implements UploadWorkflowService {
     }
 
     @Recover
-    public void doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId) {
+    public void doMediaConvertRecover(MediaConvertException e, File originVideo, Long uploadId, boolean isShortVideo) {
         try {
-            File filmFile = ffmpegService.mediaConvert(originVideo, true, false);
+            File filmFile = ffmpegService.mediaConvert(originVideo, true, false, isShortVideo);
             if (FileUtil.exist(filmFile)) {
                 return;
             }
