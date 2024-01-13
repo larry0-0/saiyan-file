@@ -80,4 +80,6 @@ public interface FileService {
     UploadResourceDTO getUploadResource(Long uploadId);
 
     boolean existsRid(Long rid);
+
+    void resetFailedUploads(Optional<String> appCode);
 }

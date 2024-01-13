@@ -156,4 +156,16 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
         List<Integer> subStatusCollection = subStatusList.stream().map(UploadSubStatusEnum::getValue).collect(Collectors.toList());
         return fileUploadExtMapper.selectByStatusAndInTime(statusCollection, subStatusCollection, deadline);
     }
+
+    @Override
+    public void resetCreateTimeForFailedUploads(String appCode) {
+        fileUploadExtMapper.resetCreateTimeForFailedUploads(appCode,
+                Lists.newArrayList(UploadStatusEnum.CONVERT_FAILURE.getValue(),
+                        UploadStatusEnum.UPLOAD_FAILURE.getValue(),
+                        UploadStatusEnum.CAPTURE_FAILURE.getValue()),
+                Lists.newArrayList(UploadSubStatusEnum.PRINT_FAILURE.getValue(),
+                        UploadSubStatusEnum.UPLOAD_ORIGIN_FAILURE.getValue(),
+                        UploadSubStatusEnum.CUT_TRAILER_FAILURE.getValue(),
+                        UploadSubStatusEnum.UPLOAD_TRAILER_FAILURE.getValue()));
+    }
 }

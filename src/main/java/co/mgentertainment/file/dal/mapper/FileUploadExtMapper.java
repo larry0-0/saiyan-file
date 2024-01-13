@@ -19,4 +19,6 @@ public interface FileUploadExtMapper {
     List<FileUploadDO> selectByStatusAndInTime(@Param("statusList") List<Integer> statusList,
                                                @Param("subStatusList") List<Integer> subStatusList,
                                                @Param("deadline") Date deadline);
+
+    int resetCreateTimeForFailedUploads(@Param("appCode") String appCode, @Param("statusList") List<Integer> statusList, @Param("subStatusList") List<Integer> subStatusList);
 }

@@ -101,4 +101,6 @@ public interface FileUploadRepository {
     Boolean updateFileUploadByPrimaryKey(FileUploadDO uploadDO);
 
     List<FileUploadDO> getUploadsByStatusInTime(List<UploadStatusEnum> statusList, List<UploadSubStatusEnum> subStatusEnums, Date deadline);
+
+    void resetCreateTimeForFailedUploads(String appCode);
 }

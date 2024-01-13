@@ -104,6 +104,14 @@ public class FileController {
         return R.ok();
     }
 
+    @PostMapping("/upload/reset/{appCode}")
+    @Operation(summary = "失败重置")
+    @SysLog(value = "失败重置", ignoredArgs = true)
+    public R<Void> resetFailedUploads(@PathVariable("appCode") String appCode) {
+        fileService.resetFailedUploads(Optional.ofNullable(appCode));
+        return R.ok();
+    }
+
     @PostMapping("/listUploadProgress")
     @Operation(summary = "根据uploadId获取视频上传进展")
     public R<List<VideoUploadInfoDTO>> listUploadInfo(@RequestBody List<Long> uploadIds) {

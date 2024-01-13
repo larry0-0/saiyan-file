@@ -439,6 +439,24 @@ public class FileServiceImpl implements FileService, InitializingBean {
     }
 
     @Override
+    public void resetFailedUploads(Optional<String> appCode) {
+        // main process
+        updateStatus(UploadStatusEnum.CONVERTING, UploadStatusEnum.CONVERT_FAILURE);
+        updateStatus(UploadStatusEnum.UPLOADING_FILM, UploadStatusEnum.UPLOAD_FAILURE);
+        updateStatus(UploadStatusEnum.CAPTURING_AND_UPLOADING_COVER, UploadStatusEnum.CAPTURE_FAILURE);
+        // vice process
+        updateSubStatus(UploadSubStatusEnum.PRINTING, UploadSubStatusEnum.PRINT_FAILURE);
+        updateSubStatus(UploadSubStatusEnum.UPLOADING_ORIGIN, UploadSubStatusEnum.UPLOAD_ORIGIN_FAILURE);
+        updateSubStatus(UploadSubStatusEnum.CUTTING_TRAILER, UploadSubStatusEnum.CUT_TRAILER_FAILURE);
+        updateSubStatus(UploadSubStatusEnum.UPLOADING_TRAILER, UploadSubStatusEnum.UPLOAD_TRAILER_FAILURE);
+        updateSubStatus(UploadSubStatusEnum.CUTTING_SHORT, UploadSubStatusEnum.CUT_SHORT_FAILURE);
+        updateSubStatus(UploadSubStatusEnum.UPLOADING_SHORT, UploadSubStatusEnum.UPLOAD_SHORT_FAILURE);
+        if (appCode.isPresent() && StringUtils.isNotBlank(appCode.get())) {
+            fileUploadRepository.resetCreateTimeForFailedUploads(appCode.get());
+        }
+    }
+
+    @Override
     public File getOriginFile(FileUploadDO fileUploadDO) {
         if (fileUploadDO == null || fileUploadDO.getUploadId() == null) {
             log.error("uploadId:{} not exists", fileUploadDO.getUploadId());
@@ -640,5 +658,25 @@ public class FileServiceImpl implements FileService, InitializingBean {
         private static Integer DEFAULT = 0;
         private static Integer IMAGE = 1;
         private static Integer THUMBNAIL = 2;
+    }
+
+    private void updateStatus(UploadStatusEnum replacedStatus, UploadStatusEnum replacingStatus) {
+        fileUploadRepository.updateFileUpload(new FileUploadDO() {{
+            setStatus(replacingStatus.getValue().shortValue());
+        }}, new FileUploadExample() {{
+            createCriteria().andCreateTimeGreaterThan(DateUtils.addMinutes(new Date(), -60))
+                    .andDeletedEqualTo((byte) 0)
+                    .andStatusEqualTo(replacedStatus.getValue().shortValue());
+        }});
+    }
+
+    private void updateSubStatus(UploadSubStatusEnum replacedSubStatus, UploadSubStatusEnum replacingSubStatus) {
+        fileUploadRepository.updateFileUpload(new FileUploadDO() {{
+            setSubStatus(replacingSubStatus.getValue().shortValue());
+        }}, new FileUploadExample() {{
+            createCriteria().andCreateTimeGreaterThan(DateUtils.addMinutes(new Date(), -60))
+                    .andDeletedEqualTo((byte) 0)
+                    .andSubStatusEqualTo(replacedSubStatus.getValue().shortValue());
+        }});
     }
 }
