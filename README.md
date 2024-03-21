@@ -1,4 +1,4 @@
-# mg-file
+# 赛亚人文件服务（含视频转码切片打水印）
 
 
 
@@ -22,7 +22,7 @@ git push -uf origin main
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](http://3.29.31.208/cgroup/backend/mg-file/-/settings/integrations)
+- [ ] [Set up project integrations](http://3.29.31.208/cgroup/backend/saiyan-file/-/settings/integrations)
 
 ## Collaborate with your team
 

@@ -19,10 +19,10 @@
         </plugin>
         <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
         <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin"/>
-        <plugin type="co.mgentertainment.common.mplugin.MysqlPagePlugin"/>
+        <plugin type="co.saiyan.common.mplugin.MysqlPagePlugin"/>
 
         <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
-                        connectionURL="jdbc:mysql://database-1.cypowfe4kxoe.me-central-1.rds.amazonaws.com/mg_fs"
+                        connectionURL="jdbc:mysql://xxx.me-central-1.rds.amazonaws.com/saiyan_fs"
                         userId="root"
                         password="!PkHJV%+VhJRem7)LFPz">
             <property name="nullCatalogMeansCurrent" value="true"/>
@@ -31,7 +31,7 @@
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
 
-        <javaModelGenerator targetPackage="co.mgentertainment.file.dal.po" targetProject="src/main/java">
+        <javaModelGenerator targetPackage="co.saiyan.file.dal.po" targetProject="src/main/java">
             <property name="constructorBased" value="false"/>
             <property name="enableSubPackages" value="false"/>
             <property name="immutable" value="false"/>
@@ -41,12 +41,12 @@
         <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources">
             <property name="enableSubPackages" value="false"/>
         </sqlMapGenerator>
-        <javaClientGenerator targetPackage="co.mgentertainment.file.dal.mapper" type="XMLMAPPER"
+        <javaClientGenerator targetPackage="co.saiyan.file.dal.mapper" type="XMLMAPPER"
                              targetProject="src/main/java">
             <property name="enableSubPackages" value="false"/>
         </javaClientGenerator>
 
-<!--        <table tableName="resource" schema="mg_fs"-->
+<!--        <table tableName="resource" schema="saiyan_fs"-->
 <!--               domainObjectName="ResourceDO"-->
 <!--               mapperName="ResourceMapper"-->
 <!--               enableCountByExample="true"-->
@@ -60,7 +60,7 @@
 <!--            <property name="useActualColumnNames" value="false"/>-->
 <!--            <property name="enableUpdateByExample" value="true"/>-->
 <!--        </table>-->
-<!--        <table tableName="resource_line" schema="mg_fs"-->
+<!--        <table tableName="resource_line" schema="saiyan_fs"-->
 <!--               domainObjectName="ResourceLineDO"-->
 <!--               mapperName="ResourceLineMapper"-->
 <!--               enableCountByExample="true"-->
@@ -74,7 +74,7 @@
 <!--            <property name="useActualColumnNames" value="false"/>-->
 <!--            <property name="enableUpdateByExample" value="true"/>-->
 <!--        </table>-->
-        <table tableName="file_upload" schema="mg_fs"
+        <table tableName="file_upload" schema="saiyan_fs"
                domainObjectName="FileUploadDO"
                mapperName="FileUploadMapper"
                enableCountByExample="true"
@@ -88,7 +88,7 @@
             <property name="useActualColumnNames" value="false"/>
             <property name="enableUpdateByExample" value="true"/>
         </table>
-<!--        <table tableName="access_client" schema="mg_fs"-->
+<!--        <table tableName="access_client" schema="saiyan_fs"-->
 <!--               domainObjectName="AccessClientDO"-->
 <!--               mapperName="AccessClientMapper"-->
 <!--               enableCountByExample="true"-->

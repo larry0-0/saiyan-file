@@ -1,6 +1,6 @@
 spring:
   application:
-    name: mg-file
+    name: saiyan-file
   profiles:
     active: @env@
   cloud:

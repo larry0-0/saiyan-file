@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
     <parent>
-        <groupId>co.mgentertainment</groupId>
+        <groupId>co.saiyan</groupId>
         <artifactId>bom</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mg-file</artifactId>
+    <artifactId>saiyan-file</artifactId>
     <version>${revision}</version>
-    <name>mg global file service</name>
+    <name>saiyan global file service</name>
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
@@ -22,35 +22,35 @@
 
     <dependencies>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>model</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>common-utils</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>common-file-upload</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>uid-generator-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>common-eventbus-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>common-doc-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>common-syslog-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.mgentertainment</groupId>
+            <groupId>co.saiyan</groupId>
             <artifactId>distributed-event-spring-boot-starter</artifactId>
         </dependency>
 
@@ -179,7 +179,7 @@
     </profiles>
 
     <build>
-        <finalName>mg-file-${project.version}-${maven.build.timestamp}</finalName>
+        <finalName>saiyan-file-${project.version}-${maven.build.timestamp}</finalName>
 
         <plugins>
             <plugin>
@@ -248,7 +248,7 @@
                 </executions>
                 <configuration>
                     <includeSystemScope>true</includeSystemScope>
-                    <mainClass>co.mgentertainment.file.Bootstrap</mainClass>
+                    <mainClass>co.saiyan.file.Bootstrap</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -261,7 +261,7 @@
                         <version>8.0.28</version>
                     </dependency>
                     <dependency>
-                        <groupId>co.mgentertainment</groupId>
+                        <groupId>co.saiyan</groupId>
                         <artifactId>mybatis-generator-plugin</artifactId>
                         <version>1.0.0-SNAPSHOT</version>
                     </dependency>
